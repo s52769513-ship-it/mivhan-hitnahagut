@@ -2126,7 +2126,11 @@ async function uploadToCloudinary(pid, input){
     form.append('folder','mivhan-hitnahagut');
     const resp=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`,{method:'POST',body:form});
     const data=await resp.json();
-    if(!resp.ok) throw new Error(data.error?.message||data.message||'שגיאת Cloudinary ('+resp.status+')');
+    if(!resp.ok){
+      const msg=data.error?.message||data.message||'';
+      if(msg.includes('whitelisted')||msg.includes('unsigned')) throw new Error('ה-Upload Preset חייב להיות מסוג Unsigned — שנה זאת בהגדרות Cloudinary');
+      throw new Error(msg||'שגיאת Cloudinary ('+resp.status+')');
+    }
     const url=data.secure_url;
     if(!url) throw new Error('לא התקבל URL מ-Cloudinary');
     await sbInsert('patient_files',{patient_id:pid,name:file.name,drive_file_id:data.public_id,drive_url:url,created_at:new Date().toISOString()});
