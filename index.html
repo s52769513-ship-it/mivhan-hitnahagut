@@ -866,8 +866,8 @@ async function renderUserDashboard(){
 async function renderUsersView(){
   const [profiles,uPats,uInsts]=await Promise.all([
     sbAdmin('user_profiles','?select=*&order=created_at'),
-    sb('user_patients','?select=*'),
-    sb('user_institutions','?select=*')
+    sbAdmin('user_patients','?select=*'),
+    sbAdmin('user_institutions','?select=*')
   ]);
   allUserProfiles=profiles.data||[];
   allUserPatients=uPats.data||[];
@@ -952,7 +952,6 @@ async function toggleUserInstitution(uid,instId,add){
     if(entry){await sbDelete('user_institutions',entry.id); allUserInstitutions=allUserInstitutions.filter(x=>!(x.user_id===uid&&x.institution_id===instId));}
   }
   renderAssignInstitutions(uid);
-  renderUsersView();
 }
 
 async function toggleUserPatient(uid,patId,add){
@@ -964,7 +963,6 @@ async function toggleUserPatient(uid,patId,add){
     if(entry){await sbDelete('user_patients',entry.id); allUserPatients=allUserPatients.filter(x=>!(x.user_id===uid&&x.patient_id===patId));}
   }
   renderAssignPatients(uid,document.getElementById('eu-patient-search')?.value||'');
-  renderUsersView();
 }
 
 async function saveEditUser(){
@@ -1138,6 +1136,7 @@ async function renderPatients(){
 // State: null=main, 'clinic'/'vizhnitz'/'education'/'ponivez'=category, then sub-selection
 let patientView = 'main'; // 'main' | 'vizhnitz-classes' | 'education-institutions' | 'patients-list'
 let patientListTitle = '';
+let patientListBackFn = 'backToMain';
 let patientListData = [];
 let currentContextType = null; // 'clinic' | 'vizhnitz' | 'education' | 'ponivez' | null
 let currentContextInstitutionId = null;
@@ -1204,7 +1203,7 @@ function renderInstitutionFilter(){
 function selectCategory(cat){
   if(cat==='clinic'){
     patientView='patients-list';
-    patientListTitle='קליניקה';
+    patientListTitle='קליניקה'; patientListBackFn='backToMain';
     const clinicInst=allInstitutions.find(i=>i.type==='clinic'||i.name?.includes('קליניקה')||i.name?.toLowerCase().includes('clinic'));
     patientListData=clinicInst?allPatients.filter(p=>p.institution_id===clinicInst.id):allPatients.filter(p=>{
       const inst=allInstitutions.find(i=>i.id===p.institution_id);
@@ -1212,7 +1211,6 @@ function selectCategory(cat){
     });
     currentContextType='clinic'; currentContextInstitutionId=clinicInst?clinicInst.id:null; currentContextClassId=null;
     renderInstitutionFilter();
-    document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px">← חזרה</button> קליניקה`;
   } else if(cat==='vizhnitz'){
     patientView='vizhnitz-classes';
     currentContextType='vizhnitz'; currentContextInstitutionId=null; currentContextClassId=null;
@@ -1223,29 +1221,28 @@ function selectCategory(cat){
     renderInstitutionFilter();
   } else if(cat==='ponivez'){
     patientView='patients-list';
-    patientListTitle='פוניבז';
+    patientListTitle='פוניבז'; patientListBackFn='backToMain';
     const ponInst=allInstitutions.find(i=>i.name?.includes('פוניבז')||i.name?.includes('פונוביז')||i.name?.toLowerCase().includes('ponivez'));
     patientListData=ponInst?allPatients.filter(p=>p.institution_id===ponInst.id):[];
     currentContextType='ponivez'; currentContextInstitutionId=ponInst?ponInst.id:null; currentContextClassId=null;
     renderInstitutionFilter();
-    document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px">← חזרה</button> פוניבז`;
   }
 }
 
 function selectVizhnitzClass(classId, className){
   patientView='patients-list';
   patientListData=allPatients.filter(p=>p.class_id===classId);
+  patientListTitle='ויזניץ · '+className; patientListBackFn='backToVizhnitz';
   currentContextClassId=classId;
   renderInstitutionFilter();
-  document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToVizhnitz()" style="margin-left:10px">← חזרה</button> ויזניץ · ${className}`;
 }
 
 function selectEduInstitution(instId, instName){
   patientView='patients-list';
   patientListData=allPatients.filter(p=>p.institution_id===instId);
+  patientListTitle=instName; patientListBackFn='backToEducation';
   currentContextInstitutionId=instId;
   renderInstitutionFilter();
-  document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToEducation()" style="margin-left:10px">← חזרה</button> ${instName}`;
 }
 
 function backToMain(){ patientView='main'; selectedInstitution=null; selectedClass=null; currentContextType=null; currentContextInstitutionId=null; currentContextClassId=null; renderInstitutionFilter(); }
@@ -1257,7 +1254,7 @@ function selectInstitution(id){ selectedInstitution=id; }
 function selectClass(id){ selectedClass=id; }
 
 function renderPatientsTable(patients){
-  document.getElementById('patients-list-title').textContent=`מטופלים (${patients.length})`;
+  document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="${patientListBackFn}()" style="margin-left:10px">← חזרה</button> ${patientListTitle} <span style="font-size:13px;color:var(--g500)">(${patients.length})</span>`;
   const tb=document.getElementById('patients-tbody');
   if(patients.length===0){tb.innerHTML=`<tr><td colspan="6"><div class="empty">👥<p>אין מטופלים</p></div></td></tr>`;return;}
   tb.innerHTML=patients.map(p=>`<tr onclick="openPatient('${p.id}')">
