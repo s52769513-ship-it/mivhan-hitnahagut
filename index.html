@@ -202,7 +202,7 @@ tr:last-child td{border-bottom:none}
               <h3 id="patients-list-title">מטופלים</h3>
               <div style="display:flex;gap:10px;align-items:center">
                 <input type="text" id="patient-search" placeholder="🔍 חיפוש..." class="form-control" style="width:220px" oninput="filterPatients(this.value)">
-                <button class="btn btn-primary" onclick="openModal('modal-new-patient')">+ מטופל חדש</button>
+                <button class="btn btn-primary" onclick="openNewPatientModal()">+ מטופל חדש</button>
               </div>
             </div>
             <div style="overflow-x:auto">
@@ -342,8 +342,8 @@ tr:last-child td{border-bottom:none}
         <div class="form-group"><label class="form-label">כתובת</label><input type="text" class="form-control" id="np-address"></div>
       </div>
       <div class="form-group"><label class="form-label">הורים</label><input type="text" class="form-control" id="np-parents"></div>
-      <div class="form-group"><label class="form-label">מוסד</label><select class="form-control" id="np-institution"><option value="">-- בחר --</option></select></div>
-      <div class="form-group"><label class="form-label">כיתה</label><select class="form-control" id="np-class"><option value="">-- בחר --</option></select></div>
+      <div class="form-group" id="np-institution-group" style="display:none"><label class="form-label">מוסד</label><select class="form-control" id="np-institution"><option value="">-- בחר --</option></select></div>
+      <div class="form-group" id="np-class-group" style="display:none"><label class="form-label">כיתה</label><select class="form-control" id="np-class"><option value="">-- בחר --</option></select></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-patient')">ביטול</button><button class="btn btn-primary" onclick="createPatient()">צור מטופל</button></div>
   </div>
@@ -662,6 +662,9 @@ async function renderPatients(){
 let patientView = 'main'; // 'main' | 'vizhnitz-classes' | 'education-institutions' | 'patients-list'
 let patientListTitle = '';
 let patientListData = [];
+let currentContextType = null; // 'clinic' | 'vizhnitz' | 'education' | 'ponivez' | null
+let currentContextInstitutionId = null;
+let currentContextClassId = null;
 
 function renderInstitutionFilter(){
   const el=document.getElementById('institution-filter');
@@ -730,19 +733,23 @@ function selectCategory(cat){
       const inst=allInstitutions.find(i=>i.id===p.institution_id);
       return inst&&inst.type==='clinic';
     });
+    currentContextType='clinic'; currentContextInstitutionId=clinicInst?clinicInst.id:null; currentContextClassId=null;
     renderInstitutionFilter();
     document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px">← חזרה</button> קליניקה`;
   } else if(cat==='vizhnitz'){
     patientView='vizhnitz-classes';
+    currentContextType='vizhnitz'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
   } else if(cat==='education'){
     patientView='education-institutions';
+    currentContextType='education'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
   } else if(cat==='ponivez'){
     patientView='patients-list';
     patientListTitle='פוניבז';
     const ponInst=allInstitutions.find(i=>i.name?.includes('פוניבז')||i.name?.includes('פונוביז')||i.name?.toLowerCase().includes('ponivez'));
     patientListData=ponInst?allPatients.filter(p=>p.institution_id===ponInst.id):[];
+    currentContextType='ponivez'; currentContextInstitutionId=ponInst?ponInst.id:null; currentContextClassId=null;
     renderInstitutionFilter();
     document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px">← חזרה</button> פוניבז`;
   }
@@ -751,6 +758,7 @@ function selectCategory(cat){
 function selectVizhnitzClass(classId, className){
   patientView='patients-list';
   patientListData=allPatients.filter(p=>p.class_id===classId);
+  currentContextClassId=classId;
   renderInstitutionFilter();
   document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="()=>{patientView=\'vizhnitz-classes\';renderInstitutionFilter();}" style="margin-left:10px">← חזרה</button> ויזניץ · ${className}`;
 }
@@ -758,11 +766,12 @@ function selectVizhnitzClass(classId, className){
 function selectEduInstitution(instId, instName){
   patientView='patients-list';
   patientListData=allPatients.filter(p=>p.institution_id===instId);
+  currentContextInstitutionId=instId;
   renderInstitutionFilter();
   document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="()=>{patientView=\'education-institutions\';renderInstitutionFilter();}" style="margin-left:10px">← חזרה</button> ${instName}`;
 }
 
-function backToMain(){ patientView='main'; selectedInstitution=null; selectedClass=null; renderInstitutionFilter(); }
+function backToMain(){ patientView='main'; selectedInstitution=null; selectedClass=null; currentContextType=null; currentContextInstitutionId=null; currentContextClassId=null; renderInstitutionFilter(); }
 
 function renderClassFilter(){ /* handled in renderInstitutionFilter now */ }
 function selectInstitution(id){ selectedInstitution=id; }
@@ -1230,6 +1239,25 @@ function populateSelects(){
 
 function openModal(id){ document.getElementById(id).style.display='flex'; populateSelects(); }
 function closeModal(id){ document.getElementById(id).style.display='none'; }
+
+function openNewPatientModal(){
+  openModal('modal-new-patient');
+  const instGroup=document.getElementById('np-institution-group');
+  const clsGroup=document.getElementById('np-class-group');
+  instGroup.style.display='none';
+  clsGroup.style.display='none';
+  document.getElementById('np-institution').value='';
+  document.getElementById('np-class').value='';
+  if(currentContextType==='clinic'||currentContextType==='ponivez'){
+    if(currentContextInstitutionId) document.getElementById('np-institution').value=currentContextInstitutionId;
+  } else if(currentContextType==='vizhnitz'){
+    clsGroup.style.display='';
+    if(currentContextClassId) document.getElementById('np-class').value=currentContextClassId;
+  } else if(currentContextType==='education'){
+    instGroup.style.display='';
+    if(currentContextInstitutionId) document.getElementById('np-institution').value=currentContextInstitutionId;
+  }
+}
 
 function toast(msg,type){
   const c=document.getElementById('toast-container');
