@@ -1682,19 +1682,18 @@ async function sendEmail(pid){
 }
 
 function makeGmailRaw(to,subject,bodyHtml){
-  const encodeB64=str=>btoa(unescape(encodeURIComponent(str)));
-  const bodyB64=encodeB64(bodyHtml);
-  const subjB64=encodeB64(subject);
+  const encB64=s=>btoa(unescape(encodeURIComponent(s)));
   const msg=[
     'MIME-Version: 1.0',
     'Content-Type: text/html; charset=UTF-8',
-    'Content-Transfer-Encoding: base64',
     `To: ${to}`,
-    `Subject: =?UTF-8?B?${subjB64}?=`,
+    `Subject: =?UTF-8?B?${encB64(subject)}?=`,
     '',
-    bodyB64
+    bodyHtml
   ].join('\r\n');
-  return btoa(msg).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const bytes=new TextEncoder().encode(msg);
+  let bin=''; bytes.forEach(b=>bin+=String.fromCharCode(b));
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
 
 async function loadEmailThread(threadId, containerId){
