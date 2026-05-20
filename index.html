@@ -2062,15 +2062,16 @@ async function uploadToCloudinary(pid, input){
     form.append('upload_preset',cloudPreset);
     form.append('folder','mivhan-hitnahagut');
     const resp=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`,{method:'POST',body:form});
-    if(!resp.ok) throw new Error('שגיאת העלאה');
     const data=await resp.json();
+    if(!resp.ok) throw new Error(data.error?.message||data.message||'שגיאת Cloudinary ('+resp.status+')');
     const url=data.secure_url;
+    if(!url) throw new Error('לא התקבל URL מ-Cloudinary');
     await sbInsert('patient_files',{patient_id:pid,name:file.name,drive_file_id:data.public_id,drive_url:url,created_at:new Date().toISOString()});
     const r=await sb('patient_files',`?patient_id=eq.${pid}&order=created_at.desc`);
     allFiles=(allFiles.filter(f=>f.patient_id!==pid)).concat(r.data||[]);
     renderPatientDocuments(pid);
     toast('הקובץ הועלה ✅','success');
-  }catch(e){ toast('שגיאה: '+e.message,'error'); }
+  }catch(e){ console.error('upload error:',e); toast('שגיאה בהעלאה: '+e.message,'error'); }
   input.value='';
 }
 
