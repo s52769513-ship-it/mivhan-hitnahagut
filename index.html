@@ -1604,9 +1604,9 @@ function loadSettings(){
 }
 
 function saveEmailSettings(){
-  const k=document.getElementById('settings-ejs-key').value.trim();
-  const s=document.getElementById('settings-ejs-service').value.trim();
-  const t=document.getElementById('settings-ejs-template').value.trim();
+  const k=(document.getElementById('settings-ejs-key').value.trim())||ejsPublicKey;
+  const s=(document.getElementById('settings-ejs-service').value.trim())||ejsServiceId;
+  const t=(document.getElementById('settings-ejs-template').value.trim())||ejsTemplateId;
   if(!k||!s||!t) return toast('נא למלא את כל שדות EmailJS','error');
   ejsPublicKey=k; ejsServiceId=s; ejsTemplateId=t;
   localStorage.setItem('ejs_key',k); localStorage.setItem('ejs_service',s); localStorage.setItem('ejs_template',t);
