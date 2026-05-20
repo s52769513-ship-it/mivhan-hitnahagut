@@ -92,6 +92,15 @@ tr:last-child td{border-bottom:none}
 .cal-day.today .cal-date{color:var(--blue)}.cal-day.other-month .cal-date{color:var(--g300)}
 .cal-apt{background:var(--blue-light);color:var(--blue);border-radius:4px;padding:2px 5px;font-size:11px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cal-apt.arrived{background:var(--green-light);color:#0F6E56}
+.day-slot{display:flex;align-items:stretch;border-bottom:1px solid var(--g100);min-height:48px}
+.day-slot-time{width:54px;min-width:54px;padding:8px 6px;font-size:12px;font-weight:700;color:var(--g500);text-align:center;border-left:2px solid var(--g100);background:var(--g50)}
+.day-slot-content{flex:1;padding:6px 10px;font-size:13px}
+.day-slot-free{cursor:pointer}.day-slot-free:hover{background:var(--blue-light)}
+.day-slot-free:hover .day-slot-add{color:var(--blue);font-weight:600}
+.day-slot-add{color:var(--g300);font-size:12px}
+.day-slot-busy .day-slot-content{background:transparent}
+.day-slot-apt{background:var(--blue-light);color:var(--blue);border-radius:6px;padding:4px 8px;margin-bottom:3px;cursor:pointer;font-size:13px}
+.day-slot-apt:hover{background:#bfdbfe}.day-slot-apt.arrived{background:var(--green-light);color:#0F6E56}
 .loading{display:flex;align-items:center;justify-content:center;padding:48px;color:var(--g400);font-size:14px;gap:10px}
 .spinner{width:20px;height:20px;border:2px solid var(--g200);border-top-color:var(--blue2);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -435,9 +444,17 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<div class="modal-backdrop" id="modal-day-view" style="display:none" onclick="closeModal('modal-day-view')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:520px">
+    <div class="modal-header"><h2 id="day-view-title">יום</h2><button class="btn btn-icon" onclick="closeModal('modal-day-view')">✕</button></div>
+    <div class="modal-body" id="day-view-body" style="max-height:70vh;overflow-y:auto;padding:0"></div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="modal-new-task" style="display:none" onclick="closeModal('modal-new-task')">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header"><h2>➕ משימה חדשה</h2><button class="btn btn-icon" onclick="closeModal('modal-new-task')">✕</button></div>
+    <div id="new-task-patient-label" style="display:none;padding:8px 16px;background:var(--blue-light);color:var(--blue2);font-size:13px;font-weight:600;border-bottom:1px solid var(--g100)"></div>
     <div class="modal-body">
       <div class="form-group"><label class="form-label">שם משימה *</label><input type="text" class="form-control" id="nt-name"></div>
       <div class="form-group"><label class="form-label">פירוט</label><textarea class="form-control" id="nt-detail" rows="3"></textarea></div>
@@ -1124,7 +1141,7 @@ function renderCalendar(gridId, titleId){
     const apts=allAppointments.filter(a=>{if(!a.start_time)return false;const ad=new Date(a.start_time);ad.setHours(0,0,0,0);return ad.getTime()===date.getTime();});
     const hebDate=getHebrewDate(date);
     const aptsHtml=apts.slice(0,2).map(a=>{const p=allPatients.find(x=>x.id===a.patient_id);return`<div class="cal-apt ${a.arrived?'arrived':''}">${fmtTime(a.start_time)} ${p?p.name:a.name||''}</div>`;}).join('');
-    html+=`<div class="cal-day ${isToday?'today':''}" onclick="openModal('modal-new-appointment')">
+    html+=`<div class="cal-day ${isToday?'today':''}" onclick="openDayView(new Date(${year},${month},${d}))">
       <div style="display:flex;justify-content:space-between;align-items:start">
         <div class="cal-date" style="font-size:13px;font-weight:700">${d}</div>
         <div style="font-size:10px;color:var(--g400);margin-top:1px">${hebDate}</div>
@@ -1145,6 +1162,42 @@ function renderDiaryCalendar(){
   const title=calDate.toLocaleDateString('he-IL',{month:'long',year:'numeric'});
   if(document.getElementById('diary-month-title')) document.getElementById('diary-month-title').textContent=title;
   renderCalendar('diary-cal','diary-month-title');
+}
+
+// === DAY VIEW ===
+let dayViewDate=null;
+function openDayView(date){
+  dayViewDate=date;
+  const title=date.toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('day-view-title').textContent=title;
+  renderDayView(date);
+  openModal('modal-day-view');
+}
+function renderDayView(date){
+  const y=date.getFullYear(),m=date.getMonth(),d=date.getDate();
+  const dayStart=new Date(y,m,d,0,0,0,0);
+  const dayEnd=new Date(y,m,d,23,59,59,999);
+  const dayApts=allAppointments.filter(a=>{if(!a.start_time)return false;const t=new Date(a.start_time);return t>=dayStart&&t<=dayEnd;});
+  let html='';
+  for(let hour=9;hour<=22;hour++){
+    const slotStart=new Date(y,m,d,hour,0);
+    const slotEnd=new Date(y,m,d,hour+1,0);
+    const slotApts=dayApts.filter(a=>{const t=new Date(a.start_time);return t>=slotStart&&t<slotEnd;});
+    const timeLabel=`${String(hour).padStart(2,'0')}:00`;
+    const isoStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}T${String(hour).padStart(2,'0')}:00`;
+    if(slotApts.length>0){
+      const aptHtml=slotApts.map(a=>{const p=allPatients.find(x=>x.id===a.patient_id);return`<div class="day-slot-apt ${a.arrived?'arrived':''}" onclick="openEditApt('${a.id}');closeModal('modal-day-view')"><span style="font-weight:600">${fmtTime(a.start_time)}</span> ${a.name||'פגישה'}${p?' — '+p.name:''}</div>`;}).join('');
+      html+=`<div class="day-slot day-slot-busy"><div class="day-slot-time">${timeLabel}</div><div class="day-slot-content">${aptHtml}</div></div>`;
+    }else{
+      html+=`<div class="day-slot day-slot-free" onclick="openNewAptAt('${isoStr}')"><div class="day-slot-time">${timeLabel}</div><div class="day-slot-content day-slot-add">+ הוסף פגישה</div></div>`;
+    }
+  }
+  document.getElementById('day-view-body').innerHTML=html;
+}
+function openNewAptAt(isoStr){
+  closeModal('modal-day-view');
+  document.getElementById('na-start').value=isoStr;
+  openModal('modal-new-appointment');
 }
 
 // === PATIENTS ===
@@ -1412,20 +1465,61 @@ async function savePersonal(id){
   toast('נשמר ✅','success'); await loadAll();
 }
 
+let patientAptView='list';
+let patientCalDate=new Date();
+
 function renderPatientAppointments(pid){
   const apts=allAppointments.filter(a=>a.patient_id===pid);
-  document.getElementById('tab-appointments').innerHTML=`
-    <div class="card">
-      <div class="card-header"><h3>פגישות</h3><button class="btn btn-primary btn-sm" onclick="openModal('modal-new-appointment')">+ פגישה</button></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>תאריך</th><th>שעה</th><th>מחיר</th><th>הגיע</th></tr></thead>
-      <tbody>${apts.length===0?'<tr><td colspan="5"><div class="empty"><p>אין פגישות</p></div></td></tr>':apts.map(a=>`<tr>
-        <td>${a.name||'פגישה'}</td>
-        <td>${a.start_time?fmtDate(a.start_time):'-'}</td>
-        <td>${a.start_time?fmtTime(a.start_time):'-'}</td>
-        <td>₪${(a.price||0).toLocaleString()}</td>
-        <td><span class="badge ${a.arrived?'badge-green':'badge-amber'}">${a.arrived?'הגיע':'לא הגיע'}</span></td>
-      </tr>`).join('')}</tbody></table></div>
+  const toggleBtns=`<div style="display:flex;gap:4px"><button class="btn btn-sm ${patientAptView==='list'?'btn-primary':'btn-secondary'}" onclick="patientAptView='list';renderPatientAppointments('${pid}')">📋 רשימה</button><button class="btn btn-sm ${patientAptView==='calendar'?'btn-primary':'btn-secondary'}" onclick="patientAptView='calendar';renderPatientAppointments('${pid}')">📅 יומן</button></div>`;
+  if(patientAptView==='calendar'){
+    document.getElementById('tab-appointments').innerHTML=`
+      <div class="card">
+        <div class="card-header"><h3>פגישות</h3><div style="display:flex;gap:6px;align-items:center">${toggleBtns}<button class="btn btn-primary btn-sm" onclick="openModal('modal-new-appointment')">+ פגישה</button></div></div>
+        ${renderPatientMiniCal(pid,apts)}
+      </div>`;
+  }else{
+    document.getElementById('tab-appointments').innerHTML=`
+      <div class="card">
+        <div class="card-header"><h3>פגישות</h3><div style="display:flex;gap:6px;align-items:center">${toggleBtns}<button class="btn btn-primary btn-sm" onclick="openModal('modal-new-appointment')">+ פגישה</button></div></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>תאריך</th><th>שעה</th><th>מחיר</th><th>הגיע</th></tr></thead>
+        <tbody>${apts.length===0?'<tr><td colspan="5"><div class="empty"><p>אין פגישות</p></div></td></tr>':apts.map(a=>`<tr style="cursor:pointer" onclick="openEditApt('${a.id}')">
+          <td>${a.name||'פגישה'}</td>
+          <td>${a.start_time?fmtDate(a.start_time):'-'}</td>
+          <td>${a.start_time?fmtTime(a.start_time):'-'}</td>
+          <td>₪${(a.price||0).toLocaleString()}</td>
+          <td><span class="badge ${a.arrived?'badge-green':'badge-amber'}">${a.arrived?'הגיע':'לא הגיע'}</span></td>
+        </tr>`).join('')}</tbody></table></div>
+      </div>`;
+  }
+}
+
+function renderPatientMiniCal(pid,apts){
+  const year=patientCalDate.getFullYear(),month=patientCalDate.getMonth();
+  const title=patientCalDate.toLocaleDateString('he-IL',{month:'long',year:'numeric'});
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const today=new Date();today.setHours(0,0,0,0);
+  let html=`<div style="padding:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <button class="btn btn-secondary btn-sm" onclick="patientCalDate=new Date(patientCalDate.getFullYear(),patientCalDate.getMonth()-1,1);renderPatientAppointments('${pid}')">→</button>
+      <strong>${title}</strong>
+      <button class="btn btn-secondary btn-sm" onclick="patientCalDate=new Date(patientCalDate.getFullYear(),patientCalDate.getMonth()+1,1);renderPatientAppointments('${pid}')">←</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center">
+      ${HEB_DAYS.map(d=>`<div style="font-size:11px;font-weight:600;color:var(--g500);padding:4px">${d}</div>`).join('')}`;
+  for(let i=0;i<firstDay;i++) html+=`<div></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const date=new Date(year,month,d);date.setHours(0,0,0,0);
+    const isToday=date.getTime()===today.getTime();
+    const dayApts=apts.filter(a=>{if(!a.start_time)return false;const ad=new Date(a.start_time);ad.setHours(0,0,0,0);return ad.getTime()===date.getTime();});
+    const hasApt=dayApts.length>0;
+    const clickFn=hasApt?`openEditApt('${dayApts[0].id}')`:'';
+    html+=`<div onclick="${clickFn}" style="padding:4px;border-radius:6px;cursor:${hasApt?'pointer':'default'};background:${isToday?'var(--blue2)':hasApt?'var(--blue-light)':'transparent'};color:${isToday?'white':hasApt?'var(--blue2)':'var(--g700)'};font-size:12px;font-weight:${hasApt?'700':'400'}">
+      ${d}${hasApt?`<div style="font-size:9px">${dayApts.length>1?dayApts.length+'×':fmtTime(dayApts[0].start_time)}</div>`:''}
     </div>`;
+  }
+  html+=`</div></div>`;
+  return html;
 }
 
 function renderPatientPayments(pid){
@@ -1572,13 +1666,27 @@ function renderPatientTasks(pid){
   const tasks=allTasks.filter(t=>t.patient_id===pid);
   document.getElementById('tab-tasks').innerHTML=`
     <div class="card">
-      <div class="card-header"><h3>משימות</h3></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>תאריך</th><th>סטטוס</th></tr></thead>
-      <tbody>${tasks.length===0?'<tr><td colspan="3"><div class="empty"><p>אין משימות</p></div></td></tr>':tasks.map(t=>`<tr>
+      <div class="card-header"><h3>משימות</h3><button class="btn btn-primary btn-sm" onclick="openNewTaskForPatient('${pid}')">+ משימה</button></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>תאריך</th><th>סטטוס</th><th></th></tr></thead>
+      <tbody>${tasks.length===0?'<tr><td colspan="4"><div class="empty"><p>אין משימות</p></div></td></tr>':tasks.map(t=>`<tr>
         <td>${t.name}</td><td>${t.due_date?fmtDateStr(t.due_date):'-'}</td>
         <td><span class="badge ${t.done?'badge-green':'badge-amber'}">${t.done?'בוצע':'ממתין'}</span></td>
+        <td><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px"></td>
       </tr>`).join('')}</tbody></table></div>
     </div>`;
+}
+
+let currentTaskPatientId=null;
+function openNewTaskForPatient(pid){
+  currentTaskPatientId=pid||null;
+  ['nt-name','nt-detail','nt-date'].forEach(id=>document.getElementById(id).value='');
+  const label=document.getElementById('new-task-patient-label');
+  if(label){
+    const p=pid?allPatients.find(x=>x.id===pid):null;
+    label.textContent=p?`מטופל: ${p.name}`:'';
+    label.style.display=p?'':'none';
+  }
+  openModal('modal-new-task');
 }
 
 function renderPatientNotes(pid){
@@ -1935,11 +2043,17 @@ function setTaskFilter(f,btn){ taskFilter=f; document.querySelectorAll('.filter-
 async function createTask(){
   const name=document.getElementById('nt-name').value.trim();
   if(!name) return toast('נא להכניס שם','error');
-  const r=await sbInsert('tasks',{name,detail:document.getElementById('nt-detail').value,due_date:document.getElementById('nt-date').value||null,done:false});
+  const body={name,detail:document.getElementById('nt-detail').value,due_date:document.getElementById('nt-date').value||null,done:false};
+  if(currentTaskPatientId) body.patient_id=currentTaskPatientId;
+  const r=await sbInsert('tasks',body);
   if(r.error) return toast('שגיאה','error');
   toast('משימה נוצרה ✅','success'); closeModal('modal-new-task');
   ['nt-name','nt-detail','nt-date'].forEach(id=>document.getElementById(id).value='');
-  await renderTasks();
+  const taskPid=currentTaskPatientId;
+  currentTaskPatientId=null;
+  await loadAll();
+  if(taskPid) renderPatientTasks(taskPid);
+  else renderTasksTable();
 }
 
 async function toggleTask(id,done){ await sbUpdate('tasks',id,{done}); const t=allTasks.find(x=>x.id===id); if(t) t.done=done; renderTasksTable(); }
