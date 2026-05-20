@@ -636,7 +636,28 @@ let currentIntTab = 'it-treatment';
 let currentQTab = 'parent';
 
 // === SUPABASE ===
+const SB_SRK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwemFvcHF6YnVsZHVxdmxocHFsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTE4OTY3NSwiZXhwIjoyMDk0NzY1Njc1fQ.SDVqnHM5f2a4HiBmSzgz0mrApEzRzeIxiPj9Nb1RKyk';
 function sbToken(){ return localStorage.getItem('sb_jwt')||SB_KEY; }
+async function sbAdmin(table,params=''){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}${params}`,{headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json'}});
+  if(!r.ok) return {data:[],error:await r.text()};
+  return {data:await r.json()};
+}
+async function sbAdminInsert(table,body){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
+  if(!r.ok) return {error:await r.text()};
+  return {data:await r.json()};
+}
+async function sbAdminUpdate(table,id,body){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
+  if(!r.ok) return {error:await r.text()};
+  return {data:await r.json()};
+}
+async function sbAdminDelete(table,id){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK}});
+  if(!r.ok) return {error:await r.text()};
+  return {data:true};
+}
 async function sb(table, params=''){
   if(!SB_URL||!SB_KEY) return {data:[],error:'לא מחובר'};
   try {
@@ -752,23 +773,23 @@ async function doRegister(){
   const data=await r.json();
   if(!data.user&&!data.id){errEl.textContent='שגיאה: '+(data.msg||data.error_description||data.error||'');return;}
   const userId=data.user?.id||data.id;
-  await sbInsert('user_profiles',{id:userId,display_name:email.split('@')[0],role:'admin'});
+  await sbAdminInsert('user_profiles',{id:userId,display_name:email.split('@')[0],role:'admin'});
   document.getElementById('login-register-hint').style.display='none';
   errEl.style.color='green'; errEl.textContent='חשבון נוצר! מתחבר...';
   setTimeout(()=>doLogin(),500);
 }
 
 async function afterLogin(user){
-  const profiles=await sb('user_profiles',`?id=eq.${user.id}&select=*`);
+  const profiles=await sbAdmin('user_profiles',`?id=eq.${user.id}&select=*`);
   let profile=(profiles.data||[])[0];
   if(!profile){
     const isAdminEmail=ADMIN_EMAILS.includes((user.email||'').toLowerCase());
     const meta=user.user_metadata||{};
     const role=isAdminEmail?'admin':(meta.role||'user');
     const displayName=meta.display_name||(user.email||'').split('@')[0];
-    const ins=await sbInsert('user_profiles',{id:user.id,display_name:displayName,role});
+    const ins=await sbAdminInsert('user_profiles',{id:user.id,display_name:displayName,role});
     if(ins.error) console.warn('profile insert failed:',ins.error);
-    const retry=await sb('user_profiles',`?id=eq.${user.id}&select=*`);
+    const retry=await sbAdmin('user_profiles',`?id=eq.${user.id}&select=*`);
     profile=(retry.data||[])[0]||{id:user.id,display_name:displayName,role};
   }
   if(!profile){document.getElementById('login-error').textContent='אין לך הרשאות למערכת. פנה למנהל.';localStorage.removeItem('sb_jwt');return;}
@@ -844,7 +865,7 @@ async function renderUserDashboard(){
 // === USER MANAGEMENT (ADMIN) ===
 async function renderUsersView(){
   const [profiles,uPats,uInsts]=await Promise.all([
-    sb('user_profiles','?select=*&order=created_at'),
+    sbAdmin('user_profiles','?select=*&order=created_at'),
     sb('user_patients','?select=*'),
     sb('user_institutions','?select=*')
   ]);
@@ -951,8 +972,8 @@ async function saveEditUser(){
   const name=document.getElementById('eu-name').value.trim();
   const role=document.getElementById('eu-role').value;
   if(!name) return toast('נא להכניס שם','error');
-  const r=await fetch(`${SB_URL}/rest/v1/user_profiles?id=eq.${editingUserId}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify({display_name:name,role})});
-  if(!r.ok) return toast('שגיאה בשמירה','error');
+  const r=await sbAdminUpdate('user_profiles',editingUserId,{display_name:name,role});
+  if(r.error) return toast('שגיאה בשמירה: '+r.error,'error');
   toast('נשמר ✅','success');
   closeModal('modal-edit-user');
   renderUsersView();
@@ -962,7 +983,7 @@ async function deleteUserProfile(){
   if(!editingUserId) return;
   if(editingUserId===currentUser?.id) return toast('לא ניתן למחוק את עצמך','error');
   if(!confirm('למחוק משתמש זה?')) return;
-  await sbDelete('user_profiles',editingUserId);
+  await sbAdminDelete('user_profiles',editingUserId);
   allUserProfiles=allUserProfiles.filter(x=>x.id!==editingUserId);
   toast('משתמש נמחק','success');
   closeModal('modal-edit-user');
@@ -989,12 +1010,8 @@ async function createUser(){
     if(!userId) return toast('משתמש קיים אך הסיסמה שגויה — שנה סיסמה או השתמש בסיסמה הנכונה','error');
   }
   if(!userId) return toast('שגיאה: '+errMsg,'error');
-  // צור פרופיל עם JWT של המשתמש (עוקף RLS)
-  const loginR=await fetch(`${SB_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
-  const loginD=await loginR.json();
-  const userJwt=loginD.access_token||sbToken();
-  const ins=await fetch(`${SB_URL}/rest/v1/user_profiles`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+userJwt,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify({id:userId,display_name:name,role})});
-  if(!ins.ok) console.warn('profile insert:', await ins.text());
+  const ins=await sbAdminInsert('user_profiles',{id:userId,display_name:name,role});
+  if(ins.error) return toast('שגיאה ביצירת פרופיל: '+ins.error,'error');
   toast('משתמש נוצר ✅','success');
   closeModal('modal-new-user');
   ['nu-name','nu-email','nu-pass'].forEach(id=>document.getElementById(id).value='');
