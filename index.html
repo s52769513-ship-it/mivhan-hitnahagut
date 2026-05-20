@@ -710,7 +710,15 @@ async function doRegister(){
 async function afterLogin(user){
   const profiles=await sb('user_profiles',`?id=eq.${user.id}&select=*`);
   const profile=(profiles.data||[])[0];
-  if(!profile){document.getElementById('login-error').textContent='אין לך הרשאות למערכת. פנה למנהל.';localStorage.removeItem('sb_jwt');return;}
+  if(!profile){
+    // Admin email with no profile yet - auto-create
+    if(ADMIN_EMAILS.includes((user.email||'').toLowerCase())){
+      await sbInsert('user_profiles',{id:user.id,display_name:(user.email||'').split('@')[0],role:'admin'});
+      const retry=await sb('user_profiles',?id=eq.&select=*);
+      profile=(retry.data||[])[0];
+    }
+    if(!profile){document.getElementById('login-error').textContent='אין לך הרשאות למערכת. פנה למנהל.';localStorage.removeItem('sb_jwt');return;}
+  }
   currentUser={id:user.id,email:user.email,role:profile.role,display_name:profile.display_name};
   isAdmin=profile.role==='admin';
   if(!isAdmin){
