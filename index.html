@@ -714,7 +714,7 @@ async function afterLogin(user){
     // Admin email with no profile yet - auto-create
     if(ADMIN_EMAILS.includes((user.email||'').toLowerCase())){
       await sbInsert('user_profiles',{id:user.id,display_name:(user.email||'').split('@')[0],role:'admin'});
-      const retry=await sb('user_profiles',?id=eq.&select=*);
+      const retry=await sb('user_profiles',`?id=eq.${user.id}&select=*`);
       profile=(retry.data||[])[0];
     }
     if(!profile){document.getElementById('login-error').textContent='אין לך הרשאות למערכת. פנה למנהל.';localStorage.removeItem('sb_jwt');return;}
