@@ -668,21 +668,22 @@ let allUserPatients = [];
 let allUserInstitutions = [];
 let editingUserId = null;
 
+const ADMIN_EMAILS=['s52769513@gmail.com','5701554@gmail.com'];
+
 async function doLogin(){
-  const email=document.getElementById('login-email').value.trim();
+  const email=document.getElementById('login-email').value.trim().toLowerCase();
   const pass=document.getElementById('login-password').value;
   const errEl=document.getElementById('login-error');
   const btn=document.getElementById('login-btn');
   if(!email||!pass){errEl.textContent='נא למלא אימייל וסיסמה';return;}
   btn.textContent='מתחבר...'; btn.disabled=true; errEl.textContent='';
+  errEl.style.color='#dc2626';
   const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
   const data=await r.json();
   btn.textContent='כניסה למערכת'; btn.disabled=false;
   if(!data.access_token){
     errEl.textContent='אימייל או סיסמה שגויים';
-    // Show register hint only if no profiles exist
-    const chk=await sb('user_profiles','?select=id&limit=1');
-    if((chk.data||[]).length===0) document.getElementById('login-register-hint').style.display='block';
+    if(ADMIN_EMAILS.includes(email)) document.getElementById('login-register-hint').style.display='block';
     return;
   }
   localStorage.setItem('sb_jwt',data.access_token);
@@ -690,16 +691,15 @@ async function doLogin(){
 }
 
 async function doRegister(){
-  const email=document.getElementById('login-email').value.trim();
+  const email=document.getElementById('login-email').value.trim().toLowerCase();
   const pass=document.getElementById('login-password').value;
   const errEl=document.getElementById('login-error');
-  if(!email||!pass){errEl.textContent='נא למלא אימייל וסיסמה';return;}
-  if(pass.length<6){errEl.textContent='סיסמה חייבת להיות לפחות 6 תווים';return;}
-  const chk=await sb('user_profiles','?select=id&limit=1');
-  if((chk.data||[]).length>0){errEl.textContent='פנה למנהל ליצירת חשבון';return;}
+  errEl.style.color='#dc2626';
+  if(!ADMIN_EMAILS.includes(email)){errEl.textContent='אין לך הרשאה ליצור חשבון. פנה למנהל.';return;}
+  if(!pass||pass.length<6){errEl.textContent='סיסמה חייבת להיות לפחות 6 תווים';return;}
   const r=await fetch(`${SB_URL}/auth/v1/signup`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
   const data=await r.json();
-  if(!data.user&&!data.id){errEl.textContent='שגיאה ביצירת חשבון: '+(data.msg||data.error||'');return;}
+  if(!data.user&&!data.id){errEl.textContent='שגיאה: '+(data.msg||data.error_description||data.error||'');return;}
   const userId=data.user?.id||data.id;
   await sbInsert('user_profiles',{id:userId,display_name:email.split('@')[0],role:'admin'});
   document.getElementById('login-register-hint').style.display='none';
@@ -911,11 +911,6 @@ async function createUser(){
 
 async function init(){
   await checkStoredSession();
-  if(!currentUser){
-    // Check if this is first time (no profiles) - show register hint
-    const chk=await sb('user_profiles','?select=id&limit=1');
-    if((chk.data||[]).length===0) document.getElementById('login-register-hint').style.display='block';
-  }
 }
 
 
