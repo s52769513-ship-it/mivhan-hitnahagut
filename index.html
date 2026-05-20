@@ -709,7 +709,7 @@ async function doRegister(){
 
 async function afterLogin(user){
   const profiles=await sb('user_profiles',`?id=eq.${user.id}&select=*`);
-  const profile=(profiles.data||[])[0];
+  let profile=(profiles.data||[])[0];
   if(!profile){
     // Admin email with no profile yet - auto-create
     if(ADMIN_EMAILS.includes((user.email||'').toLowerCase())){
