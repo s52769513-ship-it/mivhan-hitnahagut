@@ -1210,11 +1210,9 @@ function downloadQPDF(pid, qtype){
   fields.forEach(f=>{
     if(f.type==='section'){ rows+=`<div style="font-size:13px;font-weight:bold;color:#185FA5;border-bottom:2px solid #E6F1FB;padding-bottom:3px;margin:18px 0 8px">${f.label}</div>`; return; }
     if(!c[f.id]) return;
-    rows+=`<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:600;color:#64748B;margin-bottom:2px">${f.label}</div><div style="font-size:13px;white-space:pre-wrap;line-height:1.5">${c[f.id]}</div></div>`;
+    rows+=`<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:600;color:#64748B;margin-bottom:2px">${f.label}</div><div style="font-size:13px;line-height:1.5">${c[f.id]}</div></div>`;
   });
-  const wrapper=document.createElement('div');
-  wrapper.style.cssText='width:680px;padding:28px 36px;font-family:Arial,sans-serif;direction:rtl;color:#1E293B;background:white;position:fixed;top:-9999px;left:-9999px';
-  wrapper.innerHTML=`
+  const inner=`
     <div style="text-align:center;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid #E2E8F0">
       <div style="font-size:11px;color:#94A3B8;margin-bottom:2px">ב"ה</div>
       <div style="font-size:20px;font-weight:bold;margin-bottom:3px">${Q_LABELS[qtype]}</div>
@@ -1227,14 +1225,27 @@ function downloadQPDF(pid, qtype){
       </div>
     </div>
     ${rows}`;
-  document.body.appendChild(wrapper);
-  html2pdf().from(wrapper).set({
-    margin:[8,8,8,8],
-    filename:`${Q_LABELS[qtype]}-${patient?.name||'מטופל'}.pdf`,
-    image:{type:'jpeg',quality:0.98},
-    html2canvas:{scale:2,useCORS:true,logging:false},
-    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-  }).save().then(()=>document.body.removeChild(wrapper));
+  // Overlay – html2canvas requires element to be visibly rendered
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:white;z-index:99999;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px';
+  const wrapper=document.createElement('div');
+  wrapper.style.cssText='width:700px;padding:28px 36px;font-family:Arial,sans-serif;direction:rtl;color:#1E293B;background:white';
+  wrapper.innerHTML=inner;
+  overlay.appendChild(wrapper);
+  document.body.appendChild(overlay);
+  toast('מכין PDF...','');
+  setTimeout(()=>{
+    html2pdf().from(wrapper).set({
+      margin:[8,8,8,8],
+      filename:`${Q_LABELS[qtype]}-${patient?.name||'מטופל'}.pdf`,
+      image:{type:'jpeg',quality:0.98},
+      html2canvas:{scale:2,useCORS:true,logging:false},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+    }).save().then(()=>{
+      document.body.removeChild(overlay);
+      toast('PDF הורד ✅','success');
+    });
+  },150);
 }
 
 function renderGoals(pid){
