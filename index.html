@@ -511,12 +511,12 @@ let SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 let allPatients=[], allAppointments=[], allTasks=[], allPayments=[], allInstitutions=[], allClasses=[];
 let allNotes=[], allObservations=[], allGoals=[], allQuestionnaires=[];
 let allFiles=[], allEmails=[];
-let ejsPublicKey=localStorage.getItem('ejs_key')||'';
-let ejsServiceId=localStorage.getItem('ejs_service')||'';
-let ejsTemplateId=localStorage.getItem('ejs_template')||'';
+let ejsPublicKey=localStorage.getItem('ejs_key')||'M0QHmDxKQG3XJgnTQ';
+let ejsServiceId=localStorage.getItem('ejs_service')||'service_dh62bba';
+let ejsTemplateId=localStorage.getItem('ejs_template')||'template_72ogmc7';
 let cloudName=localStorage.getItem('cloud_name')||'';
 let cloudPreset=localStorage.getItem('cloud_preset')||'';
-if(ejsPublicKey) emailjs.init(ejsPublicKey);
+emailjs.init(ejsPublicKey);
 let calDate = new Date();
 let taskFilter = 'all';
 let currentPatientId = null;
