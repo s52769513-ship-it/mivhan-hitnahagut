@@ -567,6 +567,19 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<div class="modal-backdrop" id="modal-new-user" style="display:none" onclick="closeModal('modal-new-user')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><h2>➕ משתמש חדש</h2><button class="btn btn-icon" onclick="closeModal('modal-new-user')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">שם תצוגה *</label><input type="text" class="form-control" id="nu-name" placeholder="ישראל ישראלי"></div>
+      <div class="form-group"><label class="form-label">אימייל *</label><input type="email" class="form-control" id="nu-email" dir="ltr" placeholder="email@example.com"></div>
+      <div class="form-group"><label class="form-label">סיסמה *</label><input type="password" class="form-control" id="nu-pass" placeholder="לפחות 6 תווים"></div>
+      <div class="form-group"><label class="form-label">תפקיד</label><select class="form-control" id="nu-role"><option value="user">משתמש</option><option value="admin">מנהל</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-user')">ביטול</button><button class="btn btn-primary" onclick="createUser()">צור משתמש</button></div>
+  </div>
+</div>
+
 <div class="toast-container" id="toast-container"></div>
 
 <script>
