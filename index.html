@@ -442,7 +442,6 @@ tr:last-child td{border-bottom:none}
     <div class="modal-header"><h2>➕ מוסד חדש</h2><button class="btn btn-icon" onclick="closeModal('modal-new-institution')">✕</button></div>
     <div class="modal-body">
       <div class="form-group"><label class="form-label">שם מוסד *</label><input type="text" class="form-control" id="ni-name"></div>
-      <div class="form-group"><label class="form-label">סוג</label><select class="form-control" id="ni-type"><option value="clinic">קליניקה</option><option value="education">חינוך</option><option value="other">אחר</option></select></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-institution')">ביטול</button><button class="btn btn-primary" onclick="createInstitution()">צור מוסד</button></div>
   </div>
@@ -1198,7 +1197,7 @@ async function deleteGoal(id,pid){ if(!confirm('למחוק?')) return; await sbD
 async function createInstitution(){
   const name=document.getElementById('ni-name').value.trim();
   if(!name) return toast('נא להכניס שם','error');
-  const r=await sbInsert('institutions',{name,type:document.getElementById('ni-type').value});
+  const r=await sbInsert('institutions',{name,type:'education'});
   if(r.error) return toast('שגיאה','error');
   toast('מוסד נוצר ✅','success'); closeModal('modal-new-institution');
   document.getElementById('ni-name').value='';
