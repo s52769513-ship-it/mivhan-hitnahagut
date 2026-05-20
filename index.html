@@ -582,7 +582,7 @@ let ejsServiceId=localStorage.getItem('ejs_service')||'service_dh62bba';
 let ejsTemplateId=localStorage.getItem('ejs_template')||'template_72ogmc7';
 let cloudName=localStorage.getItem('cloud_name')||'';
 let cloudPreset=localStorage.getItem('cloud_preset')||'';
-emailjs.init(ejsPublicKey);
+try{ emailjs.init(ejsPublicKey); }catch(e){ console.warn('EmailJS not loaded:', e); }
 let calDate = new Date();
 let taskFilter = 'all';
 let currentPatientId = null;
@@ -678,16 +678,21 @@ async function doLogin(){
   if(!email||!pass){errEl.textContent='נא למלא אימייל וסיסמה';return;}
   btn.textContent='מתחבר...'; btn.disabled=true; errEl.textContent='';
   errEl.style.color='#dc2626';
-  const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
-  const data=await r.json();
-  btn.textContent='כניסה למערכת'; btn.disabled=false;
-  if(!data.access_token){
-    errEl.textContent='אימייל או סיסמה שגויים';
-    if(ADMIN_EMAILS.includes(email)) document.getElementById('login-register-hint').style.display='block';
-    return;
+  try{
+    const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const data=await r.json();
+    btn.textContent='כניסה למערכת'; btn.disabled=false;
+    if(!data.access_token){
+      errEl.textContent='אימייל או סיסמה שגויים';
+      if((ADMIN_EMAILS||[]).includes(email)) document.getElementById('login-register-hint').style.display='block';
+      return;
+    }
+    localStorage.setItem('sb_jwt',data.access_token);
+    await afterLogin(data.user||{id:data.user_id,email});
+  }catch(e){
+    btn.textContent='כניסה למערכת'; btn.disabled=false;
+    errEl.textContent='שגיאת התחברות: '+e.message;
   }
-  localStorage.setItem('sb_jwt',data.access_token);
-  await afterLogin(data.user||{id:data.user_id,email});
 }
 
 async function doRegister(){
