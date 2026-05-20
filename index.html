@@ -420,6 +420,45 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<div class="modal-backdrop" id="modal-edit-appointment" style="display:none" onclick="closeModal('modal-edit-appointment')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><h2>✏️ עריכת פגישה</h2><button class="btn btn-icon" onclick="closeModal('modal-edit-appointment')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">שם פגישה</label><input type="text" class="form-control" id="ea-name"></div>
+      <div class="form-group"><label class="form-label">מטופל</label><select class="form-control" id="ea-patient"><option value="">-- בחר מטופל --</option></select></div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">תחילת פגישה</label><input type="datetime-local" class="form-control" id="ea-start" dir="ltr"></div>
+        <div class="form-group"><label class="form-label">סיום פגישה</label><input type="datetime-local" class="form-control" id="ea-end" dir="ltr"></div>
+      </div>
+      <div class="form-group"><label class="form-label">מחיר (₪)</label><input type="number" class="form-control" id="ea-price" dir="ltr"></div>
+      <div class="form-group" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="ea-arrived" style="width:16px;height:16px"><label class="form-label" style="margin:0;cursor:pointer" for="ea-arrived">הגיע לפגישה</label></div>
+      <div class="form-group"><label class="form-label">תיאור</label><textarea class="form-control" id="ea-desc" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="deleteAptFromModal()">🗑️ מחק פגישה</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-edit-appointment')">ביטול</button>
+      <button class="btn btn-primary" onclick="saveEditApt()">שמור שינויים</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-edit-task" style="display:none" onclick="closeModal('modal-edit-task')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><h2>✏️ עריכת משימה</h2><button class="btn btn-icon" onclick="closeModal('modal-edit-task')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">שם משימה *</label><input type="text" class="form-control" id="et-name"></div>
+      <div class="form-group"><label class="form-label">פירוט</label><textarea class="form-control" id="et-detail" rows="3"></textarea></div>
+      <div class="form-group"><label class="form-label">תאריך יעד</label><input type="date" class="form-control" id="et-date" dir="ltr"></div>
+      <div class="form-group" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="et-done" style="width:16px;height:16px"><label class="form-label" style="margin:0;cursor:pointer" for="et-done">בוצע</label></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="deleteTaskFromModal()">🗑️ מחק משימה</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-edit-task')">ביטול</button>
+      <button class="btn btn-primary" onclick="saveEditTask()">שמור שינויים</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="modal-new-payment" style="display:none" onclick="closeModal('modal-new-payment')">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header"><h2>➕ תשלום חדש</h2><button class="btn btn-icon" onclick="closeModal('modal-new-payment')">✕</button></div>
@@ -633,9 +672,9 @@ async function renderDashboard(){
     <div class="stat-card"><div class="stat-label">✅ תקבולים שבוצעו</div><div class="stat-value green">₪${received.toLocaleString()}</div></div>
     <div class="stat-card"><div class="stat-label">⚠️ יתרת חוב</div><div class="stat-value red">₪${debt.toLocaleString()}</div></div>`;
   const aptEl=document.getElementById('today-apts');
-  aptEl.innerHTML=todayApts.length===0?'<div class="empty">📭<p>אין פגישות להיום</p></div>':todayApts.map(a=>{const p=allPatients.find(x=>x.id===a.patient_id);const t=a.start_time?fmtTime(a.start_time):'';return`<div style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:14px;font-weight:600">${a.name||'פגישה'}</div><div style="font-size:12px;color:var(--g500)">${p?p.name:''} ${t?'· '+t:''}</div></div><span class="badge ${a.arrived?'badge-green':'badge-amber'}">${a.arrived?'הגיע':'ממתין'}</span></div>`;}).join('');
+  aptEl.innerHTML=todayApts.length===0?'<div class="empty">📭<p>אין פגישות להיום</p></div>':todayApts.map(a=>{const p=allPatients.find(x=>x.id===a.patient_id);const t=a.start_time?fmtTime(a.start_time):'';return`<div onclick="openEditApt('${a.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><div><div style="font-size:14px;font-weight:600">${a.name||'פגישה'}</div><div style="font-size:12px;color:var(--g500)">${p?p.name:''} ${t?'· '+t:''}</div></div><div style="display:flex;align-items:center;gap:8px"><span class="badge ${a.arrived?'badge-green':'badge-amber'}">${a.arrived?'הגיע':'ממתין'}</span><span style="font-size:12px;color:var(--g400)">✏️</span></div></div>`;}).join('');
   const taskEl=document.getElementById('today-tasks');
-  taskEl.innerHTML=todayTasks.length===0?'<div class="empty">✅<p>אין משימות להיום</p></div>':todayTasks.map(t=>`<div style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px"><span style="font-size:14px;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span></div>`).join('');
+  taskEl.innerHTML=todayTasks.length===0?'<div class="empty">✅<p>אין משימות להיום</p></div>':todayTasks.map(t=>`<div style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px;transition:background .1s" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0" onclick="event.stopPropagation()"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span><button onclick="openEditTask('${t.id}')" class="btn btn-secondary btn-sm" style="flex-shrink:0">✏️</button></div>`).join('');
   renderCalendar('calendar-grid','cal-month-title');
 }
 
@@ -1474,6 +1513,69 @@ async function createTask(){
 async function toggleTask(id,done){ await sbUpdate('tasks',id,{done}); const t=allTasks.find(x=>x.id===id); if(t) t.done=done; renderTasksTable(); }
 async function deleteTask(id){ if(!confirm('למחוק?')) return; await sbDelete('tasks',id); allTasks=allTasks.filter(t=>t.id!==id); renderTasksTable(); }
 
+// === EDIT APPOINTMENT MODAL ===
+let editAptId=null;
+function openEditApt(id){
+  const a=allAppointments.find(x=>x.id===id); if(!a) return;
+  editAptId=id;
+  document.getElementById('ea-name').value=a.name||'';
+  document.getElementById('ea-start').value=a.start_time?a.start_time.slice(0,16):'';
+  document.getElementById('ea-end').value=a.end_time?a.end_time.slice(0,16):'';
+  document.getElementById('ea-price').value=a.price||'';
+  document.getElementById('ea-arrived').checked=a.arrived||false;
+  document.getElementById('ea-desc').value=a.description||'';
+  openModal('modal-edit-appointment');
+  document.getElementById('ea-patient').value=a.patient_id||'';
+}
+async function saveEditApt(){
+  if(!editAptId) return;
+  const body={name:document.getElementById('ea-name').value,patient_id:document.getElementById('ea-patient').value||null,start_time:document.getElementById('ea-start').value||null,end_time:document.getElementById('ea-end').value||null,price:parseFloat(document.getElementById('ea-price').value)||0,arrived:document.getElementById('ea-arrived').checked,description:document.getElementById('ea-desc').value};
+  const r=await sbUpdate('appointments',editAptId,body);
+  if(r.error) return toast('שגיאה: '+r.error,'error');
+  toast('פגישה עודכנה ✅','success'); closeModal('modal-edit-appointment');
+  await loadAll(); renderDashboard();
+  if(currentPatientId) renderPatientAppointments(currentPatientId);
+  renderCalendar('calendar-grid','cal-month-title');
+}
+async function deleteAptFromModal(){
+  if(!editAptId) return;
+  if(!confirm('למחוק פגישה זו?')) return;
+  await sbDelete('appointments',editAptId);
+  allAppointments=allAppointments.filter(a=>a.id!==editAptId);
+  toast('פגישה נמחקה','success'); closeModal('modal-edit-appointment');
+  renderDashboard();
+  if(currentPatientId) renderPatientAppointments(currentPatientId);
+  renderCalendar('calendar-grid','cal-month-title');
+}
+
+// === EDIT TASK MODAL ===
+let editTaskId=null;
+function openEditTask(id){
+  const t=allTasks.find(x=>x.id===id); if(!t) return;
+  editTaskId=id;
+  document.getElementById('et-name').value=t.name||'';
+  document.getElementById('et-detail').value=t.detail||'';
+  document.getElementById('et-date').value=t.due_date?t.due_date.slice(0,10):'';
+  document.getElementById('et-done').checked=t.done||false;
+  openModal('modal-edit-task');
+}
+async function saveEditTask(){
+  if(!editTaskId) return;
+  const body={name:document.getElementById('et-name').value,detail:document.getElementById('et-detail').value,due_date:document.getElementById('et-date').value||null,done:document.getElementById('et-done').checked};
+  const r=await sbUpdate('tasks',editTaskId,body);
+  if(r.error) return toast('שגיאה: '+r.error,'error');
+  toast('משימה עודכנה ✅','success'); closeModal('modal-edit-task');
+  await loadAll(); renderDashboard(); renderTasksTable();
+}
+async function deleteTaskFromModal(){
+  if(!editTaskId) return;
+  if(!confirm('למחוק משימה זו?')) return;
+  await sbDelete('tasks',editTaskId);
+  allTasks=allTasks.filter(t=>t.id!==editTaskId);
+  toast('משימה נמחקה','success'); closeModal('modal-edit-task');
+  renderDashboard(); renderTasksTable();
+}
+
 // === FINANCES ===
 async function renderFinances(){
   await loadAll();
@@ -1680,7 +1782,7 @@ async function uploadToCloudinary(pid, input){
 function populateSelects(){
   const pSels=['np-institution','na-patient','nc-institution'];
   const instSels=['np-institution','nc-institution'];
-  const patSels=['na-patient'];
+  const patSels=['na-patient','ea-patient'];
   instSels.forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='<option value="">-- בחר --</option>'+allInstitutions.map(i=>`<option value="${i.id}">${i.name}</option>`).join('');}});
   patSels.forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='<option value="">-- בחר מטופל --</option>'+allPatients.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');}});
   const npCls=document.getElementById('np-class');
