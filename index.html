@@ -760,7 +760,7 @@ function selectVizhnitzClass(classId, className){
   patientListData=allPatients.filter(p=>p.class_id===classId);
   currentContextClassId=classId;
   renderInstitutionFilter();
-  document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="()=>{patientView=\'vizhnitz-classes\';renderInstitutionFilter();}" style="margin-left:10px">← חזרה</button> ויזניץ · ${className}`;
+  document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToVizhnitz()" style="margin-left:10px">← חזרה</button> ויזניץ · ${className}`;
 }
 
 function selectEduInstitution(instId, instName){
@@ -768,10 +768,12 @@ function selectEduInstitution(instId, instName){
   patientListData=allPatients.filter(p=>p.institution_id===instId);
   currentContextInstitutionId=instId;
   renderInstitutionFilter();
-  document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="()=>{patientView=\'education-institutions\';renderInstitutionFilter();}" style="margin-left:10px">← חזרה</button> ${instName}`;
+  document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToEducation()" style="margin-left:10px">← חזרה</button> ${instName}`;
 }
 
 function backToMain(){ patientView='main'; selectedInstitution=null; selectedClass=null; currentContextType=null; currentContextInstitutionId=null; currentContextClassId=null; renderInstitutionFilter(); }
+function backToVizhnitz(){ patientView='vizhnitz-classes'; currentContextClassId=null; renderInstitutionFilter(); }
+function backToEducation(){ patientView='education-institutions'; currentContextInstitutionId=null; renderInstitutionFilter(); }
 
 function renderClassFilter(){ /* handled in renderInstitutionFilter now */ }
 function selectInstitution(id){ selectedInstitution=id; }
