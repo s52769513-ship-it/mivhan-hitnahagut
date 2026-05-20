@@ -383,8 +383,9 @@ tr:last-child td{border-bottom:none}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header"><h2>➕ תשלום חדש</h2><button class="btn btn-icon" onclick="closeModal('modal-new-payment')">✕</button></div>
     <div class="modal-body">
+      <div id="npy-balance-banner" style="display:none;background:var(--blue-light);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;gap:24px;font-size:14px"></div>
       <div class="form-group"><label class="form-label">סכום (₪)</label><input type="number" class="form-control" id="npy-amount" dir="ltr"></div>
-      <div class="form-group"><label class="form-label">אמצעי תשלום</label><select class="form-control" id="npy-method"><option value="">-- בחר --</option><option>מזומן</option><option>כרטיס אשראי</option><option>העברה בנקאית</option><option>ביט</option><option>פייבוקס</option></select></div>
+      <div class="form-group"><label class="form-label">אמצעי תשלום</label><select class="form-control" id="npy-method"><option value="">-- בחר --</option><option>מזומן</option><option>כרטיס אשראי</option><option>העברה בנקאית</option><option>ביט</option><option>פייבוקס</option><option>אחר</option></select></div>
       <div class="form-group"><label class="form-label">הערות</label><input type="text" class="form-control" id="npy-notes"></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-payment')">ביטול</button><button class="btn btn-primary" onclick="createPayment()">הוסף תשלום</button></div>
@@ -434,6 +435,14 @@ tr:last-child td{border-bottom:none}
       <div class="form-group"><label class="form-label">תגובות</label><textarea class="form-control" id="ng-resp" rows="2"></textarea></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-goal')">ביטול</button><button class="btn btn-primary" onclick="createGoal()">צור מטרה</button></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-questionnaire" style="display:none" onclick="closeModal('modal-questionnaire')">
+  <div class="modal" style="max-width:600px" onclick="event.stopPropagation()">
+    <div class="modal-header"><h2 id="q-modal-title">📋 שאלון</h2><button class="btn btn-icon" onclick="closeModal('modal-questionnaire')">✕</button></div>
+    <div class="modal-body" id="q-modal-body"></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-questionnaire')">ביטול</button><button class="btn btn-primary" onclick="saveQuestionnaire()">💾 שמור</button></div>
   </div>
 </div>
 
@@ -872,35 +881,57 @@ function showIntTab(id){
 }
 
 function renderPersonalTab(p){
-  const inst=allInstitutions.find(i=>i.id===p.institution_id);
-  const cls=allClasses.find(c=>c.id===p.class_id);
   const pct=p.debt>0?Math.min(100,Math.round((p.paid/p.debt)*100)):0;
+  const remaining=Math.max(0,(p.debt||0)-(p.paid||0));
   document.getElementById('tab-personal').innerHTML=`
     <div class="card" style="margin-bottom:16px">
       <div class="card-header"><h3>פרטים אישיים</h3><button class="btn btn-primary btn-sm" onclick="savePersonal('${p.id}')">💾 שמור</button></div>
       <div class="card-body">
-        <div class="detail-row"><div class="detail-label">שם מלא</div><div class="detail-value"><input type="text" id="pf-name" value="${p.name||''}"></div></div>
-        <div class="detail-row"><div class="detail-label">ת.ז.</div><div class="detail-value"><input type="text" id="pf-id" value="${p.identity_number||''}" dir="ltr"></div></div>
-        <div class="detail-row"><div class="detail-label">טלפון</div><div class="detail-value"><input type="text" id="pf-phone" value="${p.phone||''}" dir="ltr"></div></div>
-        <div class="detail-row"><div class="detail-label">כתובת</div><div class="detail-value"><input type="text" id="pf-address" value="${p.address||''}"></div></div>
-        <div class="detail-row"><div class="detail-label">הורים</div><div class="detail-value"><input type="text" id="pf-parents" value="${p.parents||''}"></div></div>
-        <div class="detail-row"><div class="detail-label">מוסד</div><div class="detail-value"><select id="pf-inst">${allInstitutions.map(i=>`<option value="${i.id}" ${i.id===p.institution_id?'selected':''}>${i.name}</option>`).join('')}</select></div></div>
-        <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${allClasses.map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
-        <div class="detail-row"><div class="detail-label">סכום שחייב</div><div class="detail-value"><input type="number" id="pf-debt" value="${p.debt||0}" dir="ltr"></div></div>
-        <div class="detail-row"><div class="detail-label">שולם</div><div class="detail-value"><input type="number" id="pf-paid" value="${p.paid||0}" dir="ltr"></div></div>
-        <div class="detail-row"><div class="detail-label">יתרה</div><div class="detail-value"><input type="number" id="pf-remaining" value="${p.remaining||0}" dir="ltr"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
+          <div class="detail-row"><div class="detail-label">שם מלא</div><div class="detail-value"><input type="text" id="pf-name" value="${p.name||''}"></div></div>
+          <div class="detail-row"><div class="detail-label">ת.ז.</div><div class="detail-value"><input type="text" id="pf-id" value="${p.identity_number||''}" dir="ltr"></div></div>
+          <div class="detail-row"><div class="detail-label">טלפון</div><div class="detail-value"><input type="text" id="pf-phone" value="${p.phone||''}" dir="ltr"></div></div>
+          <div class="detail-row"><div class="detail-label">כתובת</div><div class="detail-value"><input type="text" id="pf-address" value="${p.address||''}"></div></div>
+          <div class="detail-row" style="grid-column:1/-1"><div class="detail-label">הורים / איש קשר</div><div class="detail-value"><input type="text" id="pf-parents" value="${p.parents||''}"></div></div>
+          <div class="detail-row"><div class="detail-label">מוסד</div><div class="detail-value"><select id="pf-inst"><option value="">-- ללא --</option>${allInstitutions.map(i=>`<option value="${i.id}" ${i.id===p.institution_id?'selected':''}>${i.name}</option>`).join('')}</select></div></div>
+          <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${allClasses.map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
+        </div>
       </div>
     </div>
-    <div class="card">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>💰 כספים</h3></div>
       <div class="card-body">
-        <div style="font-size:13px;color:var(--g500);margin-bottom:6px">התקדמות תשלום: ${pct}%</div>
-        <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
+          <div class="detail-row"><div class="detail-label">סכום שחייב</div><div class="detail-value"><input type="number" id="pf-debt" value="${p.debt||0}" dir="ltr" oninput="updateRemainingDisplay()"></div></div>
+          <div class="detail-row"><div class="detail-label">שולם</div><div class="detail-value"><input type="number" id="pf-paid" value="${p.paid||0}" dir="ltr" oninput="updateRemainingDisplay()"></div></div>
+          <div class="detail-row" style="grid-column:1/-1">
+            <div class="detail-label">יתרה לתשלום</div>
+            <div class="detail-value">
+              <span id="pf-remaining-display" style="font-size:18px;font-weight:700;color:${remaining>0?'var(--red)':'var(--green)'}">₪${remaining.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <div style="font-size:12px;color:var(--g500);margin-bottom:4px">התקדמות תשלום: ${pct}%</div>
+          <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+        </div>
       </div>
     </div>`;
 }
 
+function updateRemainingDisplay(){
+  const debt=parseFloat(document.getElementById('pf-debt')?.value)||0;
+  const paid=parseFloat(document.getElementById('pf-paid')?.value)||0;
+  const rem=Math.max(0,debt-paid);
+  const el=document.getElementById('pf-remaining-display');
+  if(el){ el.textContent='₪'+rem.toLocaleString(); el.style.color=rem>0?'var(--red)':'var(--green)'; }
+}
+
 async function savePersonal(id){
-  const body={name:document.getElementById('pf-name').value,identity_number:document.getElementById('pf-id').value,phone:document.getElementById('pf-phone').value,address:document.getElementById('pf-address').value,parents:document.getElementById('pf-parents').value,institution_id:document.getElementById('pf-inst').value||null,class_id:document.getElementById('pf-class').value||null,debt:parseFloat(document.getElementById('pf-debt').value)||0,paid:parseFloat(document.getElementById('pf-paid').value)||0,remaining:parseFloat(document.getElementById('pf-remaining').value)||0};
+  const debt=parseFloat(document.getElementById('pf-debt').value)||0;
+  const paid=parseFloat(document.getElementById('pf-paid').value)||0;
+  const remaining=Math.max(0,debt-paid);
+  const body={name:document.getElementById('pf-name').value,identity_number:document.getElementById('pf-id').value,phone:document.getElementById('pf-phone').value,address:document.getElementById('pf-address').value,parents:document.getElementById('pf-parents').value,institution_id:document.getElementById('pf-inst').value||null,class_id:document.getElementById('pf-class').value||null,debt,paid,remaining};
   const r=await sbUpdate('patients',id,body);
   if(r.error) return toast('שגיאה','error');
   toast('נשמר ✅','success'); await loadAll();
@@ -1002,26 +1033,121 @@ function renderObservations(pid){
     </div>`).join('')}`;
 }
 
+const Q_LABELS={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון פונקציונלי','fobs':'שאלון פובס'};
+const Q_FIELDS={
+  parent:[
+    {id:'behavior_desc',label:'תיאור ההתנהגות הבעייתית',type:'textarea'},
+    {id:'when_occurs',label:'מתי / באיזה מצב זה קורה',type:'textarea'},
+    {id:'triggers',label:'טריגרים ידועים',type:'textarea'},
+    {id:'antecedent',label:'A – מה קדם להתנהגות',type:'textarea'},
+    {id:'behavior',label:'B – תיאור ההתנהגות',type:'textarea'},
+    {id:'consequence',label:'C – מה קורה אחרי',type:'textarea'},
+    {id:'frequency',label:'תדירות (פעמים ביום/שבוע)',type:'text'},
+    {id:'intensity',label:'עוצמה (1-5)',type:'select',options:['1','2','3','4','5']},
+    {id:'what_helps',label:'מה עוזר / מה עובד',type:'textarea'},
+    {id:'notes',label:'הערות נוספות',type:'textarea'}
+  ],
+  staff:[
+    {id:'reporter_name',label:'שם המדווח',type:'text'},
+    {id:'reporter_role',label:'תפקיד',type:'text'},
+    {id:'context',label:'הקשר / מצב',type:'textarea'},
+    {id:'behavior_desc',label:'תיאור ההתנהגות',type:'textarea'},
+    {id:'frequency',label:'תדירות',type:'text'},
+    {id:'duration',label:'משך ממוצע',type:'text'},
+    {id:'env_reaction',label:'תגובת הסביבה',type:'textarea'},
+    {id:'strategies_tried',label:'אסטרטגיות שנוסו',type:'textarea'},
+    {id:'notes',label:'הערות',type:'textarea'}
+  ],
+  functional:[
+    {id:'target_behavior',label:'התנהגות מטרה',type:'textarea'},
+    {id:'frequency',label:'תדירות',type:'text'},
+    {id:'intensity',label:'עוצמה (1-5)',type:'select',options:['1','2','3','4','5']},
+    {id:'antecedent',label:'A – נסיבות קודמות',type:'textarea'},
+    {id:'behavior',label:'B – תיאור ההתנהגות',type:'textarea'},
+    {id:'consequence',label:'C – תוצאה',type:'textarea'},
+    {id:'function',label:'פונקציה משוערת',type:'select',options:['תשומת לב','בריחה / הימנעות','חושי','קבלת פריט/פעילות','אחר']},
+    {id:'hypothesis',label:'השערה',type:'textarea'},
+    {id:'recommendations',label:'המלצות',type:'textarea'}
+  ],
+  fobs:[
+    {id:'obs_date',label:'תאריך תצפית',type:'date'},
+    {id:'location',label:'מיקום',type:'text'},
+    {id:'activity',label:'פעילות',type:'text'},
+    {id:'people_present',label:'אנשים נוכחים',type:'text'},
+    {id:'antecedent',label:'A – נסיבות',type:'textarea'},
+    {id:'behavior',label:'B – התנהגות',type:'textarea'},
+    {id:'consequence',label:'C – תוצאה',type:'textarea'},
+    {id:'function',label:'פונקציה משוערת',type:'select',options:['תשומת לב','בריחה / הימנעות','חושי','קבלת פריט/פעילות','אחר']},
+    {id:'recommendations',label:'המלצות',type:'textarea'}
+  ]
+};
+
+let currentQPatientId=null, currentQType=null, currentQId=null;
+
 function renderQuestionnaires(pid){
   const qs=allQuestionnaires.filter(q=>q.patient_id===pid);
-  const types=['parent','staff','functional','fobs'];
-  const typeLabels={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון פונקציונלי','fobs':'שאלון פובס'};
   document.getElementById('dt-questionnaires').innerHTML=`
     <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
-      ${types.map(t=>`<button class="btn btn-secondary btn-sm" onclick="addQuestionnaire('${pid}','${t}')">+ ${typeLabels[t]}</button>`).join('')}
+      ${Object.keys(Q_LABELS).map(t=>`<button class="btn btn-secondary btn-sm" onclick="openQuestionnaire('${pid}','${t}',null)">+ ${Q_LABELS[t]}</button>`).join('')}
     </div>
     ${qs.length===0?'<div class="empty">📋<p>אין שאלונים</p></div>':qs.map(q=>`
     <div class="card" style="margin-bottom:10px">
-      <div class="card-header"><h3>${q.title||typeLabels[q.q_type]||'שאלון'}</h3><span class="badge badge-teal">${typeLabels[q.q_type]||q.q_type}</span></div>
-      <div class="card-body" style="font-size:14px;white-space:pre-wrap">${JSON.stringify(q.content||{},null,2)}</div>
+      <div class="card-header">
+        <h3>${Q_LABELS[q.q_type]||q.q_type}</h3>
+        <div style="display:flex;gap:8px;align-items:center">
+          ${q.content?.obs_date?`<span style="font-size:12px;color:var(--g400)">${fmtDate(q.content.obs_date)}</span>`:''}
+          <button class="btn btn-secondary btn-sm" onclick="openQuestionnaire('${pid}','${q.q_type}','${q.id}')">✏️ ערוך</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteQuestionnaire('${q.id}','${pid}')">🗑️</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          ${(Q_FIELDS[q.q_type]||[]).filter(f=>(q.content||{})[f.id]).map(f=>`
+            <div style="grid-column:${f.type==='textarea'?'1/-1':'auto'}">
+              <div style="font-size:11px;font-weight:600;color:var(--g500);margin-bottom:2px">${f.label}</div>
+              <div style="font-size:14px;color:var(--g800)">${(q.content||{})[f.id]||'-'}</div>
+            </div>`).join('')}
+        </div>
+      </div>
     </div>`).join('')}`;
 }
 
-async function addQuestionnaire(pid, qtype){
-  const typeLabels={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון פונקציונלי','fobs':'שאלון פובס'};
-  const r=await sbInsert('questionnaires',{patient_id:pid,q_type:qtype,title:typeLabels[qtype],content:{}});
+function openQuestionnaire(pid, qtype, qid){
+  currentQPatientId=pid; currentQType=qtype; currentQId=qid;
+  const existing=qid?allQuestionnaires.find(q=>q.id===qid):null;
+  const content=existing?.content||{};
+  document.getElementById('q-modal-title').textContent=(qid?'✏️ ערוך ':'➕ ') + Q_LABELS[qtype];
+  document.getElementById('q-modal-body').innerHTML=(Q_FIELDS[qtype]||[]).map(f=>{
+    if(f.type==='textarea') return `<div class="form-group"><label class="form-label">${f.label}</label><textarea class="form-control" id="qf-${f.id}" rows="2">${content[f.id]||''}</textarea></div>`;
+    if(f.type==='select') return `<div class="form-group"><label class="form-label">${f.label}</label><select class="form-control" id="qf-${f.id}"><option value="">-- בחר --</option>${f.options.map(o=>`<option value="${o}" ${content[f.id]===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
+    if(f.type==='date') return `<div class="form-group"><label class="form-label">${f.label}</label><input type="date" class="form-control" id="qf-${f.id}" value="${content[f.id]||''}"></div>`;
+    return `<div class="form-group"><label class="form-label">${f.label}</label><input type="text" class="form-control" id="qf-${f.id}" value="${content[f.id]||''}"></div>`;
+  }).join('');
+  openModal('modal-questionnaire');
+}
+
+async function saveQuestionnaire(){
+  const content={};
+  (Q_FIELDS[currentQType]||[]).forEach(f=>{
+    const el=document.getElementById('qf-'+f.id);
+    if(el&&el.value.trim()) content[f.id]=el.value.trim();
+  });
+  let r;
+  if(currentQId){
+    r=await sbUpdate('questionnaires',currentQId,{content});
+  } else {
+    r=await sbInsert('questionnaires',{patient_id:currentQPatientId,q_type:currentQType,title:Q_LABELS[currentQType],content});
+  }
   if(r.error) return toast('שגיאה','error');
-  toast('שאלון נוצר ✅','success'); await loadAll(); renderQuestionnaires(pid);
+  toast('שאלון נשמר ✅','success');
+  closeModal('modal-questionnaire');
+  await loadAll(); renderQuestionnaires(currentQPatientId);
+}
+
+async function deleteQuestionnaire(qid,pid){
+  if(!confirm('למחוק שאלון זה?')) return;
+  await sbDelete('questionnaires',qid);
+  await loadAll(); renderQuestionnaires(pid);
 }
 
 function renderGoals(pid){
@@ -1141,7 +1267,20 @@ async function renderFinances(){
 }
 
 // === PAYMENTS ===
-function openPayment(pid){ currentPayPatientId=pid; openModal('modal-new-payment'); }
+function openPayment(pid){
+  currentPayPatientId=pid;
+  openModal('modal-new-payment');
+  const patient=allPatients.find(p=>p.id===pid);
+  const banner=document.getElementById('npy-balance-banner');
+  if(patient&&banner){
+    const remaining=Math.max(0,(patient.debt||0)-(patient.paid||0));
+    banner.style.display='flex';
+    banner.innerHTML=`
+      <span>💰 חוב: <strong>₪${(patient.debt||0).toLocaleString()}</strong></span>
+      <span>✅ שולם: <strong>₪${(patient.paid||0).toLocaleString()}</strong></span>
+      <span style="color:${remaining>0?'var(--red)':'var(--green)'}">יתרה: <strong>₪${remaining.toLocaleString()}</strong></span>`;
+  }
+}
 async function createPayment(){
   const amount=parseFloat(document.getElementById('npy-amount').value)||0;
   if(!amount) return toast('נא להכניס סכום','error');
