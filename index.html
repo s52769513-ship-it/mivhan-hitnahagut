@@ -595,10 +595,11 @@ let currentIntTab = 'it-treatment';
 let currentQTab = 'parent';
 
 // === SUPABASE ===
+function sbToken(){ return localStorage.getItem('sb_jwt')||SB_KEY; }
 async function sb(table, params=''){
   if(!SB_URL||!SB_KEY) return {data:[],error:'לא מחובר'};
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}});
+    const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':'application/json'}});
     if(!r.ok) return {data:[],error:await r.text()};
     return {data: await r.json()};
   } catch(e){ return {data:[],error:e.message}; }
@@ -606,7 +607,7 @@ async function sb(table, params=''){
 async function sbInsert(table, body){
   if(!SB_URL||!SB_KEY) return {error:'לא מחובר'};
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
+    const r = await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
     if(!r.ok) return {error:await r.text()};
     return {data: await r.json()};
   } catch(e){ return {error:e.message}; }
@@ -614,7 +615,7 @@ async function sbInsert(table, body){
 async function sbUpdate(table, id, body){
   if(!SB_URL||!SB_KEY) return {error:'לא מחובר'};
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
+    const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
     if(!r.ok) return {error:await r.text()};
     return {data: await r.json()};
   } catch(e){ return {error:e.message}; }
@@ -622,7 +623,7 @@ async function sbUpdate(table, id, body){
 async function sbDelete(table, id){
   if(!SB_URL||!SB_KEY) return {error:'לא מחובר'};
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken()}});
     if(!r.ok) return {error:await r.text()};
     return {data:true};
   } catch(e){ return {error:e.message}; }
@@ -718,9 +719,11 @@ async function afterLogin(user){
   if(!profile){
     // Admin email with no profile yet - auto-create
     if(ADMIN_EMAILS.includes((user.email||'').toLowerCase())){
-      await sbInsert('user_profiles',{id:user.id,display_name:(user.email||'').split('@')[0],role:'admin'});
+      const ins=await sbInsert('user_profiles',{id:user.id,display_name:(user.email||'').split('@')[0],role:'admin'});
+      if(ins.error) console.error('user_profiles insert failed:',ins.error);
       const retry=await sb('user_profiles',`?id=eq.${user.id}&select=*`);
       profile=(retry.data||[])[0];
+      if(!profile) profile={id:user.id,display_name:(user.email||'').split('@')[0],role:'admin'};
     }
     if(!profile){document.getElementById('login-error').textContent='אין לך הרשאות למערכת. פנה למנהל.';localStorage.removeItem('sb_jwt');return;}
   }
