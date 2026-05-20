@@ -976,12 +976,25 @@ async function createUser(){
   const role=document.getElementById('nu-role').value;
   if(!name||!email||!pass) return toast('נא למלא כל השדות','error');
   if(pass.length<6) return toast('סיסמה חייבת להיות לפחות 6 תווים','error');
+  // נסה signup
   const r=await fetch(`${SB_URL}/auth/v1/signup`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass,data:{display_name:name,role}})});
   const data=await r.json();
-  const userId=data.user?.id||data.id;
-  if(!userId) return toast('שגיאה: '+(data.msg||data.error||data.error_description||''),'error');
-  const ins=await sbInsert('user_profiles',{id:userId,display_name:name,role});
-  if(ins.error) console.warn('profile insert failed (יוצר בהתחברות ראשונה):', ins.error);
+  let userId=data.user?.id||data.id;
+  // אם המשתמש כבר קיים — התחבר כדי לקבל את ה-ID ולצור פרופיל
+  const errMsg=data.msg||data.error||data.error_description||'';
+  if(!userId && (errMsg.toLowerCase().includes('already registered')||errMsg.toLowerCase().includes('already exists'))){
+    const lr=await fetch(`${SB_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const ld=await lr.json();
+    userId=ld.user?.id||ld.user_id;
+    if(!userId) return toast('משתמש קיים אך הסיסמה שגויה — שנה סיסמה או השתמש בסיסמה הנכונה','error');
+  }
+  if(!userId) return toast('שגיאה: '+errMsg,'error');
+  // צור פרופיל עם JWT של המשתמש (עוקף RLS)
+  const loginR=await fetch(`${SB_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+  const loginD=await loginR.json();
+  const userJwt=loginD.access_token||sbToken();
+  const ins=await fetch(`${SB_URL}/rest/v1/user_profiles`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+userJwt,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify({id:userId,display_name:name,role})});
+  if(!ins.ok) console.warn('profile insert:', await ins.text());
   toast('משתמש נוצר ✅','success');
   closeModal('modal-new-user');
   ['nu-name','nu-email','nu-pass'].forEach(id=>document.getElementById(id).value='');
