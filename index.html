@@ -485,6 +485,7 @@ let selectedClass = null;
 let currentMainTab = 'clinical';
 let currentDataTab = 'dt-background';
 let currentIntTab = 'it-treatment';
+let currentQTab = 'parent';
 
 // === SUPABASE ===
 async function sb(table, params=''){
@@ -881,8 +882,10 @@ function showIntTab(id){
 }
 
 function renderPersonalTab(p){
-  const pct=p.debt>0?Math.min(100,Math.round((p.paid/p.debt)*100)):0;
-  const remaining=Math.max(0,(p.debt||0)-(p.paid||0));
+  const calcDebt=allAppointments.filter(a=>a.patient_id===p.id).reduce((s,a)=>s+(a.price||0),0);
+  const calcPaid=allPayments.filter(pay=>pay.patient_id===p.id).reduce((s,pay)=>s+(pay.amount||0),0);
+  const remaining=Math.max(0,calcDebt-calcPaid);
+  const pct=calcDebt>0?Math.min(100,Math.round((calcPaid/calcDebt)*100)):0;
   document.getElementById('tab-personal').innerHTML=`
     <div class="card" style="margin-bottom:16px">
       <div class="card-header"><h3>פרטים אישיים</h3><button class="btn btn-primary btn-sm" onclick="savePersonal('${p.id}')">💾 שמור</button></div>
@@ -898,40 +901,24 @@ function renderPersonalTab(p){
         </div>
       </div>
     </div>
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>💰 כספים</h3></div>
+    <div class="card">
+      <div class="card-header"><h3>💰 סיכום כספי</h3><span style="font-size:12px;color:var(--g400)">מחושב אוטומטית מפגישות ותשלומים</span></div>
       <div class="card-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
-          <div class="detail-row"><div class="detail-label">סכום שחייב</div><div class="detail-value"><input type="number" id="pf-debt" value="${p.debt||0}" dir="ltr" oninput="updateRemainingDisplay()"></div></div>
-          <div class="detail-row"><div class="detail-label">שולם</div><div class="detail-value"><input type="number" id="pf-paid" value="${p.paid||0}" dir="ltr" oninput="updateRemainingDisplay()"></div></div>
-          <div class="detail-row" style="grid-column:1/-1">
-            <div class="detail-label">יתרה לתשלום</div>
-            <div class="detail-value">
-              <span id="pf-remaining-display" style="font-size:18px;font-weight:700;color:${remaining>0?'var(--red)':'var(--green)'}">₪${remaining.toLocaleString()}</span>
-            </div>
-          </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
+          <div class="stat-card" style="margin:0"><div class="stat-label">חוב מפגישות</div><div class="stat-value">₪${calcDebt.toLocaleString()}</div></div>
+          <div class="stat-card" style="margin:0"><div class="stat-label">שולם</div><div class="stat-value green">₪${calcPaid.toLocaleString()}</div></div>
+          <div class="stat-card" style="margin:0"><div class="stat-label">יתרה לתשלום</div><div class="stat-value ${remaining>0?'red':'green'}">₪${remaining.toLocaleString()}</div></div>
         </div>
-        <div style="margin-top:12px">
-          <div style="font-size:12px;color:var(--g500);margin-bottom:4px">התקדמות תשלום: ${pct}%</div>
-          <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
-        </div>
+        <div style="font-size:12px;color:var(--g500);margin-bottom:4px">התקדמות תשלום: ${pct}%</div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
       </div>
     </div>`;
 }
 
-function updateRemainingDisplay(){
-  const debt=parseFloat(document.getElementById('pf-debt')?.value)||0;
-  const paid=parseFloat(document.getElementById('pf-paid')?.value)||0;
-  const rem=Math.max(0,debt-paid);
-  const el=document.getElementById('pf-remaining-display');
-  if(el){ el.textContent='₪'+rem.toLocaleString(); el.style.color=rem>0?'var(--red)':'var(--green)'; }
-}
-
 async function savePersonal(id){
-  const debt=parseFloat(document.getElementById('pf-debt').value)||0;
-  const paid=parseFloat(document.getElementById('pf-paid').value)||0;
-  const remaining=Math.max(0,debt-paid);
-  const body={name:document.getElementById('pf-name').value,identity_number:document.getElementById('pf-id').value,phone:document.getElementById('pf-phone').value,address:document.getElementById('pf-address').value,parents:document.getElementById('pf-parents').value,institution_id:document.getElementById('pf-inst').value||null,class_id:document.getElementById('pf-class').value||null,debt,paid,remaining};
+  const debt=allAppointments.filter(a=>a.patient_id===id).reduce((s,a)=>s+(a.price||0),0);
+  const paid=allPayments.filter(p=>p.patient_id===id).reduce((s,p)=>s+(p.amount||0),0);
+  const body={name:document.getElementById('pf-name').value,identity_number:document.getElementById('pf-id').value,phone:document.getElementById('pf-phone').value,address:document.getElementById('pf-address').value,parents:document.getElementById('pf-parents').value,institution_id:document.getElementById('pf-inst').value||null,class_id:document.getElementById('pf-class').value||null,debt,paid,remaining:Math.max(0,debt-paid)};
   const r=await sbUpdate('patients',id,body);
   if(r.error) return toast('שגיאה','error');
   toast('נשמר ✅','success'); await loadAll();
@@ -1036,47 +1023,86 @@ function renderObservations(pid){
 const Q_LABELS={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון פונקציונלי','fobs':'שאלון פובס'};
 const Q_FIELDS={
   parent:[
-    {id:'behavior_desc',label:'תיאור ההתנהגות הבעייתית',type:'textarea'},
-    {id:'when_occurs',label:'מתי / באיזה מצב זה קורה',type:'textarea'},
-    {id:'triggers',label:'טריגרים ידועים',type:'textarea'},
-    {id:'antecedent',label:'A – מה קדם להתנהגות',type:'textarea'},
+    {type:'section',label:'פרטים ומיקוד ראשוני'},
+    {id:'main_challenge',label:'מהו הקושי המרכזי (במשפט אחד)?',type:'textarea'},
+    {id:'desired_behavior',label:'ההתנהגות החיובית הרצויה (כאילו מצלמים אותה)',type:'textarea'},
+    {id:'importance_rating',label:'דירוג חשיבות השינוי (1–10)',type:'select',options:['1','2','3','4','5','6','7','8','9','10']},
+    {type:'section',label:'רקע ואבחנות'},
+    {id:'current_support',label:'האם הילד מקבל כיום סיוע/תמיכה? אם כן, באיזה היקף?',type:'textarea'},
+    {id:'strengths',label:'מה כבר הולך לו טוב? (לימודי/חברתי/מוטורי)',type:'textarea'},
+    {id:'past_interventions',label:'אילו טיפולים / תוכניות ניסיתם בעבר?',type:'textarea'},
+    {id:'what_worked',label:'מה עבד אפילו קצת?',type:'textarea'},
+    {id:'why_stopped',label:'מה גרם להם להפסיק לעבוד?',type:'textarea'},
+    {id:'problem_onset',label:'מתי הבעיות החלו? האם השתנו עם הזמן?',type:'textarea'},
+    {id:'red_flags',label:'דגלים אדומים / טריגרים ידועים',type:'textarea'},
+    {type:'section',label:'ABC – ניתוח ההתנהגות'},
+    {id:'antecedent',label:'A – מה קדם להתנהגות?',type:'textarea'},
     {id:'behavior',label:'B – תיאור ההתנהגות',type:'textarea'},
-    {id:'consequence',label:'C – מה קורה אחרי',type:'textarea'},
+    {id:'consequence',label:'C – מה קורה אחרי?',type:'textarea'},
     {id:'frequency',label:'תדירות (פעמים ביום/שבוע)',type:'text'},
     {id:'intensity',label:'עוצמה (1-5)',type:'select',options:['1','2','3','4','5']},
+    {type:'section',label:'חיזוקים וחוזקות'},
+    {id:'reinforcers',label:'מה הוא הכי אוהב לעשות / לקבל?',type:'textarea'},
+    {id:'talents',label:'הישגים / כישרונות שאינם קשורים לקושי',type:'textarea'},
     {id:'what_helps',label:'מה עוזר / מה עובד',type:'textarea'},
+    {id:'green_flags',label:'דגלים ירוקים / חוזקות',type:'textarea'},
+    {type:'section',label:'הערות'},
     {id:'notes',label:'הערות נוספות',type:'textarea'}
   ],
   staff:[
-    {id:'reporter_name',label:'שם המדווח',type:'text'},
-    {id:'reporter_role',label:'תפקיד',type:'text'},
-    {id:'context',label:'הקשר / מצב',type:'textarea'},
-    {id:'behavior_desc',label:'תיאור ההתנהגות',type:'textarea'},
-    {id:'frequency',label:'תדירות',type:'text'},
-    {id:'duration',label:'משך ממוצע',type:'text'},
-    {id:'env_reaction',label:'תגובת הסביבה',type:'textarea'},
-    {id:'strategies_tried',label:'אסטרטגיות שנוסו',type:'textarea'},
-    {id:'notes',label:'הערות',type:'textarea'}
+    {type:'section',label:'חלק א׳ – פרטים ומיקוד ראשוני'},
+    {id:'teacher',label:'מלמד / מחנך',type:'text'},
+    {id:'main_challenge',label:'מהו הקושי המרכזי (במשפט אחד, אובייקטיבי)?',type:'textarea'},
+    {id:'desired_behavior',label:'ההתנהגות החיובית הרצויה (כאילו מצלמים אותה)',type:'textarea'},
+    {id:'importance_rating',label:'דירוג חשיבות השינוי (1–10)',type:'select',options:['1','2','3','4','5','6','7','8','9','10']},
+    {type:'section',label:'חלק ב׳ – רקע היסטורי ואבחנות'},
+    {id:'current_support',label:'האם הילד מקבל כיום סיוע או תמיכה אישית? אם כן, באיזה היקף?',type:'textarea'},
+    {id:'strengths',label:'מה כבר הולך לו טוב? (לימודי / חברתי / מוטורי)',type:'textarea'},
+    {id:'past_interventions',label:'אילו טיפולים או תוכניות ניסיתם בעבר?',type:'textarea'},
+    {id:'what_worked',label:'מה עבד אפילו קצת?',type:'textarea'},
+    {id:'why_stopped',label:'מה גרם להם להפסיק לעבוד?',type:'textarea'},
+    {id:'problem_onset',label:'מתי הבעיות החלו? האם השתנו עם הזמן?',type:'textarea'},
+    {id:'red_flags',label:'דגלים אדומים / טריגרים',type:'textarea'},
+    {type:'section',label:'חלק ג׳ – ניתוח ההקשר והרפרטואר החיובי'},
+    {id:'reinforcers',label:'מה הוא הכי אוהב לעשות / לקבל?',type:'textarea'},
+    {id:'talents',label:'הישגים / כישרונות שאינם קשורים לקושי',type:'textarea'},
+    {id:'success_situation',label:'מצב שבו הילד הצליח לקיים את ההתנהגות הרצויה',type:'textarea'},
+    {id:'easy_requests',label:'דברים שמבקשים ממנו והוא מבצע מיד ללא ויכוח',type:'textarea'},
+    {id:'green_flags',label:'דגלים ירוקים / חוזקות',type:'textarea'},
+    {type:'section',label:'חלק ד׳ – ניתוח השרשרת והפונקציה'},
+    {id:'antecedent',label:'A – מה קרה רגע לפני שהקושי מתחיל?',type:'textarea'},
+    {id:'main_outcome',label:'C – מהי התוצאה העיקרית של הקושי?',type:'textarea'},
+    {id:'staff_response',label:'מהי התגובה המיידית של הצוות?',type:'textarea'},
+    {type:'section',label:'חלק ה׳ – תכנון קונסטרוקטיבי וצעד ראשון'},
+    {id:'first_step',label:'הצעד הקטן הראשון שהילד יכול לבצע כבר היום',type:'textarea'},
+    {id:'reinforcement_plan',label:'באיזה מחזק תשתמשו לחיזוק הצעד?',type:'textarea'},
+    {id:'env_change',label:'התנהלות / שינוי סביבתי שהצוות יכול לבצע',type:'textarea'}
   ],
   functional:[
-    {id:'target_behavior',label:'התנהגות מטרה',type:'textarea'},
+    {type:'section',label:'התנהגות מטרה'},
+    {id:'target_behavior',label:'תיאור ההתנהגות המטרה',type:'textarea'},
     {id:'frequency',label:'תדירות',type:'text'},
     {id:'intensity',label:'עוצמה (1-5)',type:'select',options:['1','2','3','4','5']},
+    {type:'section',label:'ABC'},
     {id:'antecedent',label:'A – נסיבות קודמות',type:'textarea'},
     {id:'behavior',label:'B – תיאור ההתנהגות',type:'textarea'},
     {id:'consequence',label:'C – תוצאה',type:'textarea'},
+    {type:'section',label:'ניתוח פונקציונלי'},
     {id:'function',label:'פונקציה משוערת',type:'select',options:['תשומת לב','בריחה / הימנעות','חושי','קבלת פריט/פעילות','אחר']},
     {id:'hypothesis',label:'השערה',type:'textarea'},
     {id:'recommendations',label:'המלצות',type:'textarea'}
   ],
   fobs:[
+    {type:'section',label:'פרטי התצפית'},
     {id:'obs_date',label:'תאריך תצפית',type:'date'},
     {id:'location',label:'מיקום',type:'text'},
     {id:'activity',label:'פעילות',type:'text'},
     {id:'people_present',label:'אנשים נוכחים',type:'text'},
+    {type:'section',label:'ABC'},
     {id:'antecedent',label:'A – נסיבות',type:'textarea'},
     {id:'behavior',label:'B – התנהגות',type:'textarea'},
     {id:'consequence',label:'C – תוצאה',type:'textarea'},
+    {type:'section',label:'ניתוח'},
     {id:'function',label:'פונקציה משוערת',type:'select',options:['תשומת לב','בריחה / הימנעות','חושי','קבלת פריט/פעילות','אחר']},
     {id:'recommendations',label:'המלצות',type:'textarea'}
   ]
@@ -1085,31 +1111,59 @@ const Q_FIELDS={
 let currentQPatientId=null, currentQType=null, currentQId=null;
 
 function renderQuestionnaires(pid){
-  const qs=allQuestionnaires.filter(q=>q.patient_id===pid);
+  const types=Object.keys(Q_LABELS);
   document.getElementById('dt-questionnaires').innerHTML=`
-    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
-      ${Object.keys(Q_LABELS).map(t=>`<button class="btn btn-secondary btn-sm" onclick="openQuestionnaire('${pid}','${t}',null)">+ ${Q_LABELS[t]}</button>`).join('')}
+    <div class="tab-bar" style="margin-bottom:16px;flex-wrap:wrap">
+      ${types.map(t=>`<button class="tab-btn ${currentQTab===t?'active':''}" onclick="switchQTab('${pid}','${t}')">${Q_LABELS[t]}</button>`).join('')}
     </div>
-    ${qs.length===0?'<div class="empty">📋<p>אין שאלונים</p></div>':qs.map(q=>`
-    <div class="card" style="margin-bottom:10px">
+    <div id="q-tab-content"></div>`;
+  renderQTabContent(pid);
+}
+
+function switchQTab(pid, tab){
+  currentQTab=tab;
+  document.querySelectorAll('#dt-questionnaires .tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active', Object.keys(Q_LABELS)[i]===tab);
+  });
+  renderQTabContent(pid);
+}
+
+function renderQTabContent(pid){
+  const q=allQuestionnaires.find(q=>q.patient_id===pid&&q.q_type===currentQTab);
+  const container=document.getElementById('q-tab-content');
+  if(!container) return;
+  if(!q){
+    container.innerHTML=`
+      <div style="text-align:center;padding:48px 20px">
+        <div style="font-size:52px;margin-bottom:12px">📋</div>
+        <h3 style="margin-bottom:8px;color:var(--g700)">${Q_LABELS[currentQTab]}</h3>
+        <p style="color:var(--g500);margin-bottom:24px;max-width:360px;margin-inline:auto">עדיין לא מולא שאלון זה עבור המטופל.<br>האם תרצה ליצור אותו?</p>
+        <button class="btn btn-primary" onclick="openQuestionnaire('${pid}','${currentQTab}',null)">➕ יצירת ${Q_LABELS[currentQTab]}</button>
+      </div>`;
+    return;
+  }
+  container.innerHTML=`
+    <div class="card">
       <div class="card-header">
-        <h3>${Q_LABELS[q.q_type]||q.q_type}</h3>
-        <div style="display:flex;gap:8px;align-items:center">
-          ${q.content?.obs_date?`<span style="font-size:12px;color:var(--g400)">${fmtDate(q.content.obs_date)}</span>`:''}
-          <button class="btn btn-secondary btn-sm" onclick="openQuestionnaire('${pid}','${q.q_type}','${q.id}')">✏️ ערוך</button>
+        <h3>${Q_LABELS[currentQTab]}</h3>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="printQuestionnaire('${pid}','${currentQTab}')">🖨️ הדפסה</button>
+          <button class="btn btn-secondary btn-sm" onclick="openQuestionnaire('${pid}','${currentQTab}','${q.id}')">✏️ ערוך</button>
           <button class="btn btn-danger btn-sm" onclick="deleteQuestionnaire('${q.id}','${pid}')">🗑️</button>
         </div>
       </div>
-      <div class="card-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          ${(Q_FIELDS[q.q_type]||[]).filter(f=>(q.content||{})[f.id]).map(f=>`
-            <div style="grid-column:${f.type==='textarea'?'1/-1':'auto'}">
-              <div style="font-size:11px;font-weight:600;color:var(--g500);margin-bottom:2px">${f.label}</div>
-              <div style="font-size:14px;color:var(--g800)">${(q.content||{})[f.id]||'-'}</div>
-            </div>`).join('')}
-        </div>
-      </div>
-    </div>`).join('')}`;
+      <div class="card-body">${renderQContent(q)}</div>
+    </div>`;
+}
+
+function renderQContent(q){
+  const fields=Q_FIELDS[q.q_type]||[];
+  const c=q.content||{};
+  return fields.map(f=>{
+    if(f.type==='section') return `<div style="margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--blue-light);font-size:13px;font-weight:700;color:var(--blue2)">${f.label}</div>`;
+    if(!c[f.id]) return '';
+    return `<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:600;color:var(--g500);margin-bottom:2px">${f.label}</div><div style="font-size:14px;color:var(--g800);white-space:pre-wrap">${c[f.id]}</div></div>`;
+  }).join('');
 }
 
 function openQuestionnaire(pid, qtype, qid){
@@ -1118,6 +1172,7 @@ function openQuestionnaire(pid, qtype, qid){
   const content=existing?.content||{};
   document.getElementById('q-modal-title').textContent=(qid?'✏️ ערוך ':'➕ ') + Q_LABELS[qtype];
   document.getElementById('q-modal-body').innerHTML=(Q_FIELDS[qtype]||[]).map(f=>{
+    if(f.type==='section') return `<div style="margin:12px 0 6px;font-size:13px;font-weight:700;color:var(--blue2);border-bottom:1px solid var(--g200);padding-bottom:4px">${f.label}</div>`;
     if(f.type==='textarea') return `<div class="form-group"><label class="form-label">${f.label}</label><textarea class="form-control" id="qf-${f.id}" rows="2">${content[f.id]||''}</textarea></div>`;
     if(f.type==='select') return `<div class="form-group"><label class="form-label">${f.label}</label><select class="form-control" id="qf-${f.id}"><option value="">-- בחר --</option>${f.options.map(o=>`<option value="${o}" ${content[f.id]===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
     if(f.type==='date') return `<div class="form-group"><label class="form-label">${f.label}</label><input type="date" class="form-control" id="qf-${f.id}" value="${content[f.id]||''}"></div>`;
@@ -1129,15 +1184,13 @@ function openQuestionnaire(pid, qtype, qid){
 async function saveQuestionnaire(){
   const content={};
   (Q_FIELDS[currentQType]||[]).forEach(f=>{
+    if(f.type==='section') return;
     const el=document.getElementById('qf-'+f.id);
     if(el&&el.value.trim()) content[f.id]=el.value.trim();
   });
   let r;
-  if(currentQId){
-    r=await sbUpdate('questionnaires',currentQId,{content});
-  } else {
-    r=await sbInsert('questionnaires',{patient_id:currentQPatientId,q_type:currentQType,title:Q_LABELS[currentQType],content});
-  }
+  if(currentQId){ r=await sbUpdate('questionnaires',currentQId,{content}); }
+  else { r=await sbInsert('questionnaires',{patient_id:currentQPatientId,q_type:currentQType,title:Q_LABELS[currentQType],content}); }
   if(r.error) return toast('שגיאה','error');
   toast('שאלון נשמר ✅','success');
   closeModal('modal-questionnaire');
@@ -1148,6 +1201,47 @@ async function deleteQuestionnaire(qid,pid){
   if(!confirm('למחוק שאלון זה?')) return;
   await sbDelete('questionnaires',qid);
   await loadAll(); renderQuestionnaires(pid);
+}
+
+function printQuestionnaire(pid, qtype){
+  const patient=allPatients.find(p=>p.id===pid);
+  const q=allQuestionnaires.find(q=>q.patient_id===pid&&q.q_type===qtype);
+  if(!q) return;
+  const inst=allInstitutions.find(i=>i.id===patient?.institution_id);
+  const cls=allClasses.find(c=>c.id===patient?.class_id);
+  const c=q.content||{};
+  const fields=Q_FIELDS[qtype]||[];
+  let body='';
+  fields.forEach(f=>{
+    if(f.type==='section'){ body+=`<div class="sec">${f.label}</div>`; return; }
+    if(!c[f.id]) return;
+    body+=`<div class="qa"><div class="ql">${f.label}</div><div class="qa-ans">${c[f.id]}</div></div>`;
+  });
+  const html=`<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="UTF-8"><title>${Q_LABELS[qtype]} – ${patient?.name||''}</title>
+<style>
+body{font-family:Arial,sans-serif;direction:rtl;padding:28px 36px;color:#1E293B;font-size:14px}
+h1{text-align:center;font-size:13px;color:#64748B;margin:0 0 2px}
+h2{text-align:center;font-size:20px;margin:0 0 4px}
+.sub{text-align:center;color:#64748B;font-size:13px;margin-bottom:18px}
+.info{background:#F1F5F9;border-radius:8px;padding:10px 16px;margin-bottom:22px;display:flex;gap:24px;flex-wrap:wrap;font-size:13px}
+.info strong{color:#0C3A5F}
+.sec{font-size:14px;font-weight:bold;color:#185FA5;border-bottom:2px solid #E6F1FB;padding-bottom:3px;margin:20px 0 10px}
+.qa{margin-bottom:12px}
+.ql{font-size:11px;font-weight:600;color:#64748B;margin-bottom:2px}
+.qa-ans{font-size:14px;white-space:pre-wrap}
+@media print{body{padding:15px 20px}}
+</style></head><body>
+<h1>ב"ה</h1><h2>${Q_LABELS[qtype]}</h2><div class="sub">הערכה קונסטרוקטיבית ממוקדת</div>
+<div class="info">
+  <span>שם: <strong>${patient?.name||''}</strong></span>
+  ${inst?`<span>מוסד: <strong>${inst.name}</strong></span>`:''}
+  ${cls?`<span>כיתה: <strong>${cls.name}</strong></span>`:''}
+  ${c.teacher?`<span>מלמד: <strong>${c.teacher}</strong></span>`:''}
+</div>
+${body}
+<script>window.onload=function(){window.print()}<\/script>
+</body></html>`;
+  const w=window.open('','_blank'); w.document.write(html); w.document.close();
 }
 
 function renderGoals(pid){
@@ -1270,14 +1364,15 @@ async function renderFinances(){
 function openPayment(pid){
   currentPayPatientId=pid;
   openModal('modal-new-payment');
-  const patient=allPatients.find(p=>p.id===pid);
+  const debt=allAppointments.filter(a=>a.patient_id===pid).reduce((s,a)=>s+(a.price||0),0);
+  const paid=allPayments.filter(p=>p.patient_id===pid).reduce((s,p)=>s+(p.amount||0),0);
+  const remaining=Math.max(0,debt-paid);
   const banner=document.getElementById('npy-balance-banner');
-  if(patient&&banner){
-    const remaining=Math.max(0,(patient.debt||0)-(patient.paid||0));
+  if(banner){
     banner.style.display='flex';
     banner.innerHTML=`
-      <span>💰 חוב: <strong>₪${(patient.debt||0).toLocaleString()}</strong></span>
-      <span>✅ שולם: <strong>₪${(patient.paid||0).toLocaleString()}</strong></span>
+      <span>💰 חוב: <strong>₪${debt.toLocaleString()}</strong></span>
+      <span>✅ שולם: <strong>₪${paid.toLocaleString()}</strong></span>
       <span style="color:${remaining>0?'var(--red)':'var(--green)'}">יתרה: <strong>₪${remaining.toLocaleString()}</strong></span>`;
   }
 }
@@ -1286,18 +1381,24 @@ async function createPayment(){
   if(!amount) return toast('נא להכניס סכום','error');
   const r=await sbInsert('payments',{patient_id:currentPayPatientId,amount,method:document.getElementById('npy-method').value,notes:document.getElementById('npy-notes').value});
   if(r.error) return toast('שגיאה','error');
-  const patient=allPatients.find(p=>p.id===currentPayPatientId);
-  if(patient){ const newPaid=(patient.paid||0)+amount; const newRem=Math.max(0,(patient.debt||0)-newPaid); await sbUpdate('patients',currentPayPatientId,{paid:newPaid,remaining:newRem}); }
   toast('תשלום נוסף ✅','success'); closeModal('modal-new-payment');
   ['npy-amount','npy-notes'].forEach(id=>document.getElementById(id).value='');
-  await loadAll(); if(currentPayPatientId) renderPatientPayments(currentPayPatientId);
+  await loadAll();
+  await syncPatientFinancials(currentPayPatientId);
+  if(currentPayPatientId) renderPatientPayments(currentPayPatientId);
+}
+
+async function syncPatientFinancials(pid){
+  const debt=allAppointments.filter(a=>a.patient_id===pid).reduce((s,a)=>s+(a.price||0),0);
+  const paid=allPayments.filter(p=>p.patient_id===pid).reduce((s,p)=>s+(p.amount||0),0);
+  await sbUpdate('patients',pid,{debt,paid,remaining:Math.max(0,debt-paid)});
 }
 async function deletePayment(payId,pid){
   if(!confirm('למחוק תשלום?')) return;
-  const pay=allPayments.find(p=>p.id===payId);
   await sbDelete('payments',payId);
-  if(pay){ const patient=allPatients.find(p=>p.id===pid); if(patient){ const newPaid=Math.max(0,(patient.paid||0)-(pay.amount||0)); const newRem=Math.max(0,(patient.debt||0)-newPaid); await sbUpdate('patients',pid,{paid:newPaid,remaining:newRem}); }}
-  await loadAll(); renderPatientPayments(pid);
+  await loadAll();
+  await syncPatientFinancials(pid);
+  renderPatientPayments(pid);
 }
 
 // === NOTES ===
