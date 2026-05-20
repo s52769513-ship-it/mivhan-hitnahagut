@@ -1460,10 +1460,11 @@ function renderPatientDocuments(pid){
       </div>`:''}
       <div id="files-list-${pid}">
         ${files.length===0&&hasCloud?'<div class="empty">📄<p>אין קבצים</p></div>':''}
-        ${files.map(f=>`<div class="file-item" style="cursor:pointer" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')" >
-          <div class="file-icon">${fileIcon(f.name)}</div>
-          <div style="flex:1"><div style="font-size:14px;font-weight:500">${f.name}</div><div style="font-size:11px;color:var(--g400)">${fmtDate(f.created_at)}</div></div>
-          <span class="btn btn-secondary btn-sm">👁 צפה</span>
+        ${files.map(f=>`<div class="file-item">
+          <div class="file-icon" style="cursor:pointer" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')">${fileIcon(f.name)}</div>
+          <div style="flex:1;cursor:pointer" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')"><div style="font-size:14px;font-weight:500">${f.name}</div><div style="font-size:11px;color:var(--g400)">${fmtDate(f.created_at)}</div></div>
+          <span class="btn btn-secondary btn-sm" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')">👁 צפה</span>
+          <button class="btn btn-danger btn-sm" onclick="deleteFile('${f.id}','${f.drive_file_id||''}','${pid}')">🗑️</button>
         </div>`).join('')}
       </div>
     </div>`;
@@ -2187,6 +2188,14 @@ async function sendEmail(pid){
 }
 
 // === CLOUDINARY ===
+async function deleteFile(fileId, cloudPublicId, pid){
+  if(!confirm('למחוק קובץ זה?')) return;
+  await sbDelete('patient_files',fileId);
+  allFiles=allFiles.filter(f=>f.id!==fileId);
+  renderPatientDocuments(pid);
+  toast('קובץ נמחק','success');
+}
+
 async function uploadToCloudinary(pid, input){
   const file=input.files[0]; if(!file) return;
   if(!cloudName||!cloudPreset) return toast('נא להגדיר Cloudinary בהגדרות','error');
