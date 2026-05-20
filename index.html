@@ -1074,9 +1074,11 @@ function renderPatientEmails(pid){
       ${emails.length===0?'<div class="empty">✉️<p>אין מיילים שנשלחו</p></div>':emails.map(e=>`
       <div class="card" style="margin-bottom:10px">
         <div class="card-header" style="padding:10px 16px">
-          <div><div style="font-size:14px;font-weight:600">${e.subject||'(ללא נושא)'}</div><div style="font-size:12px;color:var(--g400)">אל: ${e.to_email||''} · ${fmtDate(e.sent_at)}</div></div>
+          <div style="flex:1"><div style="font-size:14px;font-weight:600">${e.subject||'(ללא נושא)'}</div><div style="font-size:12px;color:var(--g400)">אל: ${e.to_email||''} · ${fmtDate(e.sent_at)}</div></div>
+          ${e.thread_id&&googleToken?`<button class="btn btn-secondary btn-sm" onclick="loadEmailThread('${e.thread_id}','thread-${e.id}')">📨 טען שרשור</button>`:''}
         </div>
-        <div style="padding:12px 16px;font-size:13px;color:var(--g600);max-height:80px;overflow:hidden">${e.body_html||''}</div>
+        <div style="padding:12px 16px;font-size:13px;color:var(--g600)">${e.body_html||''}</div>
+        <div id="thread-${e.id}" style="border-top:1px solid var(--g100)"></div>
       </div>`).join('')}
     </div>`;
 }
@@ -1608,7 +1610,7 @@ function connectGoogle(){
   if(!googleClientId) return toast('נא להכניס Google Client ID קודם','error');
   const client=google.accounts.oauth2.initTokenClient({
     client_id:googleClientId,
-    scope:'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/drive.file',
+    scope:'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/drive.file',
     callback:(resp)=>{
       if(resp.error){ toast('שגיאת חיבור Google: '+resp.error,'error'); return; }
       googleToken=resp.access_token;
@@ -1623,7 +1625,7 @@ function connectGoogleAndRefresh(pid){
   if(!googleClientId) { toast('נא להגדיר Google Client ID בהגדרות','error'); return; }
   const client=google.accounts.oauth2.initTokenClient({
     client_id:googleClientId,
-    scope:'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/drive.file',
+    scope:'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/drive.file',
     callback:(resp)=>{
       if(resp.error){ toast('שגיאת חיבור','error'); return; }
       googleToken=resp.access_token;
@@ -1638,7 +1640,7 @@ function connectGoogleAndRefreshEmails(pid){
   if(!googleClientId) { toast('נא להגדיר Google Client ID בהגדרות','error'); return; }
   const client=google.accounts.oauth2.initTokenClient({
     client_id:googleClientId,
-    scope:'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/drive.file',
+    scope:'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/drive.file',
     callback:(resp)=>{
       if(resp.error){ toast('שגיאת חיבור','error'); return; }
       googleToken=resp.access_token;
@@ -1668,8 +1670,9 @@ async function sendEmail(pid){
       body:JSON.stringify({raw})
     });
     if(!resp.ok){ const e=await resp.json(); throw new Error(e.error?.message||resp.status); }
+    const sent=await resp.json();
     toast('מייל נשלח ✅','success');
-    await sbInsert('patient_emails',{patient_id:pid,to_email:to,subject,body_html:bodyHtml,sent_at:new Date().toISOString()});
+    await sbInsert('patient_emails',{patient_id:pid,to_email:to,subject,body_html:bodyHtml,thread_id:sent.threadId||null,message_id:sent.id||null,sent_at:new Date().toISOString()});
     bodyEl.innerHTML=''; document.getElementById('email-subject').value='';
     const r=await sb('patient_emails',`?patient_id=eq.${pid}&order=sent_at.desc`);
     allEmails=(allEmails.filter(e=>e.patient_id!==pid)).concat(r.data||[]);
@@ -1679,15 +1682,64 @@ async function sendEmail(pid){
 }
 
 function makeGmailRaw(to,subject,bodyHtml){
+  const encodeB64=str=>btoa(unescape(encodeURIComponent(str)));
+  const bodyB64=encodeB64(bodyHtml);
+  const subjB64=encodeB64(subject);
   const msg=[
     'MIME-Version: 1.0',
     'Content-Type: text/html; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
     `To: ${to}`,
-    `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
+    `Subject: =?UTF-8?B?${subjB64}?=`,
     '',
-    bodyHtml
+    bodyB64
   ].join('\r\n');
-  return btoa(unescape(encodeURIComponent(msg))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  return btoa(msg).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+async function loadEmailThread(threadId, containerId){
+  const el=document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML='<div style="padding:10px 16px;font-size:13px;color:var(--g400)">טוען שרשור...</div>';
+  try{
+    const resp=await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${threadId}?format=full`,{
+      headers:{'Authorization':'Bearer '+googleToken}
+    });
+    if(!resp.ok) throw new Error('שגיאה בטעינה');
+    const data=await resp.json();
+    const msgs=data.messages||[];
+    el.innerHTML=msgs.map(m=>{
+      const headers=m.payload?.headers||[];
+      const from=headers.find(h=>h.name==='From')?.value||'';
+      const date=headers.find(h=>h.name==='Date')?.value||'';
+      const body=getEmailBody(m.payload);
+      return `<div style="padding:10px 16px;border-top:1px solid var(--g100)">
+        <div style="font-size:12px;color:var(--g500);margin-bottom:4px"><strong>${from}</strong> · ${date}</div>
+        <div style="font-size:13px;color:var(--g700)">${body}</div>
+      </div>`;
+    }).join('');
+  }catch(e){ el.innerHTML=`<div style="padding:10px 16px;font-size:13px;color:var(--red)">שגיאה: ${e.message}</div>`; }
+}
+
+function getEmailBody(payload){
+  if(!payload) return '';
+  if(payload.body?.data) return decodeBase64Url(payload.body.data);
+  if(payload.parts){
+    for(const part of payload.parts){
+      if(part.mimeType==='text/html'&&part.body?.data) return decodeBase64Url(part.body.data);
+    }
+    for(const part of payload.parts){
+      if(part.mimeType==='text/plain'&&part.body?.data) return `<pre style="white-space:pre-wrap">${decodeBase64Url(part.body.data)}</pre>`;
+    }
+  }
+  return '';
+}
+
+function decodeBase64Url(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    return decodeURIComponent(escape(atob(b64)));
+  }catch(e){ return ''; }
 }
 
 // === GOOGLE DRIVE ===
