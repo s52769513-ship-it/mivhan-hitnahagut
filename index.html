@@ -1916,7 +1916,7 @@ async function saveQuestionnaire(){
   });
   let r;
   if(currentQId){ r=await sbUpdate('questionnaires',currentQId,{content}); }
-  else { r=await sbInsert('questionnaires',{patient_id:currentQPatientId,q_type:currentQType,title:Q_LABELS[currentQType],content}); }
+  else { r=await sbAdminInsert('questionnaires',{patient_id:currentQPatientId,q_type:currentQType,title:Q_LABELS[currentQType],content}); }
   if(r.error) return toast('שגיאה','error');
   toast('שאלון נשמר ✅','success');
   await loadAll(); renderQuestionnaires(currentQPatientId);
@@ -2189,7 +2189,7 @@ function openPayment(pid){
 async function createPayment(){
   const amount=parseFloat(document.getElementById('npy-amount').value)||0;
   if(!amount) return toast('נא להכניס סכום','error');
-  const r=await sbInsert('payments',{patient_id:currentPayPatientId,amount,method:document.getElementById('npy-method').value,notes:document.getElementById('npy-notes').value});
+  const r=await sbAdminInsert('payments',{patient_id:currentPayPatientId,amount,method:document.getElementById('npy-method').value,notes:document.getElementById('npy-notes').value});
   if(r.error) return toast('שגיאה','error');
   toast('תשלום נוסף ✅','success'); closeModal('modal-new-payment');
   ['npy-amount','npy-notes'].forEach(id=>document.getElementById(id).value='');
@@ -2215,8 +2215,8 @@ async function deletePayment(payId,pid){
 function openNoteForPatient(pid){ currentPayPatientId=pid; openModal('modal-new-note'); }
 async function createNote(){
   const base={patient_id:currentPayPatientId,title:document.getElementById('nn-title').value,content:document.getElementById('nn-content').value,note_type:document.getElementById('nn-type').value};
-  let r=await sbInsert('notes',{...base,user_id:currentUser?.id||null});
-  if(r.error) r=await sbInsert('notes',base); // fallback: column may not exist yet
+  let r=await sbAdminInsert('notes',{...base,user_id:currentUser?.id||null});
+  if(r.error) r=await sbAdminInsert('notes',base); // fallback: column may not exist yet
   if(r.error) return toast('שגיאה: '+r.error,'error');
   toast('הערה נוצרה ✅','success'); closeModal('modal-new-note');
   ['nn-title','nn-content'].forEach(id=>document.getElementById(id).value='');
@@ -2226,7 +2226,7 @@ async function createNote(){
 // === OBSERVATIONS ===
 function openObsForPatient(pid){ currentPayPatientId=pid; openModal('modal-new-obs'); }
 async function createObservation(){
-  const r=await sbInsert('observations',{patient_id:currentPayPatientId,obs_date:document.getElementById('no-date').value||null,circumstance:document.getElementById('no-circumstance').value,behavior:document.getElementById('no-behavior').value,outcome:document.getElementById('no-outcome').value,notes:document.getElementById('no-notes').value});
+  const r=await sbAdminInsert('observations',{patient_id:currentPayPatientId,obs_date:document.getElementById('no-date').value||null,circumstance:document.getElementById('no-circumstance').value,behavior:document.getElementById('no-behavior').value,outcome:document.getElementById('no-outcome').value,notes:document.getElementById('no-notes').value});
   if(r.error) return toast('שגיאה','error');
   toast('תצפית נוצרה ✅','success'); closeModal('modal-new-obs');
   ['no-date','no-circumstance','no-behavior','no-outcome','no-notes'].forEach(id=>document.getElementById(id).value='');
@@ -2237,7 +2237,7 @@ async function deleteObs(id,pid){ if(!confirm('למחוק?')) return; await sbDe
 // === GOALS ===
 function openGoalForPatient(pid){ currentPayPatientId=pid; openModal('modal-new-goal'); }
 async function createGoal(){
-  const r=await sbInsert('treatment_goals',{patient_id:currentPayPatientId,description:document.getElementById('ng-desc').value,functional_analysis:document.getElementById('ng-func').value,hypothesis:document.getElementById('ng-hypo').value,target:document.getElementById('ng-target').value,behavioral_goal:document.getElementById('ng-bhv').value,path:document.getElementById('ng-path').value,short_reinforcement:document.getElementById('ng-short').value,long_reinforcement:document.getElementById('ng-long').value,responses:document.getElementById('ng-resp').value});
+  const r=await sbAdminInsert('treatment_goals',{patient_id:currentPayPatientId,description:document.getElementById('ng-desc').value,functional_analysis:document.getElementById('ng-func').value,hypothesis:document.getElementById('ng-hypo').value,target:document.getElementById('ng-target').value,behavioral_goal:document.getElementById('ng-bhv').value,path:document.getElementById('ng-path').value,short_reinforcement:document.getElementById('ng-short').value,long_reinforcement:document.getElementById('ng-long').value,responses:document.getElementById('ng-resp').value});
   if(r.error) return toast('שגיאה','error');
   toast('מטרה נוצרה ✅','success'); closeModal('modal-new-goal');
   ['ng-desc','ng-func','ng-hypo','ng-target','ng-bhv','ng-path','ng-short','ng-long','ng-resp'].forEach(id=>document.getElementById(id).value='');
@@ -2320,7 +2320,7 @@ async function sendEmail(pid){
       from_name: 'מכון התנהגות'
     });
     toast('מייל נשלח ✅','success');
-    await sbInsert('patient_emails',{patient_id:pid,to_email:to,subject,body_html:bodyHtml,sent_at:new Date().toISOString()});
+    await sbAdminInsert('patient_emails',{patient_id:pid,to_email:to,subject,body_html:bodyHtml,sent_at:new Date().toISOString()});
     bodyEl.innerHTML=''; document.getElementById('email-subject').value='';
     const r=await sb('patient_emails',`?patient_id=eq.${pid}&order=sent_at.desc`);
     allEmails=(allEmails.filter(e=>e.patient_id!==pid)).concat(r.data||[]);
