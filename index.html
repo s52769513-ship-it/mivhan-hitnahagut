@@ -2214,8 +2214,10 @@ async function deletePayment(payId,pid){
 // === NOTES ===
 function openNoteForPatient(pid){ currentPayPatientId=pid; openModal('modal-new-note'); }
 async function createNote(){
-  const r=await sbInsert('notes',{patient_id:currentPayPatientId,title:document.getElementById('nn-title').value,content:document.getElementById('nn-content').value,note_type:document.getElementById('nn-type').value,user_id:currentUser?.id||null});
-  if(r.error) return toast('שגיאה','error');
+  const base={patient_id:currentPayPatientId,title:document.getElementById('nn-title').value,content:document.getElementById('nn-content').value,note_type:document.getElementById('nn-type').value};
+  let r=await sbInsert('notes',{...base,user_id:currentUser?.id||null});
+  if(r.error) r=await sbInsert('notes',base); // fallback: column may not exist yet
+  if(r.error) return toast('שגיאה: '+r.error,'error');
   toast('הערה נוצרה ✅','success'); closeModal('modal-new-note');
   ['nn-title','nn-content'].forEach(id=>document.getElementById(id).value='');
   await loadAll(); renderPatientNotes(currentPayPatientId);
