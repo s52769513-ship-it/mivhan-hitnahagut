@@ -842,7 +842,7 @@ async function afterLogin(user){
   setupUIForRole();
   await loadAll();
   if(isAdmin) renderDashboard();
-  else renderUserDashboard();
+  else showView('user-dashboard');
 }
 
 function setupUIForRole(){
@@ -892,7 +892,6 @@ async function renderUserDashboard(){
   pList.innerHTML=myPats.length===0?'<div class="empty">👥<p>אין מטופלים מוקצים</p></div>':myPats.map(p=>`<div onclick="openPatient('${p.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><div class="avatar" style="background:var(--blue2)">${initials(p.name)}</div><div style="font-size:14px;font-weight:600">${p.name}</div></div>`).join('');
   const tList=document.getElementById('user-tasks-list');
   tList.innerHTML=myTasks.length===0?'<div class="empty">✅<p>אין משימות</p></div>':myTasks.map(t=>`<div style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span><button onclick="openEditTask('${t.id}')" class="btn btn-secondary btn-sm">✏️</button></div>`).join('');
-  showView('user-dashboard');
 }
 
 // === USER MANAGEMENT (ADMIN) ===
