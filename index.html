@@ -101,6 +101,9 @@ tr:last-child td{border-bottom:none}
 .day-slot-busy .day-slot-content{background:transparent}
 .day-slot-apt{background:var(--blue-light);color:var(--blue);border-radius:6px;padding:4px 8px;margin-bottom:3px;cursor:pointer;font-size:13px}
 .day-slot-apt:hover{background:#bfdbfe}.day-slot-apt.arrived{background:var(--green-light);color:#0F6E56}
+.note-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--g100);gap:8px;transition:background .1s}
+.note-row:hover{background:var(--g50)}
+.note-body{padding:12px 16px;font-size:14px;color:var(--g700);white-space:pre-wrap;border-bottom:1px solid var(--g100);background:var(--g50)}
 .loading{display:flex;align-items:center;justify-content:center;padding:48px;color:var(--g400);font-size:14px;gap:10px}
 .spinner{width:20px;height:20px;border:2px solid var(--g200);border-top-color:var(--blue2);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -1693,12 +1696,35 @@ function renderPatientNotes(pid){
   const notes=allNotes.filter(n=>n.patient_id===pid);
   document.getElementById('tab-notes').innerHTML=`
     <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openNoteForPatient('${pid}')">+ הערה</button></div>
-    ${notes.length===0?'<div class="empty">📝<p>אין הערות</p></div>':notes.map(n=>`
-    <div class="card" style="margin-bottom:10px">
-      <div class="card-header" style="padding:10px 16px"><h3 style="font-size:14px">${n.title||'הערה'}</h3><span class="badge badge-teal" style="font-size:11px">${n.note_type||'כללי'}</span></div>
-      <div style="padding:12px 16px;font-size:14px;color:var(--g700);white-space:pre-wrap">${n.content||''}</div>
-      <div style="padding:6px 16px;font-size:11px;color:var(--g400)">${n.created_at?fmtDate(n.created_at):''}</div>
-    </div>`).join('')}`;
+    ${notes.length===0?'<div class="empty">📝<p>אין הערות</p></div>':`<div class="card" style="padding:0;overflow:hidden">${notes.map(n=>{
+      const profile=allUserProfiles.find(u=>u.user_id===n.user_id);
+      const userName=profile?(profile.display_name||profile.email||''):'';
+      return`<div class="note-row" onclick="toggleNote('note-body-${n.id}')">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
+          <span style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.title||'הערה'}</span>
+          <span class="badge badge-teal" style="font-size:11px;flex-shrink:0">${n.note_type||'כללי'}</span>
+          ${userName?`<span style="font-size:12px;color:var(--g500);white-space:nowrap;flex-shrink:0">✍️ ${userName}</span>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <span style="font-size:12px;color:var(--g400)">${n.created_at?fmtDate(n.created_at):''}</span>
+          ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteNote('${n.id}','${pid}')">🗑️</button>`:''}
+          <span style="color:var(--g400);font-size:12px">▾</span>
+        </div>
+      </div>
+      <div id="note-body-${n.id}" class="note-body" style="display:none">${(n.content||'').replace(/</g,'&lt;')}</div>`;
+    }).join('')}</div>`}`;
+}
+
+function toggleNote(id){
+  const el=document.getElementById(id);
+  if(el) el.style.display=el.style.display==='none'?'':'none';
+}
+
+async function deleteNote(id,pid){
+  if(!confirm('למחוק הערה זו?')) return;
+  await sbDelete('notes',id);
+  allNotes=allNotes.filter(n=>n.id!==id);
+  renderPatientNotes(pid);
 }
 
 function renderBackground(p){
@@ -2188,7 +2214,7 @@ async function deletePayment(payId,pid){
 // === NOTES ===
 function openNoteForPatient(pid){ currentPayPatientId=pid; openModal('modal-new-note'); }
 async function createNote(){
-  const r=await sbInsert('notes',{patient_id:currentPayPatientId,title:document.getElementById('nn-title').value,content:document.getElementById('nn-content').value,note_type:document.getElementById('nn-type').value});
+  const r=await sbInsert('notes',{patient_id:currentPayPatientId,title:document.getElementById('nn-title').value,content:document.getElementById('nn-content').value,note_type:document.getElementById('nn-type').value,user_id:currentUser?.id||null});
   if(r.error) return toast('שגיאה','error');
   toast('הערה נוצרה ✅','success'); closeModal('modal-new-note');
   ['nn-title','nn-content'].forEach(id=>document.getElementById(id).value='');
