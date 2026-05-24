@@ -321,9 +321,9 @@ tr:last-child td{border-bottom:none}
         <div id="main-tab-data" style="display:none">
           <div class="tabs">
             <button class="tab-btn active" onclick="showDataTab('dt-background')">רקע</button>
-            <button class="tab-btn" onclick="showDataTab('dt-observations')">תצפיות ABC</button>
-            <button class="tab-btn" onclick="showDataTab('dt-questionnaires')">שאלונים</button>
             <button class="tab-btn" onclick="showDataTab('dt-documents')">מסמכים</button>
+            <button class="tab-btn" onclick="showDataTab('dt-questionnaires')">שאלונים</button>
+            <button class="tab-btn" onclick="showDataTab('dt-observations')">תצפיות ABC</button>
           </div>
           <div id="dt-background" class="tab-content active"></div>
           <div id="dt-documents" class="tab-content"></div>
@@ -1641,7 +1641,7 @@ function showDataTab(id){
   document.querySelectorAll('#main-tab-data .tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(id)?.classList.add('active');
   currentDataTab=id;
-  const idx=['dt-background','dt-observations','dt-questionnaires','dt-documents'].indexOf(id);
+  const idx=['dt-background','dt-documents','dt-questionnaires','dt-observations'].indexOf(id);
   document.querySelectorAll('#main-tab-data .tab-btn')[idx]?.classList.add('active');
 }
 
