@@ -2031,7 +2031,7 @@ function renderObservations(pid){
     }).join('')}`;
 }
 
-const Q_LABELS={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון הערכה פונקציונלית קונסטרוקטיבית – FBA','fobs':'שאלון פובס'};
+const Q_LABELS={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון הערכה פונקציונלית קונסטרוקטיבית – FBA','fobs':"PDC-HS – צ'ק ליסט לאבחון תפקוד"};
 const Q_FIELDS={
   parent:[
     {type:'section',label:"חלק א' – פרטים ומיקוד ראשוני"},
@@ -2116,18 +2116,41 @@ const Q_FIELDS={
     {id:'summary_q4',label:'שאלתי אותך המון שאלות! עכשיו תורך — אתה רוצה לשאול אותי משהו? מה תרצה לדעת?',type:'textarea'}
   ],
   fobs:[
-    {type:'section',label:'פרטי התצפית'},
-    {id:'obs_date',label:'תאריך תצפית',type:'date'},
-    {id:'location',label:'מיקום',type:'text'},
-    {id:'activity',label:'פעילות',type:'text'},
-    {id:'people_present',label:'אנשים נוכחים',type:'text'},
-    {type:'section',label:'ABC'},
-    {id:'antecedent',label:'A – נסיבות',type:'textarea'},
-    {id:'behavior',label:'B – התנהגות',type:'textarea'},
-    {id:'consequence',label:'C – תוצאה',type:'textarea'},
-    {type:'section',label:'ניתוח'},
-    {id:'function',label:'פונקציה משוערת',type:'select',options:['תשומת לב','בריחה / הימנעות','חושי','קבלת פריט/פעילות','אחר']},
-    {id:'recommendations',label:'המלצות',type:'textarea'}
+    {type:'section',label:'פרטי הסיום'},
+    {id:'worker_name',label:'שם העובד/ת',type:'text'},
+    {id:'interviewer_name',label:'שם המראיין/ת',type:'text'},
+    {id:'problem_description',label:'תיאור הבעיה התפקודית',type:'textarea'},
+    {type:'section',label:'הדרכה'},
+    {id:'training_formal',label:'האם העובד/ת עבר/ה הדרכה פורמאלית במשימה?',type:'select',options:['כן','לא']},
+    {id:'training_type',label:'אם כן — סוג ההדרכה (הוראות / הדגמה / תרגול)',type:'text'},
+    {id:'task_description_know',label:'* האם העובד/ת יכול/ה לתאר בדיוק את המשימה ומתי יש לבצעה?',type:'select',options:['כן','לא']},
+    {id:'past_success',label:'האם יש ראיות לכך שהעובד/ת השלימ/ה את המשימה בהצלחה בעבר?',type:'select',options:['כן','לא']},
+    {id:'speed_capable',label:'* אם נדרשת מהירות — האם העובד/ת מסוגל/ת לבצע במהירות הנדרשת?',type:'select',options:['כן','לא','לא רלוונטי']},
+    {type:'section',label:'בהירות משימה ורמזים'},
+    {id:'task_expected',label:'האם עדכנו את העובד/ת שמצפים ממנו/ה לבצע את המשימה?',type:'select',options:['כן','לא']},
+    {id:'task_purpose',label:"* האם העובד/ת יודע/ת להצהיר את מטרת המשימה?",type:'select',options:['כן','לא']},
+    {id:'visual_aids',label:"* האם עזרים לביצוע (צ'ק ליסט, דף נתונים) ממוקמים במקום נראה?",type:'select',options:['כן','לא']},
+    {id:'reminders',label:'האם העובד/ת מקבל/ת תזכורות מילוליות/כתובות/אלקטרוניות לביצוע המשימה?',type:'select',options:['כן','לא']},
+    {id:'environment',label:'האם המשימה מתבצעת בסביבה המתאימה (לא רועשת/צפופה)?',type:'select',options:['כן','לא']},
+    {type:'section',label:'משאבים, חומרים ותהליכים'},
+    {id:'staff_available',label:'האם יש מספיק עובדים מיומנים וזמינים?',type:'select',options:['כן','לא']},
+    {id:'items_available',label:'* האם פריטים נחוצים להשלמת המשימה זמינים בקלות?',type:'select',options:['כן','לא','לא רלוונטי']},
+    {id:'items_list',label:'פרטו פריטים נחוצים ומידת זמינותם',type:'text'},
+    {id:'items_designed',label:'* האם הפריטים הנחוצים מתוכננים היטב בהתאם לשימוש?',type:'select',options:['כן','לא','לא רלוונטי']},
+    {id:'items_organized',label:'* האם הפריטים הנחוצים מאורגנים היטב בהתאם לשימוש?',type:'select',options:['כן','לא','לא רלוונטי']},
+    {id:'task_standalone',label:'האם ניתן להשלים את המשימה מבלי להשלים קודם משימות אחרות?',type:'select',options:['כן','לא']},
+    {id:'prior_tasks',label:'אם לא — ציינו משימות שיש להשלים קודם',type:'text'},
+    {id:'other_responsible',label:'אם לא — האם עובדים אחרים אחראים להשלמת משימות אלו?',type:'select',options:['כן','לא','לא רלוונטי']},
+    {type:'section',label:'תוצאות התפקוד, מאמץ ותחרות'},
+    {id:'manager_observation',label:'האם מנהל/ת אי פעם צופה בעובד/ת ישירות?',type:'select',options:['כן','לא']},
+    {id:'observation_frequency',label:'אם כן — תדירות (שעתית / יומית / שבועית / חודשית / אחר)',type:'text'},
+    {id:'feedback',label:'האם העובד/ת מקבל/ת משוב על תפקודו/ה?',type:'select',options:['כן','לא']},
+    {id:'feedback_details',label:'אם כן — מי נותן, תדירות, סוג (חיובי/מתקן, כתוב/מילולי)',type:'text'},
+    {id:'impact_visible',label:'האם העובד/ת רואה את ההשפעה של יישום מדויק של המשימה?',type:'select',options:['כן','לא']},
+    {id:'impact_how',label:'אם כן — כיצד?',type:'text'},
+    {id:'task_simple',label:'האם המשימה פשוטה / דורשת מעט מאמץ?',type:'select',options:['כן','לא']},
+    {id:'task_priority',label:'האם המשימה מקבלת קדימות על פני משימות מתחרות?',type:'select',options:['כן','לא']},
+    {id:'competing_tasks',label:'אם לא — אילו משימות מתחרות בה?',type:'text'}
   ]
 };
 
@@ -2176,7 +2199,7 @@ function renderQTabContent(pid){
       <div class="q-form-head">
         <div class="q-bh">ב"ה</div>
         <h2>${Q_LABELS[currentQTab]}</h2>
-        <p>${currentQTab==='parent'?'הערכה קונסטרוקטיבית וממוקדת – משאבים':currentQTab==='staff'?'הערכה קונסטרוקטיבית ממוקדת – כיתה':currentQTab==='functional'?'הערכה ישירה – שיחה עם הילד':'הערכה קונסטרוקטיבית ממוקדת'}</p>
+        <p>${currentQTab==='parent'?'הערכה קונסטרוקטיבית וממוקדת – משאבים':currentQTab==='staff'?'הערכה קונסטרוקטיבית ממוקדת – כיתה':currentQTab==='functional'?'הערכה ישירה – שיחה עם הילד':currentQTab==='fobs'?"צ'ק ליסט לאבחון תפקוד בסביבה הטיפולית":'הערכה קונסטרוקטיבית ממוקדת'}</p>
         <div class="q-pat-info">
           <span>שם: <strong>${patient?.name||'—'}</strong></span>
           ${inst?`<span>מוסד: <strong>${inst.name}</strong></span>`:''}
