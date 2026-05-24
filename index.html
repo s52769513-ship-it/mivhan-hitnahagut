@@ -28,6 +28,10 @@ body{font-family:'Heebo',sans-serif;background:var(--g50);color:var(--g800);dire
 .main{margin-right:var(--sw);flex:1;display:flex;flex-direction:column;min-height:100vh}
 .topbar{height:var(--hh);background:white;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50}
 .topbar-title{font-size:18px;font-weight:700;color:var(--g900)}
+#clock-widget{text-align:left;line-height:1.3;font-family:'Heebo',sans-serif}
+#clock-time{font-size:17px;font-weight:700;color:var(--blue);letter-spacing:1px}
+#clock-date-he{font-size:11px;color:var(--g500);direction:rtl}
+#clock-date-en{font-size:11px;color:var(--g400);direction:ltr}
 .content{padding:24px;flex:1}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:'Heebo',sans-serif}
 .btn-primary{background:var(--blue2);color:white}.btn-primary:hover{background:var(--blue)}
@@ -235,7 +239,13 @@ tr:last-child td{border-bottom:none}
   <main class="main">
     <div class="topbar">
       <span class="topbar-title" id="topbar-title">לוח בקרה</span>
-      <div id="topbar-actions"></div>
+      <div id="topbar-actions">
+        <div id="clock-widget">
+          <div id="clock-time"></div>
+          <div id="clock-date-he"></div>
+          <div id="clock-date-en"></div>
+        </div>
+      </div>
     </div>
     <div class="content">
 
@@ -2590,6 +2600,37 @@ function fmtTime(iso){ if(!iso) return ''; const d=new Date(iso); return `${Stri
 function toLocalInput(iso){ if(!iso) return ''; const d=new Date(iso); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 function localInputToISO(val){ if(!val) return null; return new Date(val).toISOString(); }
 init();
+
+function numToHebrewLetters(n){
+  const pairs=[[400,'ת'],[300,'ש'],[200,'ר'],[100,'ק'],[90,'צ'],[80,'פ'],[70,'ע'],[60,'ס'],[50,'נ'],[40,'מ'],[30,'ל'],[20,'כ'],[10,'י'],[9,'ט'],[8,'ח'],[7,'ז'],[6,'ו'],[5,'ה'],[4,'ד'],[3,'ג'],[2,'ב'],[1,'א']];
+  let r='';
+  for(const [v,l] of pairs){
+    if(n===15){r+='טו';n=0;break;}
+    if(n===16){r+='טז';n=0;break;}
+    while(n>=v){r+=l;n-=v;}
+  }
+  return r;
+}
+function withGershayim(s){
+  if(!s)return'';
+  return s.length===1?s+'׳':s.slice(0,-1)+'״'+s.slice(-1);
+}
+function hebrewCalDate(date){
+  const parts=new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'}).formatToParts(date);
+  let d='',m='',y='';
+  for(const p of parts){if(p.type==='day')d=p.value;else if(p.type==='month')m=p.value;else if(p.type==='year')y=p.value;}
+  const dayHeb=withGershayim(numToHebrewLetters(parseInt(d)));
+  const yearHeb=withGershayim(numToHebrewLetters(parseInt(y)%1000));
+  return `${dayHeb} ב${m} ${yearHeb}`;
+}
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock-time').textContent=now.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('clock-date-he').textContent=now.toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('clock-date-en').textContent=hebrewCalDate(now);
+}
+updateClock();
+setInterval(updateClock,1000);
 </script>
 </body>
 </html>
