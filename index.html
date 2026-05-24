@@ -1991,7 +1991,7 @@ function renderObservations(pid){
     </div>`).join('')}`;
 }
 
-const Q_LABELS={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון פונקציונלי','fobs':'שאלון פובס'};
+const Q_LABELS={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון הערכה פונקציונלית קונסטרוקטיבית – FBA','fobs':'שאלון פובס'};
 const Q_FIELDS={
   parent:[
     {type:'section',label:"חלק א' – פרטים ומיקוד ראשוני"},
@@ -2050,18 +2050,30 @@ const Q_FIELDS={
     {id:'env_change',label:'האם יש התנהלות או שינוי סביבתי שהצוות יכול לבצע באופן קבוע כדי לתמוך בצורה הטובה ביותר בצעד הראשון הזה?',type:'textarea'}
   ],
   functional:[
-    {type:'section',label:'התנהגות מטרה'},
-    {id:'target_behavior',label:'תיאור ההתנהגות המטרה',type:'textarea'},
-    {id:'frequency',label:'תדירות',type:'text'},
-    {id:'intensity',label:'עוצמה (1-5)',type:'select',options:['1','2','3','4','5']},
-    {type:'section',label:'ABC'},
-    {id:'antecedent',label:'A – נסיבות קודמות',type:'textarea'},
-    {id:'behavior',label:'B – תיאור ההתנהגות',type:'textarea'},
-    {id:'consequence',label:'C – תוצאה',type:'textarea'},
-    {type:'section',label:'ניתוח פונקציונלי'},
-    {id:'function',label:'פונקציה משוערת',type:'select',options:['תשומת לב','בריחה / הימנעות','חושי','קבלת פריט/פעילות','אחר']},
-    {id:'hypothesis',label:'השערה',type:'textarea'},
-    {id:'recommendations',label:'המלצות',type:'textarea'}
+    {type:'section',label:'חזון, יעד ומוטיבציה (מה רוצים להשיג?)'},
+    {id:'vision_q1',label:'למה אתה חושב שאנחנו צריכים לעבוד יחד?',type:'textarea'},
+    {id:'vision_q2',label:'בוא/י נדמיין הצלחה. איך ייראה יום הלימודים שלך בסוף התוכנית, כשאתה מרגיש שאתה מצליח?',type:'textarea'},
+    {id:'vision_q3',label:'אם נצייר את המצב, מה אנשים אחרים בסביבתך (חברים, מורים) יראו ויבחינו בך לטובה?',type:'textarea'},
+    {id:'vision_q4',label:'מה אתה מקווה שהשינוי הזה ייתן לך?',type:'textarea'},
+    {type:'section',label:'איסוף משאבים (מה כבר עובד?)'},
+    {id:'resources_q1',label:'מה הדברים שהולכים לך טוב עכשיו בבית הספר או בחיים בכלל?',type:'textarea'},
+    {id:'resources_q2',label:'ומהם הדברים שלא הולך לך טוב עכשיו?',type:'textarea'},
+    {id:'resources_q3',label:'עצום את עיניך לרגע. האם אתה יכול לחשוב על פעם אחת שבה הצלחת להתמודד עם המצב הזה או לעשות את הדבר הרצוי?',type:'textarea'},
+    {id:'resources_q4',label:'מה קרה באותה פעם שאיפשר את ההצלחה?<span class="qf-hint">מה עשית? מי היה שם? איפה היית?</span>',type:'textarea'},
+    {id:'resources_q5',label:'מי או מה גורם לך להרגיש טוב/חזק/שמח? האם אפשר להביא את הגורם הזה לתחום שאנחנו רוצים לשפר?',type:'textarea'},
+    {type:'section',label:'שינוי היסטוריה – בחינת הדרך (מה ניסינו ומה עומד בדרך?)'},
+    {id:'history_q1',label:'מה עשית עד היום כדי לפתור או לשנות את המצב?',type:'textarea'},
+    {id:'history_q2',label:'למה לדעתך הניסיונות האלה עדיין לא עבדו כל כך טוב? מה עומד בדרך ומונע הצלחה מלאה?',type:'textarea'},
+    {id:'history_q3',label:'מה לדעתך אנחנו צריכים לשנות עכשיו, ששונה ממה שניסית בעבר?',type:'textarea'},
+    {type:'section',label:'ניתוח פונקציה ובניית בחירה (למה זה קורה ואיך נחליף?)'},
+    {id:'function_q1',label:'מה אתה מרוויח מלעשות את ההתנהגות המאתגרת? מה זה נותן לך באותו רגע שאתה צריך?',type:'textarea'},
+    {id:'function_q2',label:'אם היית יכול לבחור דרך חכמה יותר להשיג את אותו ה"רווח" — איזו דרך זו הייתה?',type:'textarea'},
+    {id:'function_q3',label:'איזו בחירה מקדימה אתה יכול לעשות לעצמך כדי להשתמש בדרך החדשה שבחרת?<span class="qf-hint">לדוגמה: תזכורת, תכנון, שינוי סביבה.</span>',type:'textarea'},
+    {type:'section',label:'השלכות וסיכום (מה הלאה?)'},
+    {id:'summary_q1',label:'איך השינוי שלך ישפיע על הסביבה שלך (בכיתה, בבית)?',type:'textarea'},
+    {id:'summary_q2',label:'איך היית רוצה להרגיש ולהיראות כשהשינוי הזה יצליח?',type:'textarea'},
+    {id:'summary_q3',label:'האם יש משהו חשוב שהשארנו בחוץ? יש משהו שאתה עדיין רוצה להגיד לי בנוגע למה שדיברנו?',type:'textarea'},
+    {id:'summary_q4',label:'שאלתי אותך המון שאלות! עכשיו תורך — אתה רוצה לשאול אותי משהו? מה תרצה לדעת?',type:'textarea'}
   ],
   fobs:[
     {type:'section',label:'פרטי התצפית'},
@@ -2124,7 +2136,7 @@ function renderQTabContent(pid){
       <div class="q-form-head">
         <div class="q-bh">ב"ה</div>
         <h2>${Q_LABELS[currentQTab]}</h2>
-        <p>${currentQTab==='parent'?'הערכה קונסטרוקטיבית וממוקדת – משאבים':currentQTab==='staff'?'הערכה קונסטרוקטיבית ממוקדת – כיתה':'הערכה קונסטרוקטיבית ממוקדת'}</p>
+        <p>${currentQTab==='parent'?'הערכה קונסטרוקטיבית וממוקדת – משאבים':currentQTab==='staff'?'הערכה קונסטרוקטיבית ממוקדת – כיתה':currentQTab==='functional'?'הערכה ישירה – שיחה עם הילד':'הערכה קונסטרוקטיבית ממוקדת'}</p>
         <div class="q-pat-info">
           <span>שם: <strong>${patient?.name||'—'}</strong></span>
           ${inst?`<span>מוסד: <strong>${inst.name}</strong></span>`:''}
