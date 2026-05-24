@@ -99,6 +99,7 @@ tr:last-child td{border-bottom:none}
 .qf-input:focus{border-bottom-color:var(--blue2);background:var(--g50);border-radius:4px 4px 0 0;padding:5px 6px}
 .qf-select{border:1px solid var(--g300)!important;border-radius:6px;padding:6px 8px;background:white;width:auto;min-width:160px}
 .q-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid var(--g100)}
+.qf-hint{display:block;font-size:11.5px;color:var(--g400);margin-top:2px;font-style:italic;line-height:1.4}
 .tab-content{display:none}.tab-content.active{display:block}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--g200);border-radius:12px;overflow:hidden}
 .cal-header{background:var(--g50);padding:10px 4px;text-align:center;font-size:12px;font-weight:600;color:var(--g500)}
@@ -1993,31 +1994,31 @@ function renderObservations(pid){
 const Q_LABELS={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון פונקציונלי','fobs':'שאלון פובס'};
 const Q_FIELDS={
   parent:[
-    {type:'section',label:'פרטים ומיקוד ראשוני'},
-    {id:'main_challenge',label:'מהו הקושי המרכזי (במשפט אחד)?',type:'textarea'},
-    {id:'desired_behavior',label:'ההתנהגות החיובית הרצויה (כאילו מצלמים אותה)',type:'textarea'},
-    {id:'importance_rating',label:'דירוג חשיבות השינוי (1–10)',type:'select',options:['1','2','3','4','5','6','7','8','9','10']},
-    {type:'section',label:'רקע ואבחנות'},
-    {id:'current_support',label:'האם הילד מקבל כיום סיוע/תמיכה? אם כן, באיזה היקף?',type:'textarea'},
-    {id:'strengths',label:'מה כבר הולך לו טוב? (לימודי/חברתי/מוטורי)',type:'textarea'},
-    {id:'past_interventions',label:'אילו טיפולים / תוכניות ניסיתם בעבר?',type:'textarea'},
-    {id:'what_worked',label:'מה עבד אפילו קצת?',type:'textarea'},
+    {type:'section',label:"חלק א' – פרטים ומיקוד ראשוני"},
+    {id:'teacher',label:'מלמד',type:'text'},
+    {id:'main_challenge',label:'מהו, במשפט אחד "הקושי המרכזי" או המצב הלא רצוי שהוביל אתכם לפנות לטיפול?<span class="qf-hint">הגדרה ברורה, קצרה ואובייקטיבית של המצב שהוביל לפנייה.</span>',type:'textarea'},
+    {id:'desired_behavior',label:'במקום המצב הלא רצוי, מהי ההתנהגות החיובית הספציפית שתרצו לראות?<span class="qf-hint">תארו אותה כאילו אתם מצלמים אותה.</span>',type:'textarea'},
+    {id:'importance_rating',label:'בדירוג מ‑1 (בקושי) עד 10 (משנה חיים) — עד כמה השינוי הזה ישפר באופן מוחשי את איכות חיי המשפחה?',type:'select',options:['1','2','3','4','5','6','7','8','9','10']},
+    {type:'section',label:"חלק ב' – רקע היסטורי, אבחנות וניתוח הצלחות עבר"},
+    {id:'diagnosis',label:'האם יש לילד אבחנה רשמית?<span class="qf-hint">כגון לקות תקשורת, קשב וריכוז, עיכוב התפתחותי, וכד\'.</span>',type:'textarea'},
+    {id:'strengths',label:'מה כבר הולך לו טוב עכשיו? איפה הוא חזק? מתי הוא הכי רגוע או שמח? מי או מה מחזק אותו?',type:'textarea'},
+    {id:'past_interventions',label:'אילו טיפולים או תוכניות ניסיתם בעבר?<span class="qf-hint">כגון ריפוי בעיסוק, קלינאית תקשורת, ייעוץ הורים, וכד\'.</span>',type:'textarea'},
+    {id:'what_worked',label:'מכל מה שניסיתם, האם יש דברים שעבדו אפילו קצת?',type:'textarea'},
     {id:'why_stopped',label:'מה גרם להם להפסיק לעבוד?',type:'textarea'},
-    {id:'problem_onset',label:'מתי הבעיות החלו? האם השתנו עם הזמן?',type:'textarea'},
-    {id:'red_flags',label:'דגלים אדומים / טריגרים ידועים',type:'textarea'},
-    {type:'section',label:'ABC – ניתוח ההתנהגות'},
-    {id:'antecedent',label:'A – מה קדם להתנהגות?',type:'textarea'},
-    {id:'behavior',label:'B – תיאור ההתנהגות',type:'textarea'},
-    {id:'consequence',label:'C – מה קורה אחרי?',type:'textarea'},
-    {id:'frequency',label:'תדירות (פעמים ביום/שבוע)',type:'text'},
-    {id:'intensity',label:'עוצמה (1-5)',type:'select',options:['1','2','3','4','5']},
-    {type:'section',label:'חיזוקים וחוזקות'},
-    {id:'reinforcers',label:'מה הוא הכי אוהב לעשות / לקבל?',type:'textarea'},
-    {id:'talents',label:'הישגים / כישרונות שאינם קשורים לקושי',type:'textarea'},
-    {id:'what_helps',label:'מה עוזר / מה עובד',type:'textarea'},
-    {id:'green_flags',label:'דגלים ירוקים / חוזקות',type:'textarea'},
-    {type:'section',label:'הערות'},
-    {id:'notes',label:'הערות נוספות',type:'textarea'}
+    {id:'problem_onset',label:'מתי הבעיות האלו החלו? האם הן השתנו עם השנים?<span class="qf-hint">תארו את התקופה שבה היה הכי קל לכם מבחינת ההתמודדות.</span>',type:'textarea'},
+    {id:'dev_delays',label:'האם היו דגלים אדומים או עיכובים משמעותיים בהתפתחות מיומנויות בסיסיות?<span class="qf-hint">כגון שפה, מוטוריקה גסה/עדינה בשלבים מוקדמים.</span>',type:'textarea'},
+    {type:'section',label:"חלק ג' – ניתוח ההקשר והרפרטואר החיובי (חיזוקים)"},
+    {id:'reinforcers',label:'מהם הדברים שהוא הכי אוהב לעשות / לקבל?<span class="qf-hint">אלו שגורמים לו לרצות להתאמץ או להשקיע כדי להשיג אותם.</span>',type:'textarea'},
+    {id:'talents',label:'מהם ההישגים או הכישרונות של הילד בתחומים שאינם קשורים לקושי?<span class="qf-hint">דוגמא: טוב בציור/בצבע, עוזר לאחים קטנים, משחק בשקט.</span>',type:'textarea'},
+    {id:'success_situation',label:'תארו מצב שבו הילד כן הצליח לקיים את ההתנהגות הרצויה (או חלק ממנה). מה קרה רגע לפני ההצלחה הזו, ומה הייתה התגובה שלכם?',type:'textarea'},
+    {id:'easy_requests',label:'האם יש דברים שאתם מבקשים ממנו והוא מבצע מיד וללא ויכוח?<span class="qf-hint">אם כן — מה מאפיין את הבקשות או ההקשר הזה?</span>',type:'textarea'},
+    {id:'green_flags',label:'האם אתם מזהים דגלים ירוקים? חוזקות מוגדרות וכלים מעשיים שניתן לקחת כדי לבנות עם הילד תוכנית?',type:'textarea'},
+    {type:'section',label:"חלק ד' – ניתוח השרשרת והפונקציה של הקושי"},
+    {id:'antecedent',label:'תארו דוגמה ספציפית: מה בדיוק קרה (אילו שינויים, בקשות או פעולות) רגע לפני שהקושי מתחיל?',type:'textarea'},
+    {id:'main_outcome',label:'כאשר הקושי מתרחש, מהי התוצאה העיקרית?<span class="qf-hint">דוגמה: הוא משיג את תשומת הלב שלכם, הוא נמנע מהמטלה, או הוא מקבל את מה שרצה.</span>',type:'textarea'},
+    {type:'section',label:"חלק ה' – תכנון קונסטרוקטיבי וצעד ראשון"},
+    {id:'first_step',label:'בהתבסס על ההצלחות הקטנות שתיארתם — מהי הצעד הקטן, הקל והראשון ביותר שאתם מאמינים שהילד יכול לבצע כבר היום כדי להתחיל להתקרב למטרה הגדולה?',type:'textarea'},
+    {id:'reinforcement_plan',label:'אם הילד יבצע בהצלחה את הצעד הקטן והראשון — באיזה מחזק מעודף תשתמשו כדי לחזק את ההתנהגות?',type:'textarea'}
   ],
   staff:[
     {type:'section',label:'חלק א׳ – פרטים ומיקוד ראשוני'},
@@ -2123,7 +2124,7 @@ function renderQTabContent(pid){
       <div class="q-form-head">
         <div class="q-bh">ב"ה</div>
         <h2>${Q_LABELS[currentQTab]}</h2>
-        <p>הערכה קונסטרוקטיבית ממוקדת</p>
+        <p>${currentQTab==='parent'?'הערכה קונסטרוקטיבית וממוקדת – משאבים':'הערכה קונסטרוקטיבית ממוקדת'}</p>
         <div class="q-pat-info">
           <span>שם: <strong>${patient?.name||'—'}</strong></span>
           ${inst?`<span>מוסד: <strong>${inst.name}</strong></span>`:''}
