@@ -51,14 +51,15 @@ tr:last-child td{border-bottom:none}
 .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600}
 .badge-green{background:var(--green-light);color:#0F6E56}.badge-red{background:var(--red-light);color:var(--red)}
 .badge-blue{background:var(--blue-light);color:var(--blue)}.badge-amber{background:var(--amber-light);color:var(--amber)}
-.queue-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
-.queue-card{border-radius:10px;padding:14px 16px;border:1px solid var(--g200);background:white;cursor:pointer;transition:background .1s}
+.queue-grid{display:flex;gap:8px;margin-bottom:16px;flex-wrap:nowrap}
+.queue-card{border-radius:8px;padding:7px 12px;border:1px solid var(--g200);background:white;cursor:pointer;transition:background .1s;display:flex;align-items:center;gap:10px;flex:1;min-width:0;white-space:nowrap;overflow:hidden}
 .queue-card:hover{background:var(--g50)}.queue-card.current{border-color:var(--blue2);background:var(--blue-light)}
 .queue-card.current:hover{background:#dbeafe}
-.queue-card-label{font-size:11px;font-weight:700;color:var(--g400);margin-bottom:6px;letter-spacing:.3px}
+.queue-card-label{font-size:10px;font-weight:700;color:var(--g400);white-space:nowrap;flex-shrink:0}
 .queue-card.current .queue-card-label{color:var(--blue2)}
-.queue-card-name{font-size:15px;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.queue-card-phone{font-size:13px;color:var(--g500)}.queue-card-time{font-size:12px;color:var(--g400);margin-top:4px}
+.queue-card-name{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.queue-card-phone{font-size:12px;color:var(--g500);white-space:nowrap;flex-shrink:0}
+.queue-card-time{font-size:11px;color:var(--g400);white-space:nowrap;flex-shrink:0}
 .apt-reminder{background:white;border:2px solid var(--blue2);border-radius:12px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:240px;animation:slideInLeft .3s ease;cursor:pointer}
 @keyframes slideInLeft{from{transform:translateX(-110%);opacity:0}to{transform:translateX(0);opacity:1}}
 .badge-teal{background:#E0F4F8;color:#1A6E82}
@@ -1125,12 +1126,12 @@ function renderQueueWidget(){
     const name=p?p.name:(a.name||'פגישה');
     const phone=p&&p.phone?p.phone:'';
     const msLeft=new Date(a.start_time)-now;
-    const countdown=showCountdown&&msLeft>0?`<div style="margin-top:6px;font-size:13px;font-weight:700;color:var(--green)">⏱ ${fmtCountdown(msLeft)}</div>`:'';
+    const countdown=showCountdown&&msLeft>0?`<div style="font-size:11px;font-weight:700;color:var(--green);white-space:nowrap;flex-shrink:0">⏱ ${fmtCountdown(msLeft)}</div>`:'';
     return `<div class="queue-card${isCurrent?' current':''}" onclick="openEditApt('${a.id}')">
       <div class="queue-card-label">${label}</div>
-      <div class="queue-card-name">${name}</div>
-      ${phone?`<div class="queue-card-phone">📞 ${phone}</div>`:'<div class="queue-card-phone" style="color:var(--g300)">אין טלפון</div>'}
       <div class="queue-card-time">${fmtTime(a.start_time)}</div>
+      <div class="queue-card-name" style="flex:1">${name}</div>
+      ${phone?`<div class="queue-card-phone">📞 ${phone}</div>`:''}
       ${countdown}
     </div>`;
   }
