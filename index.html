@@ -2971,7 +2971,7 @@ ${strength?'חוזקות/משאבים: '+strength:''}
     const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+geminiKey},
-      body:JSON.stringify({model:'meta-llama/llama-3.3-70b-instruct:free',messages:[{role:'user',content:prompt}],temperature:0.7,max_tokens:800})
+      body:JSON.stringify({model:'mistralai/mistral-7b-instruct:free',messages:[{role:'user',content:prompt}],temperature:0.7,max_tokens:800})
     });
     if(!r.ok){
       const e=await r.json();
