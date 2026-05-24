@@ -103,6 +103,7 @@ tr:last-child td{border-bottom:none}
 .cal-day.today .cal-date{color:var(--blue)}.cal-day.other-month .cal-date{color:var(--g300)}
 .cal-apt{background:var(--blue-light);color:var(--blue);border-radius:4px;padding:2px 5px;font-size:11px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cal-apt.arrived{background:var(--green-light);color:#0F6E56}
+.cal-day-holiday{background:#fff7ed !important}.cal-day-holiday.today{background:#fef3c7 !important}
 .day-slot{display:flex;align-items:stretch;border-bottom:1px solid var(--g100);min-height:48px}
 .day-slot-time{width:54px;min-width:54px;padding:8px 6px;font-size:12px;font-weight:700;color:var(--g500);text-align:center;border-left:2px solid var(--g100);background:var(--g50)}
 .day-slot-content{flex:1;padding:6px 10px;font-size:13px}
@@ -671,6 +672,7 @@ let cloudName=localStorage.getItem('cloud_name')||'dyrcadfnn';
 let cloudPreset=localStorage.getItem('cloud_preset')||'ml_default';
 try{ emailjs.init(ejsPublicKey); }catch(e){ console.warn('EmailJS not loaded:', e); }
 let calDate = new Date();
+const holidayCache = {};
 let taskFilter = 'all';
 let currentPatientId = null;
 let currentPayPatientId = null;
@@ -1248,6 +1250,7 @@ async function renderDashboard(){
   taskEl.innerHTML=todayTasks.length===0?'<div class="empty">✅<p>אין משימות להיום</p></div>':todayTasks.map(t=>`<div style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px;transition:background .1s" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0" onclick="event.stopPropagation()"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span><button onclick="openEditTask('${t.id}')" class="btn btn-secondary btn-sm" style="flex-shrink:0">✏️</button></div>`).join('');
   renderQueueWidget();
   renderCalendar('calendar-grid','cal-month-title');
+  fetchAndCacheHolidays(calDate.getFullYear(),calDate.getMonth());
 }
 
 async function quickConnect(){
@@ -1282,17 +1285,24 @@ function renderCalendar(gridId, titleId){
   const today=new Date(); today.setHours(0,0,0,0);
   let html=HEB_DAYS.map(d=>`<div class="cal-header">${d}</div>`).join('');
   for(let i=0;i<firstDay;i++) html+=`<div class="cal-day other-month"></div>`;
+  const holMap=(holidayCache[`${year}-${month}`])||{};
+  const holColor={holiday:'#dc2626',yomtov:'#dc2626',roshchodesh:'#0891b2',fast:'#92400e',modern:'#166534',chanukah:'#7c3aed',minor:'#7c3aed',special:'#92400e'};
   for(let d=1;d<=daysInMonth;d++){
     const date=new Date(year,month,d); date.setHours(0,0,0,0);
     const isToday=date.getTime()===today.getTime();
     const apts=allAppointments.filter(a=>{if(!a.start_time)return false;const ad=new Date(a.start_time);ad.setHours(0,0,0,0);return ad.getTime()===date.getTime();});
     const hebDate=getHebrewDate(date);
     const aptsHtml=apts.slice(0,2).map(a=>{const p=allPatients.find(x=>x.id===a.patient_id);return`<div class="cal-apt ${a.arrived?'arrived':''}">${fmtTime(a.start_time)} ${p?p.name:a.name||''}</div>`;}).join('');
-    html+=`<div class="cal-day ${isToday?'today':''}" onclick="openDayView(new Date(${year},${month},${d}))">
+    const dateKey=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayHols=(holMap[dateKey]||[]).filter(h=>h.category!=='parashat');
+    const holHtml=dayHols.slice(0,2).map(h=>`<div style="font-size:9px;font-weight:700;color:${holColor[h.category]||'#7c3aed'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;margin-bottom:1px">${h.title}</div>`).join('');
+    const hasMajor=dayHols.some(h=>h.category==='holiday'||h.category==='yomtov');
+    html+=`<div class="cal-day ${isToday?'today':''} ${hasMajor?'cal-day-holiday':''}" onclick="openDayView(new Date(${year},${month},${d}))">
       <div style="display:flex;justify-content:space-between;align-items:start">
         <div class="cal-date" style="font-size:13px;font-weight:700">${d}</div>
         <div style="font-size:10px;color:var(--g400);margin-top:1px">${hebDate}</div>
       </div>
+      ${holHtml}
       ${aptsHtml}
       ${apts.length>2?`<div style="font-size:10px;color:var(--blue2)">+${apts.length-2} עוד</div>`:''}
     </div>`;
@@ -1301,8 +1311,30 @@ function renderCalendar(gridId, titleId){
   if(el) el.innerHTML=html;
 }
 
-function changeMonth(dir){ calDate.setMonth(calDate.getMonth()+dir); renderCalendar('calendar-grid','cal-month-title'); renderDiaryCalendar(); }
-function goToday(){ calDate=new Date(); renderCalendar('calendar-grid','cal-month-title'); renderDiaryCalendar(); }
+function changeMonth(dir){ calDate.setMonth(calDate.getMonth()+dir); renderCalendar('calendar-grid','cal-month-title'); renderDiaryCalendar(); fetchAndCacheHolidays(calDate.getFullYear(),calDate.getMonth()); }
+function goToday(){ calDate=new Date(); renderCalendar('calendar-grid','cal-month-title'); renderDiaryCalendar(); fetchAndCacheHolidays(calDate.getFullYear(),calDate.getMonth()); }
+
+async function fetchAndCacheHolidays(year, month){
+  const key=`${year}-${month}`;
+  if(holidayCache[key]!==undefined) return;
+  holidayCache[key]={};
+  try{
+    const url=`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&mod=on&nx=on&year=${year}&month=${month+1}&ss=on&mf=on&c=off&geo=none&lg=he`;
+    const r=await fetch(url);
+    if(!r.ok) return;
+    const data=await r.json();
+    const map={};
+    (data.items||[]).forEach(item=>{
+      const d=item.date?.slice(0,10);
+      if(!d) return;
+      if(!map[d]) map[d]=[];
+      map[d].push({title:item.title,category:item.category||''});
+    });
+    holidayCache[key]=map;
+    renderCalendar('calendar-grid','cal-month-title');
+    renderCalendar('diary-cal','diary-month-title');
+  }catch(e){}
+}
 
 function renderDiaryCalendar(){
   const year=calDate.getFullYear(), month=calDate.getMonth();
