@@ -422,10 +422,10 @@ tr:last-child td{border-bottom:none}
           </div>
         </div>
         <div class="card" style="max-width:560px;margin-bottom:20px">
-          <div class="card-header"><h3><i data-lucide="sparkles"></i> עוזר AI – מטרות SMART (Gemini)</h3></div>
+          <div class="card-header"><h3><i data-lucide="sparkles"></i> עוזר AI – מטרות SMART (Groq)</h3></div>
           <div class="card-body">
-            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">הירשם בחינם ב-<strong>aistudio.google.com</strong>, לחץ "Get API Key" וקבל מפתח חינמי ללא כרטיס אשראי.</p>
-            <div class="form-group"><label class="form-label">Gemini API Key</label><input type="text" class="form-control" id="settings-gemini-key" placeholder="AIzaSy..." dir="ltr"></div>
+            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">הירשם בחינם ב-<strong>console.groq.com</strong> → API Keys → Create API Key. חינמי לחלוטין, ללא כרטיס אשראי.</p>
+            <div class="form-group"><label class="form-label">Groq API Key</label><input type="text" class="form-control" id="settings-gemini-key" placeholder="gsk_..." dir="ltr"></div>
             <button class="btn btn-primary" onclick="saveGeminiSettings()"><i data-lucide="save"></i> שמור</button>
             <div id="gemini-settings-status" style="margin-top:10px;font-size:13px"></div>
           </div>
@@ -2889,7 +2889,7 @@ function loadSettings(){
   const cs=document.getElementById('cloud-settings-status');
   if(cs) cs.innerHTML=cloudName?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> Cloudinary מוגדר</span>':'';
   const gs=document.getElementById('gemini-settings-status');
-  if(gs) gs.innerHTML=geminiKey?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> Gemini מוגדר</span>':'';
+  if(gs) gs.innerHTML=geminiKey?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> Groq מוגדר</span>':'';
 }
 
 function saveEmailSettings(){
@@ -2916,11 +2916,11 @@ function saveCloudinarySettings(){
 
 function saveGeminiSettings(){
   const k=document.getElementById('settings-gemini-key').value.trim();
-  if(!k) return toast('נא להזין Gemini API Key','error');
+  if(!k) return toast('נא להזין Groq API Key','error');
   geminiKey=k;
   localStorage.setItem('gemini_key',k);
-  document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> Gemini נשמר</span>';
-  toast('הגדרות Gemini נשמרו <i data-lucide="check-circle"></i>','success');
+  document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> Groq נשמר</span>';
+  toast('הגדרות Groq נשמרו <i data-lucide="check-circle"></i>','success');
 }
 
 // === GEMINI SMART ===
@@ -2935,7 +2935,7 @@ function openSmartAssistant(pid){
 }
 
 async function callGeminiSMART(){
-  if(!geminiKey) return toast('נא להגדיר Gemini API Key בהגדרות','error');
+  if(!geminiKey) return toast('נא להגדיר Groq API Key בהגדרות','error');
   const behavior=document.getElementById('smart-behavior').value.trim();
   const context=document.getElementById('smart-context').value.trim();
   const desired=document.getElementById('smart-desired').value.trim();
@@ -2968,19 +2968,17 @@ ${strength?'חוזקות/משאבים: '+strength:''}
 כתוב בעברית בלבד, קצר וברור.`;
 
   try{
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,{
+    const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,maxOutputTokens:800}})
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+geminiKey},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],temperature:0.7,max_tokens:800})
     });
     if(!r.ok){
       const e=await r.json();
-      const msg=e.error?.message||'שגיאה מ-Gemini';
-      if(msg.includes('quota')||msg.includes('limit: 0')) throw new Error('חרגת מהמכסה החינמית או שה-API Key אינו תקף לחשבון חינמי. יש להשתמש בחשבון Gmail אישי (לא Workspace) ב-aistudio.google.com ולהפיק Key חדש.');
-      throw new Error(msg);
+      throw new Error(e.error?.message||'שגיאה מה-API');
     }
     const data=await r.json();
-    const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'לא התקבלה תשובה';
+    const text=data.choices?.[0]?.message?.content||'לא התקבלה תשובה';
     document.getElementById('smart-result-text').textContent=text;
     document.getElementById('smart-result').style.display='block';
     lucide.createIcons();
