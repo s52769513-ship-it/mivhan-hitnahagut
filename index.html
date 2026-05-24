@@ -1122,7 +1122,13 @@ function renderQueueWidget(){
   const next=curIdx<todayApts.length-1?todayApts[curIdx+1]:(curIdx===-1?todayApts[0]:null);
 
   function qCard(a,label,isCurrent,showCountdown){
-    if(!a) return `<div class="queue-card" style="opacity:.3;display:flex;align-items:center;justify-content:center;min-height:80px;color:var(--g400);font-size:13px;cursor:default">—</div>`;
+    if(!a){
+      const emptyMsg=isCurrent?'אין פגישה עכשיו':'—';
+      return `<div class="queue-card${isCurrent?' current':''}" style="opacity:.45;cursor:default">
+        <div class="queue-card-label">${label}</div>
+        <div class="queue-card-name" style="flex:1;color:var(--g400)">${emptyMsg}</div>
+      </div>`;
+    }
     const p=allPatients.find(x=>x.id===a.patient_id);
     const name=p?p.name:(a.name||'פגישה');
     const phone=p&&p.phone?p.phone:'';
@@ -1136,12 +1142,14 @@ function renderQueueWidget(){
       ${countdown}
     </div>`;
   }
+  const notifBtn=('Notification' in window&&Notification.permission==='default')
+    ?`<button onclick="Notification.requestPermission().then(renderQueueWidget)" class="btn btn-secondary btn-sm" style="white-space:nowrap;flex-shrink:0">🔔 אפשר התראות</button>`:'';
   el.style.display='';
-  // RTL: first item appears on right → prev on right, current middle, next on left
   el.innerHTML=`<div class="queue-grid">
     ${qCard(prev,'תור קודם',false,false)}
     ${qCard(current,'⬤ תור נוכחי',true,false)}
     ${qCard(next,'תור הבא',false,true)}
+    ${notifBtn?`<div style="display:flex;align-items:center">${notifBtn}</div>`:''}
   </div>`;
 }
 let queueWidgetInterval=null;
@@ -1185,10 +1193,7 @@ function playReminderSound(){
     });
   }catch(e){}
 }
-function requestNotificationPermission(){
-  if(!('Notification' in window)) return;
-  if(Notification.permission==='default') Notification.requestPermission();
-}
+function requestNotificationPermission(){ /* triggered by user click in queue widget */ }
 
 function sendBrowserNotification(a,p){
   if(!('Notification' in window)||Notification.permission!=='granted') return;
