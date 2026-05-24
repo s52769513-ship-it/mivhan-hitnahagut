@@ -2087,7 +2087,7 @@ function renderObservations(pid){
     }).join('')}`;
 }
 
-const Q_LABELS={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון הערכה פונקציונלית קונסטרוקטיבית – FBA','fobs':"PDC-HS – צ'ק ליסט לאבחון תפקוד"};
+const Q_LABELS={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון הערכה פונקציונלית קונסטרוקטיבית – FBA','fobs':'שאלון פוב"ס – פותר.ת הבעיות'};
 const Q_FIELDS={
   parent:[
     {type:'section',label:"חלק א' – פרטים ומיקוד ראשוני"},
@@ -2172,41 +2172,67 @@ const Q_FIELDS={
     {id:'summary_q4',label:'שאלתי אותך המון שאלות! עכשיו תורך — אתה רוצה לשאול אותי משהו? מה תרצה לדעת?',type:'textarea'}
   ],
   fobs:[
-    {type:'section',label:'פרטי הסיום'},
-    {id:'worker_name',label:'שם העובד/ת',type:'text'},
-    {id:'interviewer_name',label:'שם המראיין/ת',type:'text'},
-    {id:'problem_description',label:'תיאור הבעיה התפקודית',type:'textarea'},
-    {type:'section',label:'הדרכה'},
-    {id:'training_formal',label:'האם העובד/ת עבר/ה הדרכה פורמאלית במשימה?',type:'select',options:['כן','לא']},
-    {id:'training_type',label:'אם כן — סוג ההדרכה (הוראות / הדגמה / תרגול)',type:'text'},
-    {id:'task_description_know',label:'* האם העובד/ת יכול/ה לתאר בדיוק את המשימה ומתי יש לבצעה?',type:'select',options:['כן','לא']},
-    {id:'past_success',label:'האם יש ראיות לכך שהעובד/ת השלימ/ה את המשימה בהצלחה בעבר?',type:'select',options:['כן','לא']},
-    {id:'speed_capable',label:'* אם נדרשת מהירות — האם העובד/ת מסוגל/ת לבצע במהירות הנדרשת?',type:'select',options:['כן','לא','לא רלוונטי']},
-    {type:'section',label:'בהירות משימה ורמזים'},
-    {id:'task_expected',label:'האם עדכנו את העובד/ת שמצפים ממנו/ה לבצע את המשימה?',type:'select',options:['כן','לא']},
-    {id:'task_purpose',label:"* האם העובד/ת יודע/ת להצהיר את מטרת המשימה?",type:'select',options:['כן','לא']},
-    {id:'visual_aids',label:"* האם עזרים לביצוע (צ'ק ליסט, דף נתונים) ממוקמים במקום נראה?",type:'select',options:['כן','לא']},
-    {id:'reminders',label:'האם העובד/ת מקבל/ת תזכורות מילוליות/כתובות/אלקטרוניות לביצוע המשימה?',type:'select',options:['כן','לא']},
-    {id:'environment',label:'האם המשימה מתבצעת בסביבה המתאימה (לא רועשת/צפופה)?',type:'select',options:['כן','לא']},
-    {type:'section',label:'משאבים, חומרים ותהליכים'},
-    {id:'staff_available',label:'האם יש מספיק עובדים מיומנים וזמינים?',type:'select',options:['כן','לא']},
-    {id:'items_available',label:'* האם פריטים נחוצים להשלמת המשימה זמינים בקלות?',type:'select',options:['כן','לא','לא רלוונטי']},
-    {id:'items_list',label:'פרטו פריטים נחוצים ומידת זמינותם',type:'text'},
-    {id:'items_designed',label:'* האם הפריטים הנחוצים מתוכננים היטב בהתאם לשימוש?',type:'select',options:['כן','לא','לא רלוונטי']},
-    {id:'items_organized',label:'* האם הפריטים הנחוצים מאורגנים היטב בהתאם לשימוש?',type:'select',options:['כן','לא','לא רלוונטי']},
-    {id:'task_standalone',label:'האם ניתן להשלים את המשימה מבלי להשלים קודם משימות אחרות?',type:'select',options:['כן','לא']},
-    {id:'prior_tasks',label:'אם לא — ציינו משימות שיש להשלים קודם',type:'text'},
-    {id:'other_responsible',label:'אם לא — האם עובדים אחרים אחראים להשלמת משימות אלו?',type:'select',options:['כן','לא','לא רלוונטי']},
-    {type:'section',label:'תוצאות התפקוד, מאמץ ותחרות'},
-    {id:'manager_observation',label:'האם מנהל/ת אי פעם צופה בעובד/ת ישירות?',type:'select',options:['כן','לא']},
-    {id:'observation_frequency',label:'אם כן — תדירות (שעתית / יומית / שבועית / חודשית / אחר)',type:'text'},
-    {id:'feedback',label:'האם העובד/ת מקבל/ת משוב על תפקודו/ה?',type:'select',options:['כן','לא']},
-    {id:'feedback_details',label:'אם כן — מי נותן, תדירות, סוג (חיובי/מתקן, כתוב/מילולי)',type:'text'},
-    {id:'impact_visible',label:'האם העובד/ת רואה את ההשפעה של יישום מדויק של המשימה?',type:'select',options:['כן','לא']},
-    {id:'impact_how',label:'אם כן — כיצד?',type:'text'},
-    {id:'task_simple',label:'האם המשימה פשוטה / דורשת מעט מאמץ?',type:'select',options:['כן','לא']},
-    {id:'task_priority',label:'האם המשימה מקבלת קדימות על פני משימות מתחרות?',type:'select',options:['כן','לא']},
-    {id:'competing_tasks',label:'אם לא — אילו משימות מתחרות בה?',type:'text'}
+    {id:'filled_by',label:'שם המורה / אשת הטיפול',type:'text'},
+    {id:'student_initials',label:'שם התלמיד (ניתן בראשי תיבות)',type:'text'},
+    {id:'age',label:'גיל',type:'text'},
+    {id:'diagnosis',label:'אבחנה',type:'text'},
+    {id:'framework',label:'מסגרת חינוכית',type:'select',options:['חינוך רגיל','כיתה קטנה','גן חינוך מיוחד','בי"ס כוללני']},
+    {id:'fobs_date',label:'תאריך',type:'date'},
+    {type:'info',label:'סולם ניקוד: 0 = פותר.ת באופן שאינו מקובל חברתית (כוח) | 1 = נמנע.ת / בוכה / קופא.ת | 2 = זקוק.ה לתיווך | 3 = זקוק.ה לתזכורת בלבד ואז פותר.ת עצמאית | 4 = פותר.ת עצמאית | ל.ר = לא רלוונטי (אין בעיה)'},
+    {type:'section',label:'חברתי'},
+    {id:'s1',label:'החבר לא רוצה לחלוק איתי',type:'rating'},
+    {id:'s2',label:'החבר לא סולח לי למרות שביקשתי סליחה',type:'rating'},
+    {id:'s3',label:'החברים משחקים משחק ואני לא יודע.ת את הכללים',type:'rating'},
+    {id:'s4',label:'חבר קורא לי בשמות',type:'rating'},
+    {id:'s5',label:'חבר לוקח ממני פריט אישי ללא רשות',type:'rating'},
+    {id:'s6',label:'אני רוצה לשחק עם חברים בהפסקה ולא יודע.ת איך',type:'rating'},
+    {id:'s7',label:'המשחק שאני רוצה תפוס אצל חבר אחר',type:'rating'},
+    {id:'s8',label:'החבר עושה משהו שמעצבן אותי',type:'rating'},
+    {id:'s9',label:'הפסדתי במשחק מול חברים ואני רוצה לנצח',type:'rating'},
+    {id:'s10',label:'אני רוצה להיות ראשון ומישהו אחר ראשון',type:'rating'},
+    {id:'s11',label:'אני רוצה לשחק במשחק שבחרתי והחברים לא מסכימים',type:'rating'},
+    {id:'s12',label:'חבר לא רוצה לשחק איתי',type:'rating'},
+    {type:'section',label:'התנהגותי אקדמי'},
+    {id:'a1',label:'המורה אומרת לי לעשות משימה ואני לא רוצה',type:'rating'},
+    {id:'a2',label:'יש משימה בשיעור ואני לא יודע.ת מה עושים',type:'rating'},
+    {id:'a3',label:'המורה אומרת לי שיש טעות במשימה בשיעור',type:'rating'},
+    {id:'a4',label:'המשימה קשה לי מדי',type:'rating'},
+    {type:'section',label:'סנסורי'},
+    {id:'sen1',label:'מציק לי בגוף (פצע, יובש)',type:'rating'},
+    {id:'sen2',label:'יש יותר מדי דברים מסביבי גם קולות וגם מראות',type:'rating'},
+    {id:'sen3',label:'יש רעש חזק ולא נעים לי',type:'rating'},
+    {id:'sen4',label:'ילד אחר בוכה ואני לא מסוגל.ת לשמוע',type:'rating'},
+    {type:'section',label:'אחר / התנהגותי רגשי'},
+    {id:'e1',label:"אני רוצה לשחק ב_____ (לדוג' מחשב) עכשיו וקשה לי לחכות לסוף השיעור",type:'rating'},
+    {id:'e2',label:'אני לא מצליח.ה להרכיב משהו (פאזל, משחק)',type:'rating'},
+    {id:'e3',label:'המורה מתייחסת לילד אחר ואני רוצה שתתייחס אלי',type:'rating'},
+    {id:'e4',label:'קשה לי לשבת לאורך זמן בשיעור ובמשימות',type:'rating'},
+    {id:'e5',label:'אני רוצה להגיד משהו בשיעור והמורה לא נותנת לי לענות ונותנת למישהו אחר',type:'rating'},
+    {id:'e6',label:'המחשב / המשחק לא עובד לי',type:'rating'},
+    {id:'e7',label:'המורה אומרת לי להפסיק לשחק במחשב ואני לא רוצה',type:'rating'},
+    {id:'e8',label:'אין לי עיפרון / מחק לבצע את המשימה',type:'rating'},
+    {id:'e9',label:'אני כועס.ת ונסער.ת ולא מצליח.ה להירגע',type:'rating'},
+    {id:'e10',label:'אמא הביאה לי אוכל שאני לא אוהב.ת',type:'rating'},
+    {id:'e11',label:'קשה לי לחכות בתור',type:'rating'},
+    {type:'section',label:'בעיות אחרות (לנסח בגוף ראשון)'},
+    {id:'oth1_domain',label:'תחום בעיה 1',type:'select',options:['חברתי','התנהגותי אקדמי','סנסורי','התנהגותי רגשי']},
+    {id:'oth1_text',label:'תיאור הבעיה 1',type:'text'},
+    {id:'oth1_rating',label:'ניקוד 1',type:'rating'},
+    {id:'oth2_domain',label:'תחום בעיה 2',type:'select',options:['חברתי','התנהגותי אקדמי','סנסורי','התנהגותי רגשי']},
+    {id:'oth2_text',label:'תיאור הבעיה 2',type:'text'},
+    {id:'oth2_rating',label:'ניקוד 2',type:'rating'},
+    {id:'oth3_domain',label:'תחום בעיה 3',type:'select',options:['חברתי','התנהגותי אקדמי','סנסורי','התנהגותי רגשי']},
+    {id:'oth3_text',label:'תיאור הבעיה 3',type:'text'},
+    {id:'oth3_rating',label:'ניקוד 3',type:'rating'},
+    {id:'oth4_domain',label:'תחום בעיה 4',type:'select',options:['חברתי','התנהגותי אקדמי','סנסורי','התנהגותי רגשי']},
+    {id:'oth4_text',label:'תיאור הבעיה 4',type:'text'},
+    {id:'oth4_rating',label:'ניקוד 4',type:'rating'},
+    {id:'oth5_domain',label:'תחום בעיה 5',type:'select',options:['חברתי','התנהגותי אקדמי','סנסורי','התנהגותי רגשי']},
+    {id:'oth5_text',label:'תיאור הבעיה 5',type:'text'},
+    {id:'oth5_rating',label:'ניקוד 5',type:'rating'},
+    {id:'oth6_domain',label:'תחום בעיה 6',type:'select',options:['חברתי','התנהגותי אקדמי','סנסורי','התנהגותי רגשי']},
+    {id:'oth6_text',label:'תיאור הבעיה 6',type:'text'},
+    {id:'oth6_rating',label:'ניקוד 6',type:'rating'}
   ]
 };
 
@@ -2239,9 +2265,12 @@ function renderQTabContent(pid){
   const fields=Q_FIELDS[currentQTab]||[];
   currentQPatientId=pid; currentQType=currentQTab; currentQId=q?.id||null;
 
+  const RATING_OPTS=['0','1','2','3','4','ל.ר'];
   const formRows=fields.map(f=>{
     if(f.type==='section') return `<div class="qf-section">${f.label}</div>`;
+    if(f.type==='info') return `<div style="background:var(--g50);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--g600);margin-bottom:10px;line-height:1.7">${f.label}</div>`;
     const val=(content[f.id]||'').replace(/"/g,'&quot;');
+    if(f.type==='rating') return `<div class="qf-field" style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div class="qf-label" style="flex:1;margin-bottom:0">${f.label}</div><select class="qf-input qf-select" id="qf-${f.id}" style="min-width:90px;flex-shrink:0"><option value="">--</option>${RATING_OPTS.map(o=>`<option value="${o}" ${content[f.id]===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
     if(f.type==='textarea') return `<div class="qf-field"><div class="qf-label">${f.label}</div><textarea class="qf-input" id="qf-${f.id}" rows="2">${content[f.id]||''}</textarea></div>`;
     if(f.type==='select') return `<div class="qf-field"><div class="qf-label">${f.label}</div><select class="qf-input qf-select" id="qf-${f.id}"><option value="">-- בחר --</option>${f.options.map(o=>`<option value="${o}" ${content[f.id]===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
     if(f.type==='date') return `<div class="qf-field"><div class="qf-label">${f.label}</div><input type="date" class="qf-input" id="qf-${f.id}" value="${val}"></div>`;
@@ -2255,7 +2284,7 @@ function renderQTabContent(pid){
       <div class="q-form-head">
         <div class="q-bh">ב"ה</div>
         <h2>${Q_LABELS[currentQTab]}</h2>
-        <p>${currentQTab==='parent'?'הערכה קונסטרוקטיבית וממוקדת – משאבים':currentQTab==='staff'?'הערכה קונסטרוקטיבית ממוקדת – כיתה':currentQTab==='functional'?'הערכה ישירה – שיחה עם הילד':currentQTab==='fobs'?"צ'ק ליסט לאבחון תפקוד בסביבה הטיפולית":'הערכה קונסטרוקטיבית ממוקדת'}</p>
+        <p>${currentQTab==='parent'?'הערכה קונסטרוקטיבית וממוקדת – משאבים':currentQTab==='staff'?'הערכה קונסטרוקטיבית ממוקדת – כיתה':currentQTab==='functional'?'הערכה ישירה – שיחה עם הילד':currentQTab==='fobs'?'הערכת פתרון בעיות בבית הספר':'הערכה קונסטרוקטיבית ממוקדת'}</p>
         <div class="q-pat-info">
           <span>שם: <strong>${patient?.name||'—'}</strong></span>
           ${inst?`<span>מוסד: <strong>${inst.name}</strong></span>`:''}
