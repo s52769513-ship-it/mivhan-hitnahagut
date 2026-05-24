@@ -342,8 +342,12 @@ tr:last-child td{border-bottom:none}
         <div id="main-tab-intervention" style="display:none">
           <div class="tabs">
             <button class="tab-btn active" onclick="showIntTab('it-treatment')">תוכנית טיפול</button>
+            <button class="tab-btn" onclick="showIntTab('it-tank')">טנ"ק</button>
+            <button class="tab-btn" onclick="showIntTab('it-docs')">מסמכים</button>
           </div>
           <div id="it-treatment" class="tab-content active"></div>
+          <div id="it-tank" class="tab-content"></div>
+          <div id="it-docs" class="tab-content"></div>
         </div>
       </div>
 
@@ -1639,6 +1643,8 @@ async function openPatient(id){
   renderObservations(id);
   renderQuestionnaires(id);
   renderGoals(id);
+  renderTankForm(id);
+  renderIntDocs(id);
 }
 
 function showMainTab(tab){
@@ -2292,6 +2298,143 @@ async function downloadQPDF(pid, qtype){
   }finally{
     document.body.removeChild(wrapper);
   }
+}
+
+// === TANK FORM ===
+const TANK_FIELDS=[
+  {type:'section',label:'רקע על הילד'},
+  {id:'focus',label:'על מה אתה מתמקד עם הקליינט הנוכחי?',type:'textarea'},
+  {id:'behavioral_goals',label:'מהן המטרות ההתנהגותיות של הקליינט?',type:'textarea'},
+  {id:'functional_value',label:'מהו הערך הפונקציונלי של ההתנהגויות האלו?',type:'textarea'},
+  {id:'social_value',label:'מהו הערך החברתי של ההתנהגויות האלו?',type:'textarea'},
+  {id:'antecedent_interventions',label:'אילו התערבויות בנסיבות שקלת לגבי התנהגויות מטרה של התוכנית?',type:'textarea'},
+  {id:'consequence_interventions',label:'אילו התערבויות בתוצאות שקלת לגבי התנהגויות מטרה של התוכנית?',type:'textarea'},
+  {type:'section',label:'תכנון ההתערבות – מסגרת פעולה'},
+  {id:'vision1',label:'חזון',type:'textarea'},
+  {id:'abilities1',label:'יכולות',type:'textarea'},
+  {id:'motivation1',label:'מוטיבציה',type:'textarea'},
+  {id:'tools1',label:'כלים',type:'textarea'},
+  {id:'action_plan1',label:'תוכנית פעולה',type:'textarea'},
+  {type:'section',label:'כיצד תביא את הצוות ליישם את ההתערבויות?'},
+  {id:'vision2',label:'חזון',type:'textarea'},
+  {id:'abilities2',label:'יכולות',type:'textarea'},
+  {id:'motivation2',label:'מוטיבציה',type:'textarea'},
+  {id:'tools2',label:'כלים',type:'textarea'},
+  {id:'action_plan2',label:'תוכנית פעולה',type:'textarea'},
+  {type:'section',label:'התמודדות עם חסמים והתנגדויות'},
+  {id:'institution_understanding',label:'האם למוסדות שאתה עובד מולם יש את ההבנה מה לעשות?',type:'textarea'},
+  {id:'implementation_barriers',label:'האם אין בכוחי להביא את הצוות ליישם חלק מהתוכנית / לגייס אותם?',type:'textarea'},
+  {id:'staff_priorities',label:'מה חשוב לצוות כרגע?',type:'textarea'},
+  {id:'resistance_reasons',label:'מה מביא את הצוות להתנגד לעשייה שלי?',type:'textarea'},
+  {id:'importance_understood',label:'האם הם מבינים את החשיבות של ההנחיה שלי?',type:'textarea'},
+  {id:'resistance_handling',label:'כיצד אתה מתמודד עם התנגדויות אם יש?',type:'textarea'},
+  {type:'section',label:'חומרים וכלים'},
+  {id:'general_materials',label:'אילו חומרים כלליים יש לך שאתה משתמש בהם?',type:'textarea'},
+  {id:'assessments_forms',label:'אילו הערכות וטפסים אתה ממלא כשאתה עובד מול קליינטים?',type:'textarea'},
+  {id:'transferable_materials',label:'אילו חומרי עבודה, כרטיסים, תוכנית כבר קיימים אצלך שאתה יכול להעביר לאחרים?',type:'textarea'}
+];
+
+let currentTankId=null, currentTankPid=null;
+
+function renderTankForm(pid){
+  currentTankPid=pid;
+  const q=allQuestionnaires.find(q=>q.patient_id===pid&&q.q_type==='tank');
+  const patient=allPatients.find(p=>p.id===pid);
+  const content=q?.content||{};
+  currentTankId=q?.id||null;
+  const rows=TANK_FIELDS.map(f=>{
+    if(f.type==='section') return `<div class="qf-section">${f.label}</div>`;
+    const val=(content[f.id]||'').replace(/"/g,'&quot;');
+    if(f.type==='textarea') return `<div class="qf-field"><div class="qf-label">${f.label}</div><textarea class="qf-input" id="tk-${f.id}" rows="2">${content[f.id]||''}</textarea></div>`;
+    return `<div class="qf-field"><div class="qf-label">${f.label}</div><input type="text" class="qf-input" id="tk-${f.id}" value="${val}"></div>`;
+  }).join('');
+  document.getElementById('it-tank').innerHTML=`
+    <div class="q-form-wrap">
+      <div class="q-form-head">
+        <div class="q-bh">ב"ה</div>
+        <h2>טופס ניהול קליינטים (טנ"ק)</h2>
+        <p>ניהול ותכנון ההתערבות הטיפולית</p>
+        <div class="q-pat-info"><span>שם: <strong>${patient?.name||'—'}</strong></span></div>
+      </div>
+      <div>${rows}</div>
+      <div class="q-actions">
+        ${currentTankId?`<button class="btn btn-secondary" onclick="downloadTankPDF('${pid}')"><i data-lucide="download"></i> הורדת PDF</button>`:''}
+        <button class="btn btn-primary" onclick="saveTankForm()"><i data-lucide="save"></i> שמור</button>
+      </div>
+    </div>`;
+  if(window.lucide) lucide.createIcons();
+}
+
+async function saveTankForm(){
+  const content={};
+  TANK_FIELDS.forEach(f=>{
+    if(f.type==='section') return;
+    const el=document.getElementById('tk-'+f.id);
+    if(el&&el.value.trim()) content[f.id]=el.value.trim();
+  });
+  let r;
+  if(currentTankId){ r=await sbUpdate('questionnaires',currentTankId,{content}); }
+  else { r=await sbAdminInsert('questionnaires',{patient_id:currentTankPid,q_type:'tank',title:"טנ\"ק",content}); }
+  if(r.error) return toast('שגיאה','error');
+  toast('טנ"ק נשמר <i data-lucide="check-circle"></i>','success');
+  await loadAll(); renderTankForm(currentTankPid);
+}
+
+async function downloadTankPDF(pid){
+  const patient=allPatients.find(p=>p.id===pid);
+  const q=allQuestionnaires.find(q=>q.patient_id===pid&&q.q_type==='tank');
+  if(!q) return toast('שמור תחילה','error');
+  const c=q.content||{};
+  let rows='';
+  TANK_FIELDS.forEach(f=>{
+    if(f.type==='section'){rows+=`<div style="font-size:13px;font-weight:bold;color:#185FA5;border-bottom:2px solid #dbeafe;padding-bottom:3px;margin:18px 0 8px">${f.label}</div>`;return;}
+    const val=c[f.id]||'';
+    rows+=`<div style="margin-bottom:11px"><div style="font-size:10px;font-weight:600;color:#64748B;margin-bottom:3px">${f.label}</div><div style="font-size:13px;line-height:1.6;color:#1E293B;border-bottom:1px solid #CBD5E1;min-height:22px;padding-bottom:2px">${val}</div></div>`;
+  });
+  window.scrollTo(0,0);
+  const wrapper=document.createElement('div');
+  wrapper.style.cssText='position:absolute;top:0;left:0;width:794px;padding:36px 48px;font-family:Arial,Helvetica,sans-serif;direction:rtl;color:#1E293B;background:white;box-sizing:border-box;z-index:99999';
+  wrapper.innerHTML=`<div style="text-align:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #E2E8F0"><div style="font-size:11px;color:#94A3B8;margin-bottom:2px">ב"ה</div><div style="font-size:22px;font-weight:bold;margin-bottom:3px;color:#0F172A">טופס ניהול קליינטים (טנ"ק)</div><div style="font-size:12px;color:#64748B;margin-bottom:12px">ניהול ותכנון ההתערבות הטיפולית</div><div style="background:#F1F5F9;border-radius:7px;padding:9px 16px;font-size:12px">שם: <strong style="color:#0C3A5F">${patient?.name||''}</strong></div></div>${rows}`;
+  document.body.appendChild(wrapper);
+  toast('מכין PDF...','');
+  await new Promise(r=>setTimeout(r,600));
+  try{
+    const canvas=await html2canvas(wrapper,{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff'});
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    const imgH=(canvas.height*pw)/canvas.width;
+    let ps=0;
+    while(ps<imgH){if(ps>0)pdf.addPage();pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',0,-ps,pw,imgH);ps+=ph;}
+    pdf.save(`טנק-${patient?.name||'מטופל'}.pdf`);
+    toast('PDF הורד','success');
+  }catch(e){toast('שגיאה ביצירת PDF','error');}
+  finally{document.body.removeChild(wrapper);}
+}
+
+function renderIntDocs(pid){
+  const cloudName=localStorage.getItem('cloudinary_cloud_name')||'';
+  const cloudPreset=localStorage.getItem('cloudinary_upload_preset')||'';
+  const hasCloud=!!cloudName&&!!cloudPreset;
+  const files=(allFiles||[]).filter(f=>f.patient_id===pid);
+  document.getElementById('it-docs').innerHTML=`
+    <div class="card">
+      <div class="card-header">
+        <h3><i data-lucide="folder"></i> מסמכי התערבות</h3>
+        ${hasCloud?`<label class="btn btn-primary btn-sm" style="cursor:pointer"><i data-lucide="upload"></i> העלה קובץ<input type="file" style="display:none" onchange="uploadToCloudinary('${pid}',this)"></label>`:''}
+      </div>
+      ${!hasCloud?`<div class="card-body"><p style="font-size:13px;color:var(--g500)">להעלאת קבצים יש להגדיר Cloudinary בהגדרות.</p><button class="btn btn-primary btn-sm" onclick="showView('settings')"><i data-lucide="settings"></i> הגדרות</button></div>`:''}
+      <div id="int-files-list-${pid}">
+        ${files.length===0&&hasCloud?'<div class="empty"><i data-lucide="file"></i><p>אין קבצים</p></div>':''}
+        ${files.map(f=>`<div class="file-item">
+          <div class="file-icon" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')">  ${fileIcon(f.name)}</div>
+          <div style="flex:1;cursor:pointer" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')"><div style="font-size:14px;font-weight:500">${f.name}</div><div style="font-size:11px;color:var(--g400)">${fmtDate(f.created_at)}</div></div>
+          <span class="btn btn-secondary btn-sm" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')"><i data-lucide="eye"></i></span>
+          <button class="btn btn-danger btn-sm" onclick="deleteFile('${f.id}','${f.drive_file_id||''}','${pid}')"><i data-lucide="trash-2"></i></button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  if(window.lucide) lucide.createIcons();
 }
 
 function renderGoals(pid){
