@@ -1319,7 +1319,7 @@ async function fetchAndCacheHolidays(year, month){
   if(holidayCache[key]!==undefined) return;
   holidayCache[key]={};
   try{
-    const url=`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&mod=on&nx=on&year=${year}&month=${month+1}&ss=on&mf=on&c=off&geo=none&lg=he`;
+    const url=`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&mod=off&nx=on&year=${year}&month=${month+1}&ss=on&mf=on&c=off&geo=none&lg=he`;
     const r=await fetch(url);
     if(!r.ok) return;
     const data=await r.json();
