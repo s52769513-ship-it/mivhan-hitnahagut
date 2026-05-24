@@ -421,7 +421,16 @@ tr:last-child td{border-bottom:none}
             <div id="email-settings-status" style="margin-top:10px;font-size:13px"></div>
           </div>
         </div>
-        <div class="card" style="max-width:560px">
+        <div class="card" style="max-width:560px;margin-bottom:20px">
+          <div class="card-header"><h3><i data-lucide="sparkles"></i> עוזר AI – מטרות SMART (Gemini)</h3></div>
+          <div class="card-body">
+            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">הירשם בחינם ב-<strong>aistudio.google.com</strong>, לחץ "Get API Key" וקבל מפתח חינמי ללא כרטיס אשראי.</p>
+            <div class="form-group"><label class="form-label">Gemini API Key</label><input type="text" class="form-control" id="settings-gemini-key" placeholder="AIzaSy..." dir="ltr"></div>
+            <button class="btn btn-primary" onclick="saveGeminiSettings()"><i data-lucide="save"></i> שמור</button>
+            <div id="gemini-settings-status" style="margin-top:10px;font-size:13px"></div>
+          </div>
+        </div>
+        <div class="card" style="max-width:560px;margin-bottom:20px">
           <div class="card-header"><h3><i data-lucide="folder"></i> הגדרות אחסון קבצים (Cloudinary)</h3></div>
           <div class="card-body">
             <p style="font-size:14px;color:var(--g500);margin-bottom:14px">הירשם בחינם ב-cloudinary.com (25GB חינם), צור Upload Preset מסוג Unsigned והכנס כאן.</p>
@@ -707,6 +716,44 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<div class="modal-backdrop" id="modal-smart" style="display:none" onclick="closeModal('modal-smart')">
+  <div class="modal" style="max-width:680px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i data-lucide="sparkles"></i> עוזר SMART – מטרות התנהגותיות</h2>
+      <button class="btn btn-icon" onclick="closeModal('modal-smart')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--g500);margin-bottom:16px">מלא את הפרטים ועוזר ה-AI יעזור לך לנסח מטרה התנהגותית לפי מתכונת SMART.</p>
+      <div class="form-group">
+        <label class="form-label">תיאור ההתנהגות הבעייתית</label>
+        <textarea class="form-control" id="smart-behavior" rows="2" placeholder="תאר את ההתנהגות שרוצים לשנות..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ההקשר / מתי זה קורה?</label>
+        <textarea class="form-control" id="smart-context" rows="2" placeholder="באיזה מצבים, מתי, עם מי..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ההתנהגות החלופית הרצויה</label>
+        <textarea class="form-control" id="smart-desired" rows="2" placeholder="מה רוצים שהילד יעשה במקום..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">חוזק / משאב של הילד (לא חובה)</label>
+        <textarea class="form-control" id="smart-strength" rows="1" placeholder="נקודות חוזק שיכולות לעזור..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="callGeminiSMART()" id="smart-btn"><i data-lucide="sparkles"></i> צור מטרה SMART</button>
+      <div id="smart-loading" style="display:none;margin-top:12px;font-size:13px;color:var(--g500)">מחשב... <i data-lucide="loader"></i></div>
+      <div id="smart-result" style="display:none;margin-top:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--g700);margin-bottom:6px">המטרה שנוצרה:</div>
+        <div id="smart-result-text" style="background:var(--g50);border:1px solid var(--g200);border-radius:8px;padding:14px;font-size:14px;line-height:1.8;white-space:pre-wrap;direction:rtl"></div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn btn-primary btn-sm" onclick="copySmartResult()"><i data-lucide="copy"></i> העתק</button>
+          <button class="btn btn-secondary btn-sm" onclick="applySmartToGoal()"><i data-lucide="plus"></i> הוסף כמטרה חדשה</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toast-container"></div>
 
 <script>
@@ -722,6 +769,7 @@ let ejsServiceId=localStorage.getItem('ejs_service')||'service_dh62bba';
 let ejsTemplateId=localStorage.getItem('ejs_template')||'template_72ogmc7';
 let cloudName=localStorage.getItem('cloud_name')||'dyrcadfnn';
 let cloudPreset=localStorage.getItem('cloud_preset')||'ml_default';
+let geminiKey=localStorage.getItem('gemini_key')||'';
 try{ emailjs.init(ejsPublicKey); }catch(e){ console.warn('EmailJS not loaded:', e); }
 let calDate = new Date();
 const holidayCache = {};
@@ -2440,7 +2488,10 @@ function renderIntDocs(pid){
 function renderGoals(pid){
   const goals=allGoals.filter(g=>g.patient_id===pid);
   document.getElementById('it-treatment').innerHTML=`
-    <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openGoalForPatient('${pid}')">+ מטרה חדשה</button></div>
+    <div style="margin-bottom:12px;display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary btn-sm" onclick="openSmartAssistant('${pid}')"><i data-lucide="sparkles"></i> עוזר SMART</button>
+      <button class="btn btn-primary btn-sm" onclick="openGoalForPatient('${pid}')">+ מטרה חדשה</button>
+    </div>
     ${goals.length===0?'<div class="empty"><i data-lucide="target"></i><p>אין מטרות טיפוליות עדיין</p></div>':goals.map((g,i)=>`
     <div class="goal-card">
       <div class="goal-header"><span style="font-weight:600">מטרה #${i+1}</span><button class="btn btn-danger btn-sm" onclick="deleteGoal('${g.id}','${pid}')"><i data-lucide="trash-2"></i></button></div>
@@ -2787,7 +2838,14 @@ async function createObservation(){
 async function deleteObs(id,pid){ if(!confirm('למחוק?')) return; await sbDelete('observations',id); await loadAll(); renderObservations(pid); }
 
 // === GOALS ===
-function openGoalForPatient(pid){ currentPayPatientId=pid; openModal('modal-new-goal'); }
+function openGoalForPatient(pid,prefillText){
+  currentPayPatientId=pid;
+  openModal('modal-new-goal');
+  if(prefillText){
+    const el=document.getElementById('ng-bhv');
+    if(el) el.value=prefillText;
+  }
+}
 async function createGoal(){
   const r=await sbAdminInsert('treatment_goals',{patient_id:currentPayPatientId,description:document.getElementById('ng-desc').value,functional_analysis:document.getElementById('ng-func').value,hypothesis:document.getElementById('ng-hypo').value,target:document.getElementById('ng-target').value,behavioral_goal:document.getElementById('ng-bhv').value,path:document.getElementById('ng-path').value,short_reinforcement:document.getElementById('ng-short').value,long_reinforcement:document.getElementById('ng-long').value,responses:document.getElementById('ng-resp').value});
   if(r.error) return toast('שגיאה','error');
@@ -2825,10 +2883,13 @@ function loadSettings(){
   const t=document.getElementById('settings-ejs-template'); if(t) t.value=ejsTemplateId;
   const cn=document.getElementById('settings-cloud-name'); if(cn) cn.value=cloudName;
   const cp=document.getElementById('settings-cloud-preset'); if(cp) cp.value=cloudPreset;
+  const gk=document.getElementById('settings-gemini-key'); if(gk) gk.value=geminiKey;
   const es=document.getElementById('email-settings-status');
   if(es) es.innerHTML=ejsPublicKey?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> EmailJS מוגדר</span>':'';
   const cs=document.getElementById('cloud-settings-status');
   if(cs) cs.innerHTML=cloudName?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> Cloudinary מוגדר</span>':'';
+  const gs=document.getElementById('gemini-settings-status');
+  if(gs) gs.innerHTML=geminiKey?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> Gemini מוגדר</span>':'';
 }
 
 function saveEmailSettings(){
@@ -2851,6 +2912,91 @@ function saveCloudinarySettings(){
   localStorage.setItem('cloud_name',n); localStorage.setItem('cloud_preset',p);
   document.getElementById('cloud-settings-status').innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> Cloudinary נשמר</span>';
   toast('הגדרות קבצים נשמרו <i data-lucide="check-circle"></i>','success');
+}
+
+function saveGeminiSettings(){
+  const k=document.getElementById('settings-gemini-key').value.trim();
+  if(!k) return toast('נא להזין Gemini API Key','error');
+  geminiKey=k;
+  localStorage.setItem('gemini_key',k);
+  document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> Gemini נשמר</span>';
+  toast('הגדרות Gemini נשמרו <i data-lucide="check-circle"></i>','success');
+}
+
+// === GEMINI SMART ===
+let smartCurrentPid=null;
+
+function openSmartAssistant(pid){
+  smartCurrentPid=pid;
+  ['smart-behavior','smart-context','smart-desired','smart-strength'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('smart-result').style.display='none';
+  document.getElementById('smart-loading').style.display='none';
+  openModal('modal-smart');
+}
+
+async function callGeminiSMART(){
+  if(!geminiKey) return toast('נא להגדיר Gemini API Key בהגדרות','error');
+  const behavior=document.getElementById('smart-behavior').value.trim();
+  const context=document.getElementById('smart-context').value.trim();
+  const desired=document.getElementById('smart-desired').value.trim();
+  const strength=document.getElementById('smart-strength').value.trim();
+  if(!behavior||!desired) return toast('נא למלא לפחות תיאור ההתנהגות והרצוי','error');
+
+  document.getElementById('smart-btn').disabled=true;
+  document.getElementById('smart-loading').style.display='block';
+  document.getElementById('smart-result').style.display='none';
+
+  const prompt=`אתה מומחה לניתוח התנהגותי יישומי (ABA) ועוזר לנסח מטרות התנהגותיות לפי מתכונת SMART.
+נסח מטרה התנהגותית אחת ברורה ומלאה בעברית לפי המידע הבא:
+
+התנהגות בעייתית: ${behavior}
+הקשר/מצב: ${context||'לא צוין'}
+התנהגות חלופית רצויה: ${desired}
+${strength?'חוזקות/משאבים: '+strength:''}
+
+אנא נסח מטרה SMART אחת שכוללת:
+• S – Specific (ספציפי): מה בדיוק הילד יעשה
+• M – Measurable (מדיד): כיצד נמדוד הצלחה
+• A – Achievable (ישים): שיהיה ריאלי
+• R – Relevant (רלוונטי): קשור לצורך הילד
+• T – Time-bound (מוגבל בזמן): מסגרת זמן ברורה
+
+לאחר המטרה, הוסף:
+- עצה אחת קצרה לחיזוק ההצלחה
+- נוסח קצר לרישום ב"מטרה התנהגותית" בכרטיס הטיפול
+
+כתוב בעברית בלבד, קצר וברור.`;
+
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,maxOutputTokens:800}})
+    });
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה מ-Gemini');}
+    const data=await r.json();
+    const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'לא התקבלה תשובה';
+    document.getElementById('smart-result-text').textContent=text;
+    document.getElementById('smart-result').style.display='block';
+    lucide.createIcons();
+  }catch(e){
+    toast('שגיאה: '+e.message,'error');
+  }finally{
+    document.getElementById('smart-btn').disabled=false;
+    document.getElementById('smart-loading').style.display='none';
+    lucide.createIcons();
+  }
+}
+
+function copySmartResult(){
+  const text=document.getElementById('smart-result-text').textContent;
+  navigator.clipboard.writeText(text).then(()=>toast('הועתק ללוח','success')).catch(()=>toast('העתקה נכשלה','error'));
+}
+
+function applySmartToGoal(){
+  const text=document.getElementById('smart-result-text').textContent;
+  closeModal('modal-smart');
+  if(smartCurrentPid) openGoalForPatient(smartCurrentPid,text);
 }
 
 // === EMAIL ===
