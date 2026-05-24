@@ -853,6 +853,7 @@ async function afterLogin(user){
   document.getElementById('sidebar-user').textContent=currentUser.display_name||currentUser.email;
   setupUIForRole();
   await loadAll();
+  startQueueWidgetTimer();
   if(isAdmin) renderDashboard();
   else showView('user-dashboard');
 }
@@ -1094,6 +1095,14 @@ function showView(v){
 }
 
 // === QUEUE WIDGET ===
+function fmtCountdown(ms){
+  if(ms<=0) return 'עכשיו';
+  const h=Math.floor(ms/3600000);
+  const m=Math.floor((ms%3600000)/60000);
+  if(h>0) return `עוד ${h}ש' ${m}ד'`;
+  return `עוד ${m}ד'`;
+}
+
 function renderQueueWidget(){
   const el=document.getElementById('queue-widget');
   if(!el) return;
@@ -1109,24 +1118,37 @@ function renderQueueWidget(){
   const prev=curIdx>0?todayApts[curIdx-1]:null;
   const current=curIdx>=0?todayApts[curIdx]:null;
   const next=curIdx<todayApts.length-1?todayApts[curIdx+1]:(curIdx===-1?todayApts[0]:null);
-  function qCard(a,label,isCurrent){
+
+  function qCard(a,label,isCurrent,showCountdown){
     if(!a) return `<div class="queue-card" style="opacity:.3;display:flex;align-items:center;justify-content:center;min-height:80px;color:var(--g400);font-size:13px;cursor:default">—</div>`;
     const p=allPatients.find(x=>x.id===a.patient_id);
     const name=p?p.name:(a.name||'פגישה');
     const phone=p&&p.phone?p.phone:'';
+    const msLeft=new Date(a.start_time)-now;
+    const countdown=showCountdown&&msLeft>0?`<div style="margin-top:6px;font-size:13px;font-weight:700;color:var(--green)">⏱ ${fmtCountdown(msLeft)}</div>`:'';
     return `<div class="queue-card${isCurrent?' current':''}" onclick="openEditApt('${a.id}')">
       <div class="queue-card-label">${label}</div>
       <div class="queue-card-name">${name}</div>
       ${phone?`<div class="queue-card-phone">📞 ${phone}</div>`:'<div class="queue-card-phone" style="color:var(--g300)">אין טלפון</div>'}
       <div class="queue-card-time">${fmtTime(a.start_time)}</div>
+      ${countdown}
     </div>`;
   }
   el.style.display='';
+  // RTL: first item appears on right → prev on right, current middle, next on left
   el.innerHTML=`<div class="queue-grid">
-    ${qCard(prev,'◀ תור קודם',false)}
-    ${qCard(current,'⬤ תור נוכחי',true)}
-    ${qCard(next,'תור הבא ▶',false)}
+    ${qCard(prev,'תור קודם',false,false)}
+    ${qCard(current,'⬤ תור נוכחי',true,false)}
+    ${qCard(next,'תור הבא',false,true)}
   </div>`;
+}
+let queueWidgetInterval=null;
+function startQueueWidgetTimer(){
+  if(queueWidgetInterval) clearInterval(queueWidgetInterval);
+  queueWidgetInterval=setInterval(()=>{
+    const el=document.getElementById('queue-widget');
+    if(el&&el.style.display!=='none') renderQueueWidget();
+  },30000);
 }
 
 // === APPOINTMENT REMINDERS ===
