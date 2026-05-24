@@ -76,6 +76,7 @@ tr:last-child td{border-bottom:none}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
 .modal{background:white;border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-xl{max-width:900px;width:96vw}
 .modal-header{padding:18px 24px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1;border-radius:16px 16px 0 0}
 .modal-header h2{font-size:17px;font-weight:700;color:var(--g900)}
 .modal-body{padding:22px}
@@ -306,7 +307,6 @@ tr:last-child td{border-bottom:none}
             <button class="tab-btn active" onclick="showTab('tab-personal')">פרטים אישיים</button>
             <button class="tab-btn" onclick="showTab('tab-appointments')">פגישות</button>
             <button class="tab-btn" data-admin-tab onclick="showTab('tab-payments')">תשלומים</button>
-            <button class="tab-btn" onclick="showTab('tab-documents')">מסמכים</button>
             <button class="tab-btn" onclick="showTab('tab-tasks')">משימות</button>
             <button class="tab-btn" onclick="showTab('tab-notes')">הערות</button>
             <button class="tab-btn" onclick="showTab('tab-emails')"><i data-lucide="mail"></i> מיילים</button>
@@ -314,7 +314,6 @@ tr:last-child td{border-bottom:none}
           <div class="tab-content active" id="tab-personal"></div>
           <div class="tab-content" id="tab-appointments"></div>
           <div class="tab-content" id="tab-payments"></div>
-          <div class="tab-content" id="tab-documents"></div>
           <div class="tab-content" id="tab-tasks"></div>
           <div class="tab-content" id="tab-notes"></div>
           <div class="tab-content" id="tab-emails"></div>
@@ -324,8 +323,10 @@ tr:last-child td{border-bottom:none}
             <button class="tab-btn active" onclick="showDataTab('dt-background')">רקע</button>
             <button class="tab-btn" onclick="showDataTab('dt-observations')">תצפיות ABC</button>
             <button class="tab-btn" onclick="showDataTab('dt-questionnaires')">שאלונים</button>
+            <button class="tab-btn" onclick="showDataTab('dt-documents')">מסמכים</button>
           </div>
           <div id="dt-background" class="tab-content active"></div>
+          <div id="dt-documents" class="tab-content"></div>
           <div id="dt-observations" class="tab-content"></div>
           <div id="dt-questionnaires" class="tab-content"></div>
         </div>
@@ -450,8 +451,9 @@ tr:last-child td{border-bottom:none}
         <div class="form-group"><label class="form-label">כתובת</label><input type="text" class="form-control" id="np-address"></div>
       </div>
       <div class="form-group"><label class="form-label">הורים</label><input type="text" class="form-control" id="np-parents"></div>
-      <div class="form-group" id="np-institution-group" style="display:none"><label class="form-label">מוסד</label><select class="form-control" id="np-institution"><option value="">-- בחר --</option></select></div>
-      <div class="form-group" id="np-class-group" style="display:none"><label class="form-label">כיתה</label><select class="form-control" id="np-class"><option value="">-- בחר --</option></select></div>
+      <div class="form-group"><label class="form-label">שיוך ל:</label><select class="form-control" id="np-affiliation"><option value="">-- ללא --</option><option value="clinic">קליניקה</option><option value="vizhnitz">ויזניץ</option><option value="education">משרד החינוך</option><option value="ponivez">פוניבז</option></select></div>
+      <div class="form-group"><label class="form-label">מוסד</label><input type="text" class="form-control" id="np-institution" placeholder="שם המוסד..."></div>
+      <div class="form-group" id="np-class-group"><label class="form-label">כיתה</label><select class="form-control" id="np-class"><option value="">-- ללא --</option></select></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-patient')">ביטול</button><button class="btn btn-primary" onclick="createPatient()">צור מטופל</button></div>
   </div>
@@ -496,18 +498,28 @@ tr:last-child td{border-bottom:none}
 </div>
 
 <div class="modal-backdrop" id="modal-edit-appointment" style="display:none" onclick="closeModal('modal-edit-appointment')">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal modal-xl" onclick="event.stopPropagation()">
     <div class="modal-header"><h2><i data-lucide="pencil"></i> עריכת פגישה</h2><button class="btn btn-icon" onclick="closeModal('modal-edit-appointment')"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
-      <div class="form-group"><label class="form-label">שם פגישה</label><input type="text" class="form-control" id="ea-name"></div>
-      <div class="form-group"><label class="form-label">מטופל</label><select class="form-control" id="ea-patient"><option value="">-- בחר מטופל --</option></select></div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">שם פגישה</label><input type="text" class="form-control" id="ea-name"></div>
+        <div class="form-group"><label class="form-label">מטופל</label><select class="form-control" id="ea-patient"><option value="">-- בחר מטופל --</option></select></div>
+      </div>
       <div class="form-grid">
         <div class="form-group"><label class="form-label">תחילת פגישה</label><input type="datetime-local" class="form-control" id="ea-start" dir="ltr"></div>
         <div class="form-group"><label class="form-label">סיום פגישה</label><input type="datetime-local" class="form-control" id="ea-end" dir="ltr"></div>
       </div>
-      <div class="form-group"><label class="form-label">מחיר (₪)</label><input type="number" class="form-control" id="ea-price" dir="ltr"></div>
-      <div class="form-group" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="ea-arrived" style="width:16px;height:16px"><label class="form-label" style="margin:0;cursor:pointer" for="ea-arrived">הגיע לפגישה</label></div>
-      <div class="form-group"><label class="form-label">תיאור</label><textarea class="form-control" id="ea-desc" rows="2"></textarea></div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">מחיר (₪)</label><input type="number" class="form-control" id="ea-price" dir="ltr"></div>
+        <div class="form-group" style="display:flex;gap:8px;align-items:center;padding-top:28px"><input type="checkbox" id="ea-arrived" style="width:16px;height:16px"><label class="form-label" style="margin:0;cursor:pointer" for="ea-arrived">הגיע לפגישה</label></div>
+      </div>
+      <div class="form-group"><label class="form-label"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px"></i> תיעוד הפגישה</label><textarea class="form-control" id="ea-desc" rows="6" placeholder="רשום כאן את תיעוד הפגישה..."></textarea></div>
+      <div class="form-group"><label class="form-label"><i data-lucide="user-check" style="width:14px;height:14px;vertical-align:-2px"></i> הערות מדריך</label><textarea class="form-control" id="ea-supervisor" rows="4" placeholder="הערות מדריך / סופרויזר..."></textarea></div>
+      <div class="form-group">
+        <label class="form-label"><i data-lucide="paperclip" style="width:14px;height:14px;vertical-align:-2px"></i> קבצים מצורפים לפגישה</label>
+        <div id="ea-files-list" style="margin-bottom:10px"></div>
+        <label class="btn btn-secondary btn-sm" style="cursor:pointer" id="ea-upload-label"><i data-lucide="upload"></i> העלה קובץ<input type="file" id="ea-file-input" style="display:none" onchange="uploadAptFile(this)"></label>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-danger" onclick="deleteAptFromModal()"><i data-lucide="trash-2"></i> מחק פגישה</button>
@@ -1402,6 +1414,33 @@ async function renderPatients(){
 }
 
 // State: null=main, 'clinic'/'vizhnitz'/'education'/'ponivez'=category, then sub-selection
+const CLASS_ORDER=['גנים','א','ב','ג','ד','ה','ו','ז','ח','ט','ישיבה קטנה','ישיבה גדולה','אברך'];
+async function findOrCreateInstitution(name, type='general'){
+  name=(name||'').trim();
+  if(!name) return null;
+  const existing=allInstitutions.find(i=>i.name===name&&i.type===type)||allInstitutions.find(i=>i.name===name);
+  if(existing) return existing.id;
+  const r=await sbInsert('institutions',{name,type});
+  if(r.error||!r.data?.[0]) return null;
+  allInstitutions.push(r.data[0]);
+  return r.data[0].id;
+}
+function reapplyPatientFilter(){
+  if(patientView!=='patients-list') return;
+  if(currentContextType==='clinic'){
+    patientListData=allPatients.filter(p=>{const inst=allInstitutions.find(i=>i.id===p.institution_id);return inst&&inst.type==='clinic';});
+  } else if(currentContextType==='education'){
+    const eduIds=new Set(allInstitutions.filter(i=>i.type==='education').map(i=>i.id));
+    patientListData=allPatients.filter(p=>eduIds.has(p.institution_id));
+  } else if(currentContextType==='ponivez'){
+    const ponIds=new Set(allInstitutions.filter(i=>i.type==='ponivez').map(i=>i.id));
+    patientListData=allPatients.filter(p=>ponIds.has(p.institution_id));
+  } else if(currentContextType==='vizhnitz'&&currentContextClassId){
+    patientListData=allPatients.filter(p=>p.class_id===currentContextClassId);
+  } else if(currentContextInstitutionId){
+    patientListData=allPatients.filter(p=>p.institution_id===currentContextInstitutionId);
+  }
+}
 let patientView = 'main'; // 'main' | 'vizhnitz-classes' | 'education-institutions' | 'patients-list'
 let patientListTitle = '';
 let patientListBackFn = 'backToMain';
@@ -1450,19 +1489,7 @@ function renderInstitutionFilter(){
     return;
   }
 
-  if(patientView==='education-institutions'){
-    el.style.display='none';
-    ps.style.display='block';
-    const eduInsts = allInstitutions.filter(i=>i.type==='education');
-    document.getElementById('patients-list-title').innerHTML = `<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> משרד החינוך – בחר מוסד`;
-    document.getElementById('patients-tbody').innerHTML = `<tr><td colspan="6"><div style="padding:20px"><div style="display:flex;flex-wrap:wrap;gap:10px">
-      ${eduInsts.map(i=>`<button class="cat-btn" style="min-width:140px" onclick="selectEduInstitution('${i.id}','${i.name}')"><span class="ci"><i data-lucide="building"></i></span><span>${i.name}</span></button>`).join('')}
-      <button class="cat-btn" style="min-width:140px" onclick="openModal('modal-new-institution')"><span class="ci"><i data-lucide="plus-circle"></i></span><span>מוסד חדש</span></button>
-    </div></div></td></tr>`;
-    return;
-  }
-
-  if(patientView==='patients-list'){
+if(patientView==='patients-list'){
     el.style.display='none';
     ps.style.display='block';
     renderPatientsTable(patientListData);
@@ -1486,15 +1513,18 @@ function selectCategory(cat){
     currentContextType='vizhnitz'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
   } else if(cat==='education'){
-    patientView='education-institutions';
+    patientView='patients-list';
+    patientListTitle='משרד החינוך'; patientListBackFn='backToMain';
+    const eduIds=new Set(allInstitutions.filter(i=>i.type==='education').map(i=>i.id));
+    patientListData=allPatients.filter(p=>eduIds.has(p.institution_id));
     currentContextType='education'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
   } else if(cat==='ponivez'){
     patientView='patients-list';
     patientListTitle='פוניבז'; patientListBackFn='backToMain';
-    const ponInst=allInstitutions.find(i=>i.name?.includes('פוניבז')||i.name?.includes('פונוביז')||i.name?.toLowerCase().includes('ponivez'));
-    patientListData=ponInst?allPatients.filter(p=>p.institution_id===ponInst.id):[];
-    currentContextType='ponivez'; currentContextInstitutionId=ponInst?ponInst.id:null; currentContextClassId=null;
+    const ponIds=new Set(allInstitutions.filter(i=>i.type==='ponivez').map(i=>i.id));
+    patientListData=allPatients.filter(p=>ponIds.has(p.institution_id));
+    currentContextType='ponivez'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
   }
 }
@@ -1545,17 +1575,21 @@ function filterPatients(q){
 async function createPatient(){
   const name=document.getElementById('np-name').value.trim();
   if(!name) return toast('נא להכניס שם','error');
-  const body={name,phone:document.getElementById('np-phone').value,identity_number:document.getElementById('np-id').value,address:document.getElementById('np-address').value,parents:document.getElementById('np-parents').value,institution_id:document.getElementById('np-institution').value||null,class_id:document.getElementById('np-class').value||null,debt:0,paid:0,remaining:0};
+  const affiliation=document.getElementById('np-affiliation').value||'general';
+  const ctxDefaults={education:'משרד החינוך',clinic:'קליניקה',ponivez:'פוניבז',vizhnitz:'ויזניץ'};
+  const instName=document.getElementById('np-institution').value||ctxDefaults[affiliation]||'';
+  const institution_id=await findOrCreateInstitution(instName,affiliation);
+  const body={name,phone:document.getElementById('np-phone').value,identity_number:document.getElementById('np-id').value,address:document.getElementById('np-address').value,parents:document.getElementById('np-parents').value,institution_id,class_id:document.getElementById('np-class').value||null,debt:0,paid:0,remaining:0};
   const r=await sbInsert('patients',body);
   if(r.error) return toast('שגיאה: '+r.error,'error');
   toast('מטופל נוצר <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-patient');
   ['np-name','np-phone','np-id','np-address','np-parents'].forEach(id=>document.getElementById(id).value='');
-  await loadAll(); renderPatientsTable(allPatients);
+  await loadAll(); reapplyPatientFilter(); renderPatientsTable(patientListData);
 }
 
 async function deletePatient(id){
   if(!confirm('למחוק מטופל זה?')) return;
-  await sbDelete('patients',id); toast('נמחק',''); await loadAll(); renderPatientsTable(allPatients);
+  await sbDelete('patients',id); toast('נמחק',''); await loadAll(); reapplyPatientFilter(); renderPatientsTable(patientListData);
 }
 
 // === PATIENT DETAIL ===
@@ -1598,7 +1632,7 @@ function showTab(id){
   document.querySelectorAll('#main-tab-clinical .tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('#clinical-tabs .tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(id)?.classList.add('active');
-  const idx=['tab-personal','tab-appointments','tab-payments','tab-documents','tab-tasks','tab-notes','tab-emails'].indexOf(id);
+  const idx=['tab-personal','tab-appointments','tab-payments','tab-tasks','tab-notes','tab-emails'].indexOf(id);
   document.querySelectorAll('#clinical-tabs .tab-btn')[idx]?.classList.add('active');
 }
 
@@ -1607,7 +1641,7 @@ function showDataTab(id){
   document.querySelectorAll('#main-tab-data .tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(id)?.classList.add('active');
   currentDataTab=id;
-  const idx=['dt-background','dt-observations','dt-questionnaires'].indexOf(id);
+  const idx=['dt-background','dt-observations','dt-questionnaires','dt-documents'].indexOf(id);
   document.querySelectorAll('#main-tab-data .tab-btn')[idx]?.classList.add('active');
 }
 
@@ -1633,8 +1667,9 @@ function renderPersonalTab(p){
           <div class="detail-row"><div class="detail-label">כתובת</div><div class="detail-value"><input type="text" id="pf-address" value="${p.address||''}"></div></div>
           <div class="detail-row" style="grid-column:1/-1"><div class="detail-label">אימייל</div><div class="detail-value"><input type="email" id="pf-email" value="${p.email||''}" dir="ltr" placeholder="example@email.com"></div></div>
           <div class="detail-row" style="grid-column:1/-1"><div class="detail-label">הורים / איש קשר</div><div class="detail-value"><input type="text" id="pf-parents" value="${p.parents||''}"></div></div>
-          <div class="detail-row"><div class="detail-label">מוסד</div><div class="detail-value"><select id="pf-inst"><option value="">-- ללא --</option>${allInstitutions.map(i=>`<option value="${i.id}" ${i.id===p.institution_id?'selected':''}>${i.name}</option>`).join('')}</select></div></div>
-          <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${allClasses.map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
+          <div class="detail-row"><div class="detail-label">שיוך ל:</div><div class="detail-value"><select id="pf-affiliation"><option value="">-- ללא --</option><option value="clinic" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='clinic'?'selected':''}>קליניקה</option><option value="vizhnitz" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='vizhnitz'?'selected':''}>ויזניץ</option><option value="education" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='education'?'selected':''}>משרד החינוך</option><option value="ponivez" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='ponivez'?'selected':''}>פוניבז</option></select></div></div>
+          <div class="detail-row"><div class="detail-label">מוסד</div><div class="detail-value"><input type="text" id="pf-inst" value="${allInstitutions.find(i=>i.id===p.institution_id)?.name||''}"></div></div>
+          <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${[...allClasses].sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);}).map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
         </div>
       </div>
     </div>
@@ -1655,7 +1690,11 @@ function renderPersonalTab(p){
 async function savePersonal(id){
   const debt=allAppointments.filter(a=>a.patient_id===id).reduce((s,a)=>s+(a.price||0),0);
   const paid=allPayments.filter(p=>p.patient_id===id).reduce((s,p)=>s+(p.amount||0),0);
-  const body={name:document.getElementById('pf-name').value,identity_number:document.getElementById('pf-id').value,phone:document.getElementById('pf-phone').value,address:document.getElementById('pf-address').value,email:document.getElementById('pf-email').value,parents:document.getElementById('pf-parents').value,institution_id:document.getElementById('pf-inst').value||null,class_id:document.getElementById('pf-class').value||null,debt,paid,remaining:Math.max(0,debt-paid)};
+  const pfAff=document.getElementById('pf-affiliation')?.value||'general';
+  const ctxDef={education:'משרד החינוך',clinic:'קליניקה',ponivez:'פוניבז',vizhnitz:'ויזניץ'};
+  const pfInstName=document.getElementById('pf-inst')?.value||ctxDef[pfAff]||'';
+  const institution_id=await findOrCreateInstitution(pfInstName,pfAff);
+  const body={name:document.getElementById('pf-name').value,identity_number:document.getElementById('pf-id').value,phone:document.getElementById('pf-phone').value,address:document.getElementById('pf-address').value,email:document.getElementById('pf-email').value,parents:document.getElementById('pf-parents').value,institution_id,class_id:document.getElementById('pf-class').value||null,debt,paid,remaining:Math.max(0,debt-paid)};
   const r=await sbUpdate('patients',id,body);
   if(r.error) return toast('שגיאה','error');
   toast('נשמר <i data-lucide="check-circle"></i>','success'); await loadAll();
@@ -1735,9 +1774,9 @@ function renderPatientPayments(pid){
 }
 
 function renderPatientDocuments(pid){
-  const files=allFiles.filter(f=>f.patient_id===pid);
+  const files=allFiles.filter(f=>f.patient_id===pid&&!f.drive_file_id?.includes('||apt:'));
   const hasCloud=!!cloudName&&!!cloudPreset;
-  document.getElementById('tab-documents').innerHTML=`
+  document.getElementById('dt-documents').innerHTML=`
     <div class="card">
       <div class="card-header">
         <h3><i data-lucide="folder"></i> מסמכים</h3>
@@ -2280,6 +2319,48 @@ async function deleteTask(id){ if(!confirm('למחוק?')) return; await sbDelet
 
 // === EDIT APPOINTMENT MODAL ===
 let editAptId=null;
+function renderAptFiles(aptId){
+  const files=allFiles.filter(f=>f.drive_file_id?.includes(`||apt:${aptId}`));
+  const el=document.getElementById('ea-files-list');
+  if(!el) return;
+  if(files.length===0){el.innerHTML='<div style="font-size:13px;color:var(--g400)">אין קבצים מצורפים</div>';return;}
+  el.innerHTML=files.map(f=>`<div class="file-item" style="margin-bottom:6px">
+    <div class="file-icon">${fileIcon(f.name)}</div>
+    <div style="flex:1;font-size:14px;font-weight:500;cursor:pointer" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')">${f.name}</div>
+    <span class="btn btn-secondary btn-sm" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')"><i data-lucide="eye"></i> צפה</span>
+    <button class="btn btn-danger btn-sm" onclick="deleteAptFile('${f.id}','${f.drive_file_id||''}','${aptId}')"><i data-lucide="trash-2"></i></button>
+  </div>`).join('');
+  lucide.createIcons();
+}
+async function deleteAptFile(fileId,publicId,aptId){
+  if(!confirm('למחוק קובץ זה?')) return;
+  if(publicId) await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({public_id:publicId.split('||')[0],api_key:'',timestamp:''})}).catch(()=>{});
+  await sbDelete('patient_files',fileId);
+  allFiles=allFiles.filter(f=>f.id!=fileId);
+  renderAptFiles(aptId);
+}
+async function uploadAptFile(input){
+  if(!editAptId) return;
+  const file=input.files[0]; if(!file) return;
+  if(!cloudName||!cloudPreset) return toast('נא להגדיר Cloudinary בהגדרות','error');
+  const a=allAppointments.find(x=>x.id===editAptId);
+  const pid=a?.patient_id||null;
+  toast('מעלה קובץ...','');
+  const fd=new FormData();
+  fd.append('file',file);
+  fd.append('upload_preset',cloudPreset);
+  try{
+    const res=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,{method:'POST',body:fd});
+    const data=await res.json();
+    if(!data.secure_url) throw new Error('לא התקבל URL');
+    const publicIdWithApt=`${data.public_id}||apt:${editAptId}`;
+    await sbInsert('patient_files',{patient_id:pid,name:file.name,drive_file_id:publicIdWithApt,drive_url:data.secure_url,created_at:new Date().toISOString()});
+    if(pid){const r=await sb('patient_files',`?patient_id=eq.${pid}&order=created_at.desc`);allFiles=(allFiles.filter(f=>f.patient_id!==pid)).concat(r.data||[]);}
+    toast('קובץ הועלה בהצלחה','success');
+    renderAptFiles(editAptId);
+  }catch(e){toast('שגיאה בהעלאה: '+e.message,'error');}
+  input.value='';
+}
 function openEditApt(id){
   const a=allAppointments.find(x=>x.id===id); if(!a) return;
   editAptId=id;
@@ -2288,13 +2369,23 @@ function openEditApt(id){
   document.getElementById('ea-end').value=toLocalInput(a.end_time);
   document.getElementById('ea-price').value=a.price||'';
   document.getElementById('ea-arrived').checked=a.arrived||false;
-  document.getElementById('ea-desc').value=a.description||'';
+  let notes='',sup='';
+  try{const parsed=JSON.parse(a.description||'{}');notes=parsed.notes||'';sup=parsed.sup||'';}catch{notes=a.description||'';}
+  document.getElementById('ea-desc').value=notes;
+  document.getElementById('ea-supervisor').value=sup;
+  const hasCloud=!!cloudName&&!!cloudPreset;
+  document.getElementById('ea-upload-label').style.display=hasCloud?'':'none';
   openModal('modal-edit-appointment');
   document.getElementById('ea-patient').value=a.patient_id||'';
+  renderAptFiles(id);
+  lucide.createIcons();
 }
 async function saveEditApt(){
   if(!editAptId) return;
-  const body={name:document.getElementById('ea-name').value,patient_id:document.getElementById('ea-patient').value||null,start_time:localInputToISO(document.getElementById('ea-start').value),end_time:localInputToISO(document.getElementById('ea-end').value),price:parseFloat(document.getElementById('ea-price').value)||0,arrived:document.getElementById('ea-arrived').checked,description:document.getElementById('ea-desc').value};
+  const notes=document.getElementById('ea-desc').value;
+  const sup=document.getElementById('ea-supervisor').value;
+  const description=sup?JSON.stringify({notes,sup}):notes;
+  const body={name:document.getElementById('ea-name').value,patient_id:document.getElementById('ea-patient').value||null,start_time:localInputToISO(document.getElementById('ea-start').value),end_time:localInputToISO(document.getElementById('ea-end').value),price:parseFloat(document.getElementById('ea-price').value)||0,arrived:document.getElementById('ea-arrived').checked,description};
   const r=await sbUpdate('appointments',editAptId,body);
   if(r.error) return toast('שגיאה: '+r.error,'error');
   toast('פגישה עודכנה <i data-lucide="check-circle"></i>','success'); closeModal('modal-edit-appointment');
@@ -2560,13 +2651,12 @@ async function uploadToCloudinary(pid, input){
 
 // === HELPERS ===
 function populateSelects(){
-  const pSels=['np-institution','na-patient','nc-institution'];
-  const instSels=['np-institution','nc-institution'];
+  const instSels=['nc-institution'];
   const patSels=['na-patient','ea-patient'];
   instSels.forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='<option value="">-- בחר --</option>'+allInstitutions.map(i=>`<option value="${i.id}">${i.name}</option>`).join('');}});
   patSels.forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='<option value="">-- בחר מטופל --</option>'+allPatients.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');}});
-  const npCls=document.getElementById('np-class');
-  if(npCls) npCls.innerHTML='<option value="">-- ללא --</option>'+allClasses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  const sortedCls=[...allClasses].sort((a,b)=>{const ai=CLASS_ORDER.indexOf(a.name),bi=CLASS_ORDER.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
+  ['np-class'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<option value="">-- ללא --</option>'+sortedCls.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');});
 }
 
 function openModal(id){ document.getElementById(id).style.display='flex'; populateSelects(); }
@@ -2574,21 +2664,13 @@ function closeModal(id){ document.getElementById(id).style.display='none'; }
 
 function openNewPatientModal(){
   openModal('modal-new-patient');
-  const instGroup=document.getElementById('np-institution-group');
-  const clsGroup=document.getElementById('np-class-group');
-  instGroup.style.display='none';
-  clsGroup.style.display='none';
   document.getElementById('np-institution').value='';
-  document.getElementById('np-class').value='';
-  if(currentContextType==='clinic'||currentContextType==='ponivez'){
-    if(currentContextInstitutionId) document.getElementById('np-institution').value=currentContextInstitutionId;
-  } else if(currentContextType==='vizhnitz'){
-    clsGroup.style.display='';
-    if(currentContextClassId) document.getElementById('np-class').value=currentContextClassId;
-  } else if(currentContextType==='education'){
-    instGroup.style.display='';
-    if(currentContextInstitutionId) document.getElementById('np-institution').value=currentContextInstitutionId;
-  }
+  document.getElementById('np-affiliation').value=currentContextType||'';
+  const clsEl=document.getElementById('np-class');
+  const clsGroup=document.getElementById('np-class-group');
+  clsEl.value='';
+  if(currentContextClassId) clsEl.value=currentContextClassId;
+  clsGroup.style.display=currentContextType==='education'?'none':'';
 }
 
 function toast(msg,type){
