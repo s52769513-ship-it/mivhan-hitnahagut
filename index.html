@@ -2133,7 +2133,8 @@ function renderQTabContent(pid){
       </div>
       <div>${formRows}</div>
       <div class="q-actions">
-        <button class="btn btn-secondary" onclick="downloadQPDF('${pid}','${currentQTab}')"><i data-lucide="download"></i> הורדת PDF</button>
+        ${q?`<button class="btn btn-secondary" onclick="downloadQPDF('${pid}','${currentQTab}')"><i data-lucide="download"></i> הורדת PDF</button>`:''}
+
         ${q?`<button class="btn btn-danger btn-sm" onclick="deleteQuestionnaire('${q.id}','${pid}')"><i data-lucide="trash-2"></i> מחק</button>`:''}
         <button class="btn btn-primary" onclick="saveQuestionnaire()"><i data-lucide="save"></i> שמור</button>
       </div>
