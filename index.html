@@ -854,6 +854,7 @@ async function afterLogin(user){
   document.getElementById('sidebar-user').textContent=currentUser.display_name||currentUser.email;
   setupUIForRole();
   await loadAll();
+  requestNotificationPermission();
   startQueueWidgetTimer();
   if(isAdmin) renderDashboard();
   else showView('user-dashboard');
@@ -1184,10 +1185,24 @@ function playReminderSound(){
     });
   }catch(e){}
 }
+function requestNotificationPermission(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission==='default') Notification.requestPermission();
+}
+
+function sendBrowserNotification(a,p){
+  if(!('Notification' in window)||Notification.permission!=='granted') return;
+  const name=p?p.name:(a.name||'פגישה');
+  const body=[a.name&&p?a.name:'', p&&p.phone?'📞 '+p.phone:'', fmtTime(a.start_time)].filter(Boolean).join(' · ');
+  const n=new Notification('⏰ תזכורת פגישה — '+name,{body,icon:'/favicon.ico',tag:'apt-'+a.id,requireInteraction:true,dir:'rtl',lang:'he'});
+  n.onclick=()=>{window.focus();n.close();};
+}
+
 function showAptReminder(a,p){
+  playReminderSound();
+  sendBrowserNotification(a,p);
   const container=document.getElementById('apt-reminder-container');
   if(!container) return;
-  playReminderSound();
   const div=document.createElement('div');
   div.className='apt-reminder';
   div.style.pointerEvents='all';
