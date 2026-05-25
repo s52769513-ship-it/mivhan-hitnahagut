@@ -1,0 +1,7 @@
+.env.local
+.env*.local
+crm/.env.local
+crm/.env*.local
+.mcp.json
+migrate.py
+migration.sql
