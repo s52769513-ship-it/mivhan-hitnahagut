@@ -305,7 +305,7 @@ tr:last-child td{border-bottom:none}
               </div>
             </div>
             <div style="overflow-x:auto">
-              <table><thead><tr><th>שם</th><th>טלפון</th><th>חוב</th><th>שולם</th><th>יתרה</th><th></th></tr></thead>
+              <table id="patients-table"><thead><tr><th>שם</th><th>טלפון</th><th class="col-finance">חוב</th><th class="col-finance">שולם</th><th class="col-finance">יתרה</th><th></th></tr></thead>
               <tbody id="patients-tbody"></tbody></table>
             </div>
           </div>
@@ -1726,14 +1726,12 @@ function selectClass(id){ selectedClass=id; }
 function renderPatientsTable(patients){
   document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="${patientListBackFn}()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> ${patientListTitle} <span style="font-size:13px;color:var(--g500)">(${patients.length})</span>`;
   const tb=document.getElementById('patients-tbody');
-  if(patients.length===0){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><i data-lucide="users"></i><p>אין מטופלים</p></div></td></tr>`;return;}
+  if(patients.length===0){tb.innerHTML=`<tr><td colspan="${isAdmin?6:3}"><div class="empty"><i data-lucide="users"></i><p>אין מטופלים</p></div></td></tr>`;return;}
   tb.innerHTML=patients.map(p=>`<tr onclick="openPatient('${p.id}')">
     <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div><strong>${p.name||''}</strong></div></td>
     <td>${p.phone||'-'}</td>
-    <td>₪${(p.debt||0).toLocaleString()}</td>
-    <td style="color:var(--green)">₪${(p.paid||0).toLocaleString()}</td>
-    <td><span class="badge ${(p.remaining||0)>0?'badge-red':'badge-green'}">₪${(p.remaining||0).toLocaleString()}</span></td>
-    <td onclick="event.stopPropagation()"><button class="btn btn-danger btn-sm" onclick="deletePatient('${p.id}')"><i data-lucide="trash-2"></i></button></td>
+    ${isAdmin?`<td>₪${(p.debt||0).toLocaleString()}</td><td style="color:var(--green)">₪${(p.paid||0).toLocaleString()}</td><td><span class="badge ${(p.remaining||0)>0?'badge-red':'badge-green'}">₪${(p.remaining||0).toLocaleString()}</span></td>`:''}
+    <td onclick="event.stopPropagation()">${isAdmin?`<button class="btn btn-danger btn-sm" onclick="deletePatient('${p.id}')"><i data-lucide="trash-2"></i></button>`:''}</td>
   </tr>`).join('');
 }
 
@@ -1770,11 +1768,11 @@ async function openPatient(id){
   document.getElementById('patient-header').innerHTML=`
     <div class="avatar" style="background:${avatarColor(p.name)};width:52px;height:52px;font-size:18px">${initials(p.name)}</div>
     <div style="flex:1"><h2 style="font-size:20px;font-weight:700">${p.name}</h2><p style="font-size:13px;color:var(--g500)">${p.phone||''} ${p.address?'· '+p.address:''}</p></div>
-    <div style="display:flex;gap:20px">
+    ${isAdmin?`<div style="display:flex;gap:20px">
       <div style="text-align:center"><div style="font-size:11px;color:var(--g500)">חוב</div><div style="font-size:16px;font-weight:700">₪${(p.debt||0).toLocaleString()}</div></div>
       <div style="text-align:center"><div style="font-size:11px;color:var(--g500)">שולם</div><div style="font-size:16px;font-weight:700;color:var(--green)">₪${(p.paid||0).toLocaleString()}</div></div>
       <div style="text-align:center"><div style="font-size:11px;color:var(--g500)">יתרה</div><div style="font-size:16px;font-weight:700;color:var(--red)">₪${(p.remaining||0).toLocaleString()}</div></div>
-    </div>`;
+    </div>`:''}  `;
   showMainTab('clinical');
   renderPersonalTab(p);
   renderPatientAppointments(id);
@@ -1845,7 +1843,7 @@ function renderPersonalTab(p){
         </div>
       </div>
     </div>
-    <div class="card">
+    ${isAdmin?`<div class="card">
       <div class="card-header"><h3>💰 סיכום כספי</h3><span style="font-size:12px;color:var(--g400)">מחושב אוטומטית מפגישות ותשלומים</span></div>
       <div class="card-body">
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
@@ -1856,7 +1854,7 @@ function renderPersonalTab(p){
         <div style="font-size:12px;color:var(--g500);margin-bottom:4px">התקדמות תשלום: ${pct}%</div>
         <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
       </div>
-    </div>`;
+    </div>`:''}  `;
 }
 
 async function savePersonal(id){
