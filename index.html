@@ -484,7 +484,7 @@ tr:last-child td{border-bottom:none}
         <div class="form-group"><label class="form-label">כתובת</label><input type="text" class="form-control" id="np-address"></div>
       </div>
       <div class="form-group"><label class="form-label">הורים</label><input type="text" class="form-control" id="np-parents"></div>
-      <div class="form-group"><label class="form-label">שיוך ל:</label><select class="form-control" id="np-affiliation"><option value="">-- ללא --</option><option value="clinic">קליניקה</option><option value="vizhnitz">ויזניץ</option><option value="education">משרד החינוך</option><option value="ponivez">פוניבז</option></select></div>
+      <div class="form-group"><label class="form-label">שיוך ל:</label><select class="form-control" id="np-affiliation" onchange="updateNpClassOptions()"><option value="">-- ללא --</option><option value="clinic">קליניקה</option><option value="vizhnitz">ויזניץ</option><option value="education">משרד החינוך</option><option value="ponivez">פוניבז</option></select></div>
       <div class="form-group"><label class="form-label">מוסד</label><input type="text" class="form-control" id="np-institution" placeholder="שם המוסד..."></div>
       <div class="form-group" id="np-class-group"><label class="form-label">כיתה</label><select class="form-control" id="np-class"><option value="">-- ללא --</option></select></div>
     </div>
@@ -882,6 +882,12 @@ async function loadAll(){
     allTasks=allTasks.filter(t=>t.assigned_to===viewAsUserId||visiblePats.has(t.patient_id));
     allAppointments=allAppointments.filter(a=>visiblePats.has(a.patient_id));
   } else if(!isAdmin && currentUser){
+    const [apRef,aiRef]=await Promise.all([
+      sbAdmin('user_patients',`?user_id=eq.${currentUser.id}&select=patient_id`),
+      sbAdmin('user_institutions',`?user_id=eq.${currentUser.id}&select=institution_id`)
+    ]);
+    userAssignedPatients=(apRef.data||[]).map(x=>x.patient_id);
+    userAssignedInstitutions=(aiRef.data||[]).map(x=>x.institution_id);
     const visiblePats=new Set([
       ...userAssignedPatients,
       ...allPatients.filter(p=>p.institution_id&&userAssignedInstitutions.includes(p.institution_id)).map(p=>p.id)
@@ -1020,8 +1026,9 @@ async function checkStoredSession(){
 // === USER DASHBOARD ===
 async function renderUserDashboard(){
   await loadAll();
-  const myPats=allPatients.filter(p=>userAssignedPatients.includes(p.id));
-  const myTasks=allTasks.filter(t=>t.assigned_to===currentUser.id);
+  const myPats=viewAsPermissions?allPatients:allPatients.filter(p=>userAssignedPatients.includes(p.id));
+  const myUid=viewAsUserId||currentUser.id;
+  const myTasks=allTasks.filter(t=>t.assigned_to===myUid);
   const today=new Date(); today.setHours(0,0,0,0);
   const overdue=myTasks.filter(t=>t.due_date&&new Date(t.due_date)<today&&!t.done).length;
   document.getElementById('user-stats-grid').innerHTML=`
@@ -1832,7 +1839,7 @@ function renderPersonalTab(p){
           <div class="detail-row" style="grid-column:1/-1"><div class="detail-label">הורים / איש קשר</div><div class="detail-value"><input type="text" id="pf-parents" value="${p.parents||''}"></div></div>
           <div class="detail-row"><div class="detail-label">שיוך ל:</div><div class="detail-value"><select id="pf-affiliation"><option value="">-- ללא --</option><option value="clinic" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='clinic'?'selected':''}>קליניקה</option><option value="vizhnitz" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='vizhnitz'?'selected':''}>ויזניץ</option><option value="education" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='education'?'selected':''}>משרד החינוך</option><option value="ponivez" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='ponivez'?'selected':''}>פוניבז</option></select></div></div>
           <div class="detail-row"><div class="detail-label">מוסד</div><div class="detail-value"><input type="text" id="pf-inst" value="${allInstitutions.find(i=>i.id===p.institution_id)?.name||''}"></div></div>
-          <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${[...allClasses].sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);}).map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
+          <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${[...allClasses].filter(c=>p.institution_id?c.institution_id===p.institution_id:true).sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);}).map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
         </div>
       </div>
     </div>
@@ -3229,8 +3236,23 @@ function populateSelects(){
   const patSels=['na-patient','ea-patient'];
   instSels.forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='<option value="">-- בחר --</option>'+allInstitutions.map(i=>`<option value="${i.id}">${i.name}</option>`).join('');}});
   patSels.forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='<option value="">-- בחר מטופל --</option>'+allPatients.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');}});
-  const sortedCls=[...allClasses].sort((a,b)=>{const ai=CLASS_ORDER.indexOf(a.name),bi=CLASS_ORDER.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
-  ['np-class'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<option value="">-- ללא --</option>'+sortedCls.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');});
+  updateNpClassOptions();
+}
+
+function updateNpClassOptions(){
+  const affEl=document.getElementById('np-affiliation');
+  const clsEl=document.getElementById('np-class');
+  if(!clsEl) return;
+  const affType=affEl?affEl.value:'';
+  let cls=allClasses;
+  if(affType){
+    const instIds=new Set(allInstitutions.filter(i=>i.type===affType).map(i=>i.id));
+    cls=allClasses.filter(c=>instIds.has(c.institution_id));
+  }
+  const sorted=[...cls].sort((a,b)=>{const ai=CLASS_ORDER.indexOf(a.name),bi=CLASS_ORDER.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
+  const seen=new Set();
+  const unique=sorted.filter(c=>{if(seen.has(c.name))return false;seen.add(c.name);return true;});
+  clsEl.innerHTML='<option value="">-- ללא --</option>'+unique.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
 }
 
 function openModal(id){ document.getElementById(id).style.display='flex'; populateSelects(); }
