@@ -865,7 +865,7 @@ async function loadAll(){
     sb('questionnaires','?order=created_at'),
     sb('patient_files','?order=created_at.desc'),
     sb('patient_emails','?order=sent_at.desc'),
-    sbAdmin('user_profiles','?select=id,display_name,email')
+    sbAdmin('user_profiles','?select=id,display_name')
   ]);
   allPatients=p.data||[]; allAppointments=a.data||[];
   allTasks=t.data||[]; allPayments=pay.data||[];
@@ -2100,7 +2100,7 @@ function renderPatientNotes(pid){
     <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openNoteForPatient('${pid}')">+ הערה</button></div>
     ${notes.length===0?'<div class="empty"><i data-lucide="file-text"></i><p>אין הערות</p></div>':`<div class="card" style="padding:0;overflow:hidden">${notes.map(n=>{
       const profile=allUserProfiles.find(u=>u.id===n.user_id);
-      const userName=profile?(profile.display_name||profile.email||''):'';
+      const userName=profile?.display_name||'';
       const NOTE_TYPE_HE={clinical:'קליני',observation:'תצפית'};
       const typeBadge=NOTE_TYPE_HE[n.note_type]||(userName||'כללי');
       return`<div class="note-row" onclick="toggleNote('note-body-${n.id}')">
