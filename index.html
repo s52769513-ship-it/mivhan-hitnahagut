@@ -1490,7 +1490,7 @@ async function renderPatients(){
 }
 
 // State: null=main, 'clinic'/'vizhnitz'/'education'/'ponivez'=category, then sub-selection
-const CLASS_ORDER=['גנים','א','ב','ג','ד','ה','ו','ז','ח','ט','ישיבה קטנה','ישיבה גדולה','אברך'];
+const CLASS_ORDER=['ב','ג','ד','ה','ו','ז','ח','ט'];
 async function findOrCreateInstitution(name, type='general'){
   name=(name||'').trim();
   if(!name) return null;
