@@ -2106,7 +2106,8 @@ async function renderPatientNotes(pid){
     ${notes.length===0?'<div class="empty"><i data-lucide="file-text"></i><p>אין הערות</p></div>':`<div class="card" style="padding:0;overflow:hidden">${notes.map(n=>{
       const profile=allUserProfiles.find(u=>u.id===n.user_id||u.user_id===n.user_id);
       const userName=profile?.display_name||profile?.name||'';
-      const typeBadge=NOTE_TYPE_HE[n.note_type]||(userName||(n.user_id?'משתמש לא ידוע':'כללי'));
+      const _dbg=!NOTE_TYPE_HE[n.note_type]&&!userName?`[uid:${n.user_id?n.user_id.slice(0,6):'null'} profs:${allUserProfiles.length}]`:'';
+      const typeBadge=NOTE_TYPE_HE[n.note_type]||(userName||_dbg||'כללי');
       return`<div class="note-row" onclick="toggleNote('note-body-${n.id}')">
         <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
           <span style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.title||'הערה'}</span>
