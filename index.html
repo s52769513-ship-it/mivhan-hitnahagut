@@ -1079,7 +1079,13 @@ function renderAssignInstitutions(uid){
 }
 
 async function toggleCategoryAccess(uid,cat,add){
-  const typeInsts=allInstitutions.filter(i=>(i.type||'general')===cat);
+  let typeInsts=allInstitutions.filter(i=>(i.type||'general')===cat);
+  if(typeInsts.length===0&&add){
+    const names={clinic:'קליניקה',vizhnitz:'ויזניץ',education:'משרד החינוך',ponivez:'פוניבז'};
+    const r=await sbAdminInsert('institutions',{name:names[cat]||cat,type:cat});
+    if(!r.error&&r.data?.[0]){ allInstitutions.push(r.data[0]); typeInsts=[r.data[0]]; }
+    else{ toast('שגיאה ביצירת מוסד','error'); return; }
+  }
   for(const inst of typeInsts) await toggleUserInstitution(uid,inst.id,add);
   renderAssignInstitutions(uid);
 }
@@ -1101,6 +1107,8 @@ function renderAssignPatients(uid, q){
 
 async function toggleUserInstitution(uid,instId,add){
   if(add){
+    const alreadyExists=allUserInstitutions.some(x=>x.user_id===uid&&x.institution_id===instId);
+    if(alreadyExists){ renderAssignInstitutions(uid); return; }
     const r=await sbAdminInsert('user_institutions',{user_id:uid,institution_id:instId});
     if(!r.error) allUserInstitutions.push({user_id:uid,institution_id:instId});
     else toast('שגיאה: '+r.error,'error');
