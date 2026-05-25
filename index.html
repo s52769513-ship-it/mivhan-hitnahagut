@@ -1513,17 +1513,33 @@ function reapplyPatientFilter(){
     patientListData=allPatients.filter(p=>ponIds.has(p.institution_id));
   } else if(currentContextType==='vizhnitz'&&currentContextClassId){
     patientListData=allPatients.filter(p=>p.class_id===currentContextClassId);
+  } else if(currentContextType==='all'){
+    patientListData=filterAllPatients(allPatientsFilter);
   } else if(currentContextInstitutionId){
     patientListData=allPatients.filter(p=>p.institution_id===currentContextInstitutionId);
   }
+}
+function filterAllPatients(f){
+  if(f==='all') return [...allPatients];
+  const ids=new Set(allInstitutions.filter(i=>i.type===f).map(i=>i.id));
+  return allPatients.filter(p=>ids.has(p.institution_id));
+}
+function setAllPatientsFilter(f, btn){
+  allPatientsFilter=f;
+  patientListData=filterAllPatients(f);
+  document.querySelectorAll('#all-patients-pills .pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  renderPatientsTable(patientListData);
+  lucide.createIcons();
 }
 let patientView = 'main'; // 'main' | 'vizhnitz-classes' | 'education-institutions' | 'patients-list'
 let patientListTitle = '';
 let patientListBackFn = 'backToMain';
 let patientListData = [];
-let currentContextType = null; // 'clinic' | 'vizhnitz' | 'education' | 'ponivez' | null
+let currentContextType = null; // 'clinic' | 'vizhnitz' | 'education' | 'ponivez' | 'all' | null
 let currentContextInstitutionId = null;
 let currentContextClassId = null;
+let allPatientsFilter = 'all'; // filter within 'all' view
 
 function renderInstitutionFilter(){
   const srch=document.getElementById('patient-search');
@@ -1540,6 +1556,7 @@ function renderInstitutionFilter(){
       <button class="cat-btn" onclick="selectCategory('vizhnitz')"><span class="ci"><i data-lucide="graduation-cap"></i></span><span>ויזניץ</span></button>
       <button class="cat-btn" onclick="selectCategory('education')"><span class="ci"><i data-lucide="clipboard-list"></i></span><span>משרד החינוך</span></button>
       <button class="cat-btn" onclick="selectCategory('ponivez')"><span class="ci"><i data-lucide="building"></i></span><span>פוניבז</span></button>
+      <button class="cat-btn" onclick="selectCategory('all')"><span class="ci"><i data-lucide="users"></i></span><span>כולם</span></button>
     `;
     ps.style.display='none';
     return;
@@ -1568,6 +1585,16 @@ function renderInstitutionFilter(){
 if(patientView==='patients-list'){
     el.style.display='none';
     ps.style.display='block';
+    if(currentContextType==='all'){
+      const pills=[{v:'all',l:'הכל'},{v:'clinic',l:'קליניקה'},{v:'vizhnitz',l:'ויזניץ'},{v:'education',l:'משרד החינוך'},{v:'ponivez',l:'פוניבז'}];
+      const cf=document.getElementById('class-filter');
+      cf.style.display='block';
+      cf.innerHTML=`<div id="all-patients-pills" style="display:flex;gap:8px;flex-wrap:wrap;padding:0 0 8px">
+        ${pills.map(p=>`<button class="pill${allPatientsFilter===p.v?' active':''}" onclick="setAllPatientsFilter('${p.v}',this)" style="padding:5px 14px;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allPatientsFilter===p.v?'var(--blue2)':'white'};color:${allPatientsFilter===p.v?'white':'var(--g700)'};font-family:'Rubik',sans-serif">${p.l}</button>`).join('')}
+      </div>`;
+    } else {
+      document.getElementById('class-filter').style.display='none';
+    }
     renderPatientsTable(patientListData);
     return;
   }
@@ -1601,6 +1628,13 @@ function selectCategory(cat){
     const ponIds=new Set(allInstitutions.filter(i=>i.type==='ponivez').map(i=>i.id));
     patientListData=allPatients.filter(p=>ponIds.has(p.institution_id));
     currentContextType='ponivez'; currentContextInstitutionId=null; currentContextClassId=null;
+    renderInstitutionFilter();
+  } else if(cat==='all'){
+    patientView='patients-list';
+    patientListTitle='כל המטופלים'; patientListBackFn='backToMain';
+    patientListData=[...allPatients];
+    currentContextType='all'; currentContextInstitutionId=null; currentContextClassId=null;
+    allPatientsFilter='all';
     renderInstitutionFilter();
   }
 }
