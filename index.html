@@ -1779,7 +1779,7 @@ async function openPatient(id){
   renderPatientPayments(id);
   renderPatientDocuments(id);
   renderPatientTasks(id);
-  renderPatientNotes(id);
+  renderPatientNotes(id); // async, runs in background
   renderPatientEmails(id);
   renderBackground(p);
   renderObservations(id);
@@ -2094,14 +2094,18 @@ function openNewTaskForPatient(pid){
   openModal('modal-new-task');
 }
 
-function renderPatientNotes(pid){
+async function renderPatientNotes(pid){
   const notes=allNotes.filter(n=>n.patient_id===pid);
+  if(!allUserProfiles.length){
+    const r=await sbAdmin('user_profiles','?select=id,display_name');
+    if(r.data?.length) allUserProfiles=r.data;
+  }
+  const NOTE_TYPE_HE={clinical:'קליני',observation:'תצפית'};
   document.getElementById('tab-notes').innerHTML=`
     <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openNoteForPatient('${pid}')">+ הערה</button></div>
     ${notes.length===0?'<div class="empty"><i data-lucide="file-text"></i><p>אין הערות</p></div>':`<div class="card" style="padding:0;overflow:hidden">${notes.map(n=>{
       const profile=allUserProfiles.find(u=>u.id===n.user_id);
       const userName=profile?.display_name||'';
-      const NOTE_TYPE_HE={clinical:'קליני',observation:'תצפית'};
       const typeBadge=NOTE_TYPE_HE[n.note_type]||(userName||'כללי');
       return`<div class="note-row" onclick="toggleNote('note-body-${n.id}')">
         <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
@@ -2116,6 +2120,7 @@ function renderPatientNotes(pid){
       </div>
       <div id="note-body-${n.id}" class="note-body" style="display:none">${(n.content||'').replace(/</g,'&lt;')}</div>`;
     }).join('')}</div>`}`;
+  if(window.lucide) lucide.createIcons();
 }
 
 function toggleNote(id){
