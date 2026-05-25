@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230D2645'/><g transform='translate(50,44) rotate(-28)'><rect x='-38' y='-38' width='22' height='72' rx='11' fill='white' transform='translate(-14,0)'/><rect x='-38' y='-38' width='22' height='76' rx='11' fill='%236BBFD8' transform='translate(8,-4)'/><rect x='-38' y='-38' width='22' height='72' rx='11' fill='%238B1A4A' transform='translate(30,-2)'/></g><circle cx='50' cy='84' r='9' fill='white'/></svg>">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap');
@@ -432,6 +433,19 @@ tr:last-child td{border-bottom:none}
           </div>
         </div>
         <div class="card" style="max-width:560px;margin-bottom:20px">
+          <div class="card-header"><h3><i data-lucide="mail"></i> Gmail – שליחה וקבלה</h3></div>
+          <div class="card-body">
+            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">ב-<strong>console.cloud.google.com</strong> → APIs &amp; Services → Credentials → צור OAuth 2.0 Client ID מסוג <strong>Web application</strong>.<br>הוסף ל-Authorized JavaScript origins: <code>https://s52769513-ship-it.github.io</code></p>
+            <div class="form-group"><label class="form-label">Google Client ID</label><input type="text" class="form-control" id="settings-google-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com" dir="ltr"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+              <button class="btn btn-primary" onclick="saveGoogleClientId()"><i data-lucide="save"></i> שמור</button>
+              <button class="btn btn-secondary" id="gmail-connect-btn" onclick="connectGmail()" style="display:none"><i data-lucide="log-in"></i> התחבר לGmail</button>
+              <button class="btn btn-danger" id="gmail-disconnect-btn" onclick="disconnectGmail()" style="display:none"><i data-lucide="log-out"></i> התנתק</button>
+            </div>
+            <div id="gmail-settings-status" style="margin-top:10px;font-size:13px"></div>
+          </div>
+        </div>
+        <div class="card" style="max-width:560px;margin-bottom:20px">
           <div class="card-header"><h3><i data-lucide="sparkles"></i> עוזר AI – מטרות SMART (Gemini)</h3></div>
           <div class="card-body">
             <p style="font-size:14px;color:var(--g500);margin-bottom:14px">קבל מפתח API חינמי ב-<strong>aistudio.google.com</strong> → "Get API key" → "Create API key". המפתח מתחיל ב-<code>AIza...</code></p>
@@ -765,6 +779,22 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<div class="modal-backdrop" id="modal-gmail-view" style="display:none" onclick="closeModal('modal-gmail-view')">
+  <div class="modal" style="max-width:700px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2 id="gmail-view-subject" style="font-size:16px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></h2>
+      <button class="btn btn-icon" onclick="closeModal('modal-gmail-view')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px;font-size:13px;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:10px">
+        <div><strong>מ:</strong> <span id="gmail-view-from"></span></div>
+        <div><strong>תאריך:</strong> <span id="gmail-view-date"></span></div>
+      </div>
+      <div id="gmail-view-body" style="font-size:14px;line-height:1.7;max-height:60vh;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toast-container"></div>
 
 <script>
@@ -782,7 +812,13 @@ let cloudName=localStorage.getItem('cloud_name')||'dyrcadfnn';
 let cloudPreset=localStorage.getItem('cloud_preset')||'ml_default';
 let geminiKey=localStorage.getItem('gemini_key')||'';
 let aiModel=localStorage.getItem('ai_model')||'gemini-2.0-flash';
+let googleClientId=localStorage.getItem('google_client_id')||'';
+let gmailToken=null;
+let gmailTokenExpiry=0;
+let gmailTokenClient=null;
+let gmailUser=localStorage.getItem('gmail_user')||'';
 try{ emailjs.init(ejsPublicKey); }catch(e){ console.warn('EmailJS not loaded:', e); }
+setTimeout(initGoogleAuth, 800);
 let calDate = new Date();
 const holidayCache = {};
 let taskFilter = 'all';
@@ -2007,16 +2043,17 @@ function openFileViewer(url, name){
 function renderPatientEmails(pid){
   const p=allPatients.find(x=>x.id===pid);
   const emails=allEmails.filter(e=>e.patient_id===pid).sort((a,b)=>new Date(b.sent_at)-new Date(a.sent_at));
-  const hasEjs=!!ejsPublicKey&&!!ejsServiceId&&!!ejsTemplateId;
+  const hasEmail=isGmailReady()||(!!ejsPublicKey&&!!ejsServiceId&&!!ejsTemplateId);
   document.getElementById('tab-emails').innerHTML=`
-    <div style="display:flex;gap:12px;margin-bottom:16px">
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
       <button class="tab-btn active" id="etab-compose" onclick="switchEmailTab('compose','${pid}')"><i data-lucide="pencil"></i> כתיבת מייל</button>
-      <button class="tab-btn" id="etab-history" onclick="switchEmailTab('history','${pid}')"><i data-lucide="scroll-text"></i> היסטוריה (${emails.length})</button>
+      <button class="tab-btn" id="etab-history" onclick="switchEmailTab('history','${pid}')"><i data-lucide="scroll-text"></i> נשלחו (${emails.length})</button>
+      <button class="tab-btn" id="etab-inbox" onclick="switchEmailTab('inbox','${pid}')"><i data-lucide="inbox"></i> נכנסים</button>
     </div>
     <div id="email-compose-panel">
-      ${!hasEjs?`<div class="drive-connect-banner">
-        <p style="font-size:14px;font-weight:600;margin-bottom:8px"><i data-lucide="mail"></i> נדרשת הגדרת EmailJS</p>
-        <p style="font-size:13px;color:var(--g600);margin-bottom:12px">גש להגדרות והכנס את פרטי EmailJS כדי לשלוח מיילים</p>
+      ${!hasEmail?`<div class="drive-connect-banner">
+        <p style="font-size:14px;font-weight:600;margin-bottom:8px"><i data-lucide="mail"></i> נדרשת הגדרת מייל</p>
+        <p style="font-size:13px;color:var(--g600);margin-bottom:12px">גש להגדרות וחבר Gmail (מומלץ) או הגדר EmailJS</p>
         <button class="btn btn-primary" onclick="showView('settings')"><i data-lucide="settings"></i> הגדרות</button>
       </div>`:`
       <div class="card">
@@ -2057,14 +2094,23 @@ function renderPatientEmails(pid){
         </div>
         <div style="padding:12px 16px;font-size:13px;color:var(--g600)">${e.body_html||''}</div>
       </div>`).join('')}
+    </div>
+    <div id="email-inbox-panel" style="display:none">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button class="btn btn-secondary btn-sm" onclick="loadPatientInbox('${pid}')"><i data-lucide="refresh-cw"></i> רענן</button>
+      </div>
+      <div id="email-inbox-list"><div class="empty"><i data-lucide="inbox"></i><p>לחץ רענן לטעינת מיילים נכנסים${p&&p.email?' מ-'+p.email:''}</p></div></div>
     </div>`;
 }
 
 function switchEmailTab(tab, pid){
   document.getElementById('email-compose-panel').style.display = tab==='compose'?'':'none';
   document.getElementById('email-history-panel').style.display = tab==='history'?'':'none';
+  document.getElementById('email-inbox-panel').style.display = tab==='inbox'?'':'none';
   document.getElementById('etab-compose').classList.toggle('active', tab==='compose');
   document.getElementById('etab-history').classList.toggle('active', tab==='history');
+  document.getElementById('etab-inbox').classList.toggle('active', tab==='inbox');
+  if(tab==='inbox') loadPatientInbox(pid);
 }
 
 function renderPatientTasks(pid){
@@ -3058,6 +3104,7 @@ function loadSettings(){
   if(cs) cs.innerHTML=cloudName?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> Cloudinary מוגדר</span>':'';
   const gs=document.getElementById('gemini-settings-status');
   if(gs) gs.innerHTML=geminiKey?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> Gemini מוגדר</span>':'';
+  updateGmailStatus();
 }
 
 function saveEmailSettings(){
@@ -3091,6 +3138,168 @@ function saveGeminiSettings(){
   aiModel=m; localStorage.setItem('ai_model',m);
   document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> Gemini נשמר ('+m+')</span>';
   toast('הגדרות Gemini נשמרו <i data-lucide="check-circle"></i>','success');
+}
+
+// === GMAIL API ===
+function isGmailReady(){ return !!(gmailToken && Date.now()<gmailTokenExpiry); }
+
+function initGoogleAuth(){
+  if(!googleClientId){ updateGmailStatus(); return; }
+  if(!window.google?.accounts?.oauth2){ setTimeout(initGoogleAuth,400); return; }
+  gmailTokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:googleClientId,
+    scope:'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly',
+    callback:async(resp)=>{
+      if(resp.error){ toast('שגיאת חיבור Google: '+resp.error,'error'); return; }
+      gmailToken=resp.access_token;
+      gmailTokenExpiry=Date.now()+(resp.expires_in*1000);
+      try{
+        const u=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{'Authorization':'Bearer '+gmailToken}});
+        const d=await u.json(); gmailUser=d.email||'';
+        localStorage.setItem('gmail_user',gmailUser);
+      }catch(e){}
+      updateGmailStatus();
+      toast('Gmail מחובר: '+gmailUser,'success');
+    }
+  });
+  updateGmailStatus();
+}
+
+function saveGoogleClientId(){
+  const id=document.getElementById('settings-google-client-id').value.trim();
+  if(!id) return toast('נא להזין Google Client ID','error');
+  googleClientId=id; localStorage.setItem('google_client_id',id);
+  toast('Client ID נשמר','success');
+  gmailTokenClient=null; initGoogleAuth();
+}
+
+function connectGmail(){
+  if(!gmailTokenClient) return toast('נא לשמור Client ID תחילה','error');
+  gmailTokenClient.requestAccessToken();
+}
+
+function disconnectGmail(){
+  if(gmailToken) try{ google.accounts.oauth2.revoke(gmailToken,()=>{}); }catch(e){}
+  gmailToken=null; gmailTokenExpiry=0; gmailUser='';
+  localStorage.removeItem('gmail_user');
+  updateGmailStatus();
+  toast('Gmail התנתק','success');
+}
+
+function updateGmailStatus(){
+  const cBtn=document.getElementById('gmail-connect-btn');
+  const dBtn=document.getElementById('gmail-disconnect-btn');
+  const status=document.getElementById('gmail-settings-status');
+  const inp=document.getElementById('settings-google-client-id');
+  if(inp&&googleClientId) inp.value=googleClientId;
+  if(!cBtn||!status) return;
+  const ok=isGmailReady();
+  cBtn.style.display=(googleClientId&&!ok)?'':'none';
+  dBtn.style.display=ok?'':'none';
+  if(ok) status.innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> מחובר: '+gmailUser+'</span>';
+  else if(googleClientId) status.innerHTML='<span style="color:var(--g400)">Client ID נשמר — לחץ "התחבר לGmail"</span>';
+  else status.innerHTML='';
+  lucide.createIcons();
+}
+
+function makeRFC2822(to,subject,bodyHtml){
+  const enc=s=>btoa(unescape(encodeURIComponent(s)));
+  const lines=[
+    'To: '+to,
+    'From: '+gmailUser,
+    'Subject: =?utf-8?B?'+enc(subject)+'?=',
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=utf-8',
+    '',
+    bodyHtml
+  ];
+  return btoa(unescape(encodeURIComponent(lines.join('\r\n')))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+async function sendViaGmailAPI(to,subject,bodyHtml){
+  const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+gmailToken,'Content-Type':'application/json'},
+    body:JSON.stringify({raw:makeRFC2822(to,subject,bodyHtml)})
+  });
+  if(!r.ok){ const e=await r.json(); throw new Error(e.error?.message||'Gmail send failed'); }
+}
+
+async function loadPatientInbox(pid){
+  if(!isGmailReady()){
+    if(googleClientId){ connectGmail(); return; }
+    return toast('נא לחבר Gmail בהגדרות','error');
+  }
+  const p=allPatients.find(x=>x.id===pid);
+  const listEl=document.getElementById('email-inbox-list');
+  if(!listEl) return;
+  listEl.innerHTML='<div style="text-align:center;padding:20px;color:var(--g400)"><i data-lucide="loader"></i> טוען...</div>';
+  lucide.createIcons();
+  try{
+    const q=p&&p.email?'from:'+p.email:'';
+    const url='https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=15'+(q?'&q='+encodeURIComponent(q):'');
+    const r=await fetch(url,{headers:{'Authorization':'Bearer '+gmailToken}});
+    if(!r.ok) throw new Error('שגיאה בטעינת תיבת הדואר');
+    const data=await r.json();
+    const msgs=data.messages||[];
+    if(!msgs.length){
+      listEl.innerHTML='<div class="empty"><i data-lucide="inbox"></i><p>אין מיילים נכנסים'+(p&&p.email?' מ-'+p.email:'')+'</p></div>';
+      lucide.createIcons(); return;
+    }
+    const details=await Promise.all(msgs.slice(0,10).map(m=>
+      fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date',
+        {headers:{'Authorization':'Bearer '+gmailToken}}).then(r=>r.json())
+    ));
+    listEl.innerHTML=details.map(msg=>{
+      const hh=msg.payload?.headers||[];
+      const gh=n=>hh.find(h=>h.name===n)?.value||'';
+      const d=gh('Date'); const ds=d?new Date(d).toLocaleDateString('he-IL'):'';
+      return `<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openGmailMessage('${msg.id}')">
+        <div class="card-header" style="padding:10px 16px">
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600">${gh('Subject')||'(ללא נושא)'}</div>
+            <div style="font-size:12px;color:var(--g400)">${gh('From')} · ${ds}</div>
+          </div>
+          <i data-lucide="chevron-left" style="color:var(--g300)"></i>
+        </div>
+        <div style="padding:8px 16px;font-size:13px;color:var(--g500)">${msg.snippet||''}</div>
+      </div>`;
+    }).join('');
+    lucide.createIcons();
+  }catch(e){
+    listEl.innerHTML='<div class="empty"><i data-lucide="alert-circle"></i><p>'+e.message+'</p></div>';
+    lucide.createIcons();
+  }
+}
+
+async function openGmailMessage(msgId){
+  if(!isGmailReady()) return;
+  try{
+    const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+msgId+'?format=full',
+      {headers:{'Authorization':'Bearer '+gmailToken}});
+    const msg=await r.json();
+    const hh=msg.payload?.headers||[];
+    const gh=n=>hh.find(h=>h.name===n)?.value||'';
+    let body='';
+    function ex(part){
+      if(part.mimeType==='text/html'&&part.body?.data){
+        try{ body=decodeURIComponent(escape(atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'))));}catch(e){}
+      } else if(part.mimeType==='text/plain'&&!body&&part.body?.data){
+        try{ body='<pre style="white-space:pre-wrap">'+decodeURIComponent(escape(atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'))))+'</pre>';}catch(e){}
+      }
+      if(part.parts) part.parts.forEach(ex);
+    }
+    ex(msg.payload);
+    if(!body&&msg.payload?.body?.data){
+      try{ body=decodeURIComponent(escape(atob(msg.payload.body.data.replace(/-/g,'+').replace(/_/g,'/'))));}catch(e){}
+    }
+    const d=gh('Date');
+    document.getElementById('gmail-view-subject').textContent=gh('Subject')||'(ללא נושא)';
+    document.getElementById('gmail-view-from').textContent=gh('From');
+    document.getElementById('gmail-view-date').textContent=d?new Date(d).toLocaleString('he-IL'):'';
+    document.getElementById('gmail-view-body').innerHTML=body||'<em>תוכן לא זמין</em>';
+    openModal('modal-gmail-view'); lucide.createIcons();
+  }catch(e){ toast('שגיאה בטעינת מייל: '+e.message,'error'); }
 }
 
 // === GEMINI SMART ===
@@ -3183,14 +3392,14 @@ async function sendEmail(pid){
   const bodyEl=document.getElementById('email-body');
   const bodyHtml=bodyEl.innerHTML.trim();
   if(!to||!subject||!bodyHtml) return toast('נא למלא נמען, נושא ותוכן','error');
-  if(!ejsPublicKey||!ejsServiceId||!ejsTemplateId) return toast('נא להגדיר EmailJS בהגדרות','error');
+  const hasEjs=ejsPublicKey&&ejsServiceId&&ejsTemplateId;
+  if(!isGmailReady()&&!hasEjs) return toast('נא לחבר Gmail או להגדיר EmailJS בהגדרות','error');
   try{
-    await emailjs.send(ejsServiceId, ejsTemplateId, {
-      to_email: to,
-      subject: subject,
-      message_html: bodyHtml,
-      from_name: 'מכון התנהגות'
-    });
+    if(isGmailReady()){
+      await sendViaGmailAPI(to,subject,bodyHtml);
+    } else {
+      await emailjs.send(ejsServiceId,ejsTemplateId,{to_email:to,subject,message_html:bodyHtml,from_name:'מכון התנהגות'});
+    }
     toast('מייל נשלח <i data-lucide="check-circle"></i>','success');
     await sbAdminInsert('patient_emails',{patient_id:pid,to_email:to,subject,body_html:bodyHtml,sent_at:new Date().toISOString()});
     bodyEl.innerHTML=''; document.getElementById('email-subject').value='';
@@ -3198,7 +3407,7 @@ async function sendEmail(pid){
     allEmails=(allEmails.filter(e=>e.patient_id!==pid)).concat(r.data||[]);
     renderPatientEmails(pid);
     switchEmailTab('history',pid);
-  }catch(e){ toast('שגיאה בשליחה: '+(e.text||e.message||'בדוק הגדרות EmailJS'),'error'); }
+  }catch(e){ toast('שגיאה בשליחה: '+(e.text||e.message||'בדוק הגדרות'),'error'); }
 }
 
 // === CLOUDINARY ===
