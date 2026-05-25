@@ -1585,13 +1585,22 @@ function renderInstitutionFilter(){
 
   if(patientView==='main'){
     el.style.display='grid';
-    el.innerHTML=`
-      <button class="cat-btn" onclick="selectCategory('clinic')"><span class="ci"><i data-lucide="building-2"></i></span><span>קליניקה</span></button>
-      <button class="cat-btn" onclick="selectCategory('vizhnitz')"><span class="ci"><i data-lucide="graduation-cap"></i></span><span>ויזניץ</span></button>
-      <button class="cat-btn" onclick="selectCategory('education')"><span class="ci"><i data-lucide="clipboard-list"></i></span><span>משרד החינוך</span></button>
-      <button class="cat-btn" onclick="selectCategory('ponivez')"><span class="ci"><i data-lucide="building"></i></span><span>פוניבז</span></button>
-      <button class="cat-btn" onclick="selectCategory('all')"><span class="ci"><i data-lucide="users"></i></span><span>כולם</span></button>
-    `;
+    const allCats=[
+      {cat:'clinic',icon:'building-2',label:'קליניקה'},
+      {cat:'vizhnitz',icon:'graduation-cap',label:'ויזניץ'},
+      {cat:'education',icon:'clipboard-list',label:'משרד החינוך'},
+      {cat:'ponivez',icon:'building',label:'פוניבז'}
+    ];
+    let visibleCats=allCats;
+    if(!isAdmin){
+      const accessInsts=viewAsPermissions?viewAsPermissions.institutions:userAssignedInstitutions;
+      const accessTypes=new Set(allInstitutions.filter(i=>accessInsts.includes(i.id)).map(i=>i.type||'general'));
+      visibleCats=allCats.filter(c=>accessTypes.has(c.cat));
+    }
+    const showAll=!isAdmin&&visibleCats.length>1;
+    el.innerHTML=visibleCats.map(c=>`<button class="cat-btn" onclick="selectCategory('${c.cat}')"><span class="ci"><i data-lucide="${c.icon}"></i></span><span>${c.label}</span></button>`).join('')
+      +(showAll?`<button class="cat-btn" onclick="selectCategory('all')"><span class="ci"><i data-lucide="users"></i></span><span>כולם</span></button>`:'')
+      +(isAdmin?`<button class="cat-btn" onclick="selectCategory('all')"><span class="ci"><i data-lucide="users"></i></span><span>כולם</span></button>`:'');
     ps.style.display='none';
     return;
   }
