@@ -656,7 +656,7 @@ tr:last-child td{border-bottom:none}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header"><h2><i data-lucide="plus-circle"></i> כיתה חדשה</h2><button class="btn btn-icon" onclick="closeModal('modal-new-class')"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
-      <div class="form-group"><label class="form-label">שם כיתה *</label><input type="text" class="form-control" id="nc-name"></div>
+      <div class="form-group"><label class="form-label">כיתה *</label><select class="form-control" id="nc-name"><option value="">-- בחר --</option><option>ב</option><option>ג</option><option>ד</option><option>ה</option><option>ו</option><option>ז</option><option>ח</option><option>ט</option></select></div>
       <div class="form-group"><label class="form-label">מוסד</label><select class="form-control" id="nc-institution"><option value="">-- בחר --</option></select></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-class')">ביטול</button><button class="btn btn-primary" onclick="createClass()">צור כיתה</button></div>
