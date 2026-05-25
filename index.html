@@ -1605,6 +1605,22 @@ function renderInstitutionFilter(){
     return;
   }
 
+  if(patientView==='education-institutions'){
+    el.style.display='none';
+    ps.style.display='block';
+    cf.style.display='block';
+    let eduInsts=allInstitutions.filter(i=>i.type==='education');
+    if(!isAdmin){
+      const accessInsts=viewAsPermissions?viewAsPermissions.institutions:userAssignedInstitutions;
+      eduInsts=eduInsts.filter(i=>accessInsts.includes(i.id));
+    }
+    document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> משרד החינוך – בחר מוסד`;
+    document.getElementById('patients-tbody').innerHTML=`<tr><td colspan="6"><div style="padding:20px"><div style="display:flex;flex-wrap:wrap;gap:10px">
+      ${eduInsts.map(inst=>`<button class="cat-btn" style="min-width:140px" onclick="selectEduInstitution('${inst.id}','${inst.name}')"><span class="ci"><i data-lucide="clipboard-list"></i></span><span>${inst.name}</span></button>`).join('')}
+    </div></div></td></tr>`;
+    return;
+  }
+
   if(patientView==='vizhnitz-classes'){
     el.style.display='none';
     ps.style.display='block';
@@ -1629,7 +1645,12 @@ if(patientView==='patients-list'){
     el.style.display='none';
     ps.style.display='block';
     if(currentContextType==='all'){
-      const pills=[{v:'all',l:'הכל'},{v:'clinic',l:'קליניקה'},{v:'vizhnitz',l:'ויזניץ'},{v:'education',l:'משרד החינוך'},{v:'ponivez',l:'פוניבז'}];
+      let pills=[{v:'all',l:'הכל'},{v:'clinic',l:'קליניקה'},{v:'vizhnitz',l:'ויזניץ'},{v:'education',l:'משרד החינוך'},{v:'ponivez',l:'פוניבז'}];
+      if(!isAdmin){
+        const accessInsts=viewAsPermissions?viewAsPermissions.institutions:userAssignedInstitutions;
+        const accessTypes=new Set(allInstitutions.filter(i=>accessInsts.includes(i.id)).map(i=>i.type||'general'));
+        pills=pills.filter(p=>p.v==='all'||accessTypes.has(p.v));
+      }
       const cf=document.getElementById('class-filter');
       cf.style.display='block';
       cf.innerHTML=`<div id="all-patients-pills" style="display:flex;gap:8px;flex-wrap:wrap;padding:0 0 8px">
@@ -1647,22 +1668,16 @@ function selectCategory(cat){
   if(cat==='clinic'){
     patientView='patients-list';
     patientListTitle='קליניקה'; patientListBackFn='backToMain';
-    const clinicInst=allInstitutions.find(i=>i.type==='clinic'||i.name?.includes('קליניקה')||i.name?.toLowerCase().includes('clinic'));
-    patientListData=clinicInst?allPatients.filter(p=>p.institution_id===clinicInst.id):allPatients.filter(p=>{
-      const inst=allInstitutions.find(i=>i.id===p.institution_id);
-      return inst&&inst.type==='clinic';
-    });
-    currentContextType='clinic'; currentContextInstitutionId=clinicInst?clinicInst.id:null; currentContextClassId=null;
+    const clinicIds=new Set(allInstitutions.filter(i=>i.type==='clinic').map(i=>i.id));
+    patientListData=allPatients.filter(p=>clinicIds.has(p.institution_id));
+    currentContextType='clinic'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
   } else if(cat==='vizhnitz'){
     patientView='vizhnitz-classes';
     currentContextType='vizhnitz'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
   } else if(cat==='education'){
-    patientView='patients-list';
-    patientListTitle='משרד החינוך'; patientListBackFn='backToMain';
-    const eduIds=new Set(allInstitutions.filter(i=>i.type==='education').map(i=>i.id));
-    patientListData=allPatients.filter(p=>eduIds.has(p.institution_id));
+    patientView='education-institutions';
     currentContextType='education'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
   } else if(cat==='ponivez'){
