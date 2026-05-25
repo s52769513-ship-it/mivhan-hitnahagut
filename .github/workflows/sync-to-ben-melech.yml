@@ -1,0 +1,40 @@
+name: Sync CRM to ben-melech
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'crm/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout mivhan-hitnahagut
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Clone ben-melech
+        run: |
+          git clone https://x-access-token:${{ secrets.BEN_MELECH_TOKEN }}@github.com/s52769513-ship-it/ben-melech.git target
+
+      - name: Sync crm/ to ben-melech root
+        run: |
+          rsync -av --delete \
+            --exclude='.git' \
+            source/crm/ target/
+
+      - name: Commit and push
+        run: |
+          cd target
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to sync"
+          else
+            git commit -m "Sync from mivhan-hitnahagut @ ${{ github.sha }}"
+            git push
+          fi
