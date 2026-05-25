@@ -865,7 +865,7 @@ async function loadAll(){
     sb('questionnaires','?order=created_at'),
     sb('patient_files','?order=created_at.desc'),
     sb('patient_emails','?order=sent_at.desc'),
-    sbAdmin('user_profiles','?select=id,display_name')
+    sbAdmin('user_profiles','?select=*')
   ]);
   allPatients=p.data||[]; allAppointments=a.data||[];
   allTasks=t.data||[]; allPayments=pay.data||[];
@@ -2097,16 +2097,16 @@ function openNewTaskForPatient(pid){
 async function renderPatientNotes(pid){
   const notes=allNotes.filter(n=>n.patient_id===pid);
   if(!allUserProfiles.length){
-    const r=await sbAdmin('user_profiles','?select=id,display_name');
+    const r=await sbAdmin('user_profiles','?select=*');
     if(r.data?.length) allUserProfiles=r.data;
   }
   const NOTE_TYPE_HE={clinical:'קליני',observation:'תצפית'};
   document.getElementById('tab-notes').innerHTML=`
     <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openNoteForPatient('${pid}')">+ הערה</button></div>
     ${notes.length===0?'<div class="empty"><i data-lucide="file-text"></i><p>אין הערות</p></div>':`<div class="card" style="padding:0;overflow:hidden">${notes.map(n=>{
-      const profile=allUserProfiles.find(u=>u.id===n.user_id);
-      const userName=profile?.display_name||'';
-      const typeBadge=NOTE_TYPE_HE[n.note_type]||(userName||'כללי');
+      const profile=allUserProfiles.find(u=>u.id===n.user_id||u.user_id===n.user_id);
+      const userName=profile?.display_name||profile?.name||'';
+      const typeBadge=NOTE_TYPE_HE[n.note_type]||(userName||(n.user_id?'משתמש לא ידוע':'כללי'));
       return`<div class="note-row" onclick="toggleNote('note-body-${n.id}')">
         <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
           <span style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.title||'הערה'}</span>
