@@ -1626,11 +1626,9 @@ function renderInstitutionFilter(){
     // Show classes for vizhnitz institution
     const vizInst = allInstitutions.find(i=>i.type==='vizhnitz')||allInstitutions.find(i=>i.name&&(i.name.includes('ויזניץ')||i.name.toLowerCase().includes('vizhnitz')));
     const vizClasses = vizInst ? allClasses.filter(c=>c.institution_id===vizInst.id) : [];
-    const addAllBtn = isAdmin&&vizInst ? `<button class="btn btn-secondary btn-sm" onclick="addStandardVizhnitzClasses('${vizInst.id}')" style="margin-right:8px"><i data-lucide="plus"></i> הוסף כיתות ב-ט</button>` : '';
-    document.getElementById('patients-list-title').innerHTML = `<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> ויזניץ – בחר כיתה ${addAllBtn}`;
+    document.getElementById('patients-list-title').innerHTML = `<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> ויזניץ – בחר כיתה`;
     document.getElementById('patients-tbody').innerHTML = `<tr><td colspan="6"><div style="padding:20px"><div style="display:flex;flex-wrap:wrap;gap:10px">
       ${vizClasses.map(c=>`<button class="cat-btn" style="min-width:120px" onclick="selectVizhnitzClass('${c.id}','${c.name}')"><span class="ci"><i data-lucide="building"></i></span><span>${c.name}</span></button>`).join('')}
-      ${isAdmin?`<button class="cat-btn" style="min-width:120px" onclick="openModal('modal-new-class')"><span class="ci"><i data-lucide="plus-circle"></i></span><span>כיתה חדשה</span></button>`:''}
     </div></div></td></tr>`;
     return;
   }
@@ -1699,18 +1697,6 @@ function selectVizhnitzClass(classId, className){
   renderInstitutionFilter();
 }
 
-async function addStandardVizhnitzClasses(instId){
-  const standard=['ב','ג','ד','ה','ו','ז','ח','ט'];
-  const existing=new Set(allClasses.filter(c=>c.institution_id===instId).map(c=>c.name));
-  const missing=standard.filter(n=>!existing.has(n));
-  if(missing.length===0){alert('כל הכיתות כבר קיימות');return;}
-  for(const name of missing){
-    const r=await sbAdminInsert('classes',{name,institution_id:instId});
-    if(!r.error&&r.data?.[0]) allClasses.push(r.data[0]);
-  }
-  renderInstitutionFilter();
-  if(window.lucide) lucide.createIcons();
-}
 
 function selectEduInstitution(instId, instName){
   patientView='patients-list';
