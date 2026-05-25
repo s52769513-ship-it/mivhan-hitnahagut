@@ -780,17 +780,23 @@ tr:last-child td{border-bottom:none}
 </div>
 
 <div class="modal-backdrop" id="modal-gmail-view" style="display:none" onclick="closeModal('modal-gmail-view')">
-  <div class="modal" style="max-width:700px" onclick="event.stopPropagation()">
-    <div class="modal-header">
+  <div class="modal" style="max-width:700px;display:flex;flex-direction:column;max-height:90vh" onclick="event.stopPropagation()">
+    <div class="modal-header" style="flex-shrink:0">
       <h2 id="gmail-view-subject" style="font-size:16px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></h2>
       <button class="btn btn-icon" onclick="closeModal('modal-gmail-view')"><i data-lucide="x"></i></button>
     </div>
-    <div class="modal-body">
-      <div style="margin-bottom:12px;font-size:13px;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:10px">
-        <div><strong>מ:</strong> <span id="gmail-view-from"></span></div>
-        <div><strong>תאריך:</strong> <span id="gmail-view-date"></span></div>
+    <div class="modal-body" style="flex:1;overflow-y:auto;padding:16px">
+      <div id="gmail-thread-messages" style="display:flex;flex-direction:column;gap:14px"></div>
+    </div>
+    <div style="flex-shrink:0;border-top:1px solid var(--g200);padding:12px 16px;background:var(--bg)">
+      <div contenteditable="true" id="gmail-reply-body" dir="rtl"
+        style="min-height:72px;border:1px solid var(--g200);border-radius:8px;padding:10px 12px;font-size:14px;outline:none;background:var(--surface);color:var(--text)"
+        data-placeholder="כתוב תשובה..."></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-primary btn-sm" onclick="sendThreadReply()">
+          <i data-lucide="send"></i> שלח תשובה
+        </button>
       </div>
-      <div id="gmail-view-body" style="font-size:14px;line-height:1.7;max-height:60vh;overflow-y:auto"></div>
     </div>
   </div>
 </div>
@@ -3202,7 +3208,7 @@ function updateGmailStatus(){
   lucide.createIcons();
 }
 
-function makeRFC2822(to,subject,bodyHtml){
+function makeRFC2822(to,subject,bodyHtml,opts={}){
   const enc=s=>btoa(unescape(encodeURIComponent(s)));
   const lines=[
     'To: '+to,
@@ -3210,17 +3216,20 @@ function makeRFC2822(to,subject,bodyHtml){
     'Subject: =?utf-8?B?'+enc(subject)+'?=',
     'MIME-Version: 1.0',
     'Content-Type: text/html; charset=utf-8',
-    '',
-    bodyHtml
   ];
+  if(opts.inReplyTo) lines.push('In-Reply-To: '+opts.inReplyTo);
+  if(opts.references) lines.push('References: '+opts.references);
+  lines.push('',''+bodyHtml);
   return btoa(unescape(encodeURIComponent(lines.join('\r\n')))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
 
-async function sendViaGmailAPI(to,subject,bodyHtml){
+async function sendViaGmailAPI(to,subject,bodyHtml,opts={}){
+  const body={raw:makeRFC2822(to,subject,bodyHtml,opts)};
+  if(opts.threadId) body.threadId=opts.threadId;
   const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{
     method:'POST',
     headers:{'Authorization':'Bearer '+gmailToken,'Content-Type':'application/json'},
-    body:JSON.stringify({raw:makeRFC2822(to,subject,bodyHtml)})
+    body:JSON.stringify(body)
   });
   if(!r.ok){ const e=await r.json(); throw new Error(e.error?.message||'Gmail send failed'); }
 }
@@ -3236,33 +3245,36 @@ async function loadPatientInbox(pid){
   listEl.innerHTML='<div style="text-align:center;padding:20px;color:var(--g400)"><i data-lucide="loader"></i> טוען...</div>';
   lucide.createIcons();
   try{
-    const q=p&&p.email?'from:'+p.email:'';
-    const url='https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=15'+(q?'&q='+encodeURIComponent(q):'');
+    const q=p&&p.email?'from:'+p.email+' OR to:'+p.email:'';
+    const url='https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=15'+(q?'&q='+encodeURIComponent(q):'');
     const r=await fetch(url,{headers:{'Authorization':'Bearer '+gmailToken}});
     if(!r.ok) throw new Error('שגיאה בטעינת תיבת הדואר');
     const data=await r.json();
-    const msgs=data.messages||[];
-    if(!msgs.length){
-      listEl.innerHTML='<div class="empty"><i data-lucide="inbox"></i><p>אין מיילים נכנסים'+(p&&p.email?' מ-'+p.email:'')+'</p></div>';
+    const threads=data.threads||[];
+    if(!threads.length){
+      listEl.innerHTML='<div class="empty"><i data-lucide="inbox"></i><p>אין שיחות'+(p&&p.email?' עם '+p.email:'')+'</p></div>';
       lucide.createIcons(); return;
     }
-    const details=await Promise.all(msgs.slice(0,10).map(m=>
-      fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date',
+    const details=await Promise.all(threads.slice(0,12).map(t=>
+      fetch('https://gmail.googleapis.com/gmail/v1/users/me/threads/'+t.id+'?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Subject&metadataHeaders=Date',
         {headers:{'Authorization':'Bearer '+gmailToken}}).then(r=>r.json())
     ));
-    listEl.innerHTML=details.map(msg=>{
-      const hh=msg.payload?.headers||[];
+    listEl.innerHTML=details.map(thread=>{
+      const msgs=thread.messages||[];
+      const last=msgs[msgs.length-1];
+      const hh=last?.payload?.headers||[];
       const gh=n=>hh.find(h=>h.name===n)?.value||'';
       const d=gh('Date'); const ds=d?new Date(d).toLocaleDateString('he-IL'):'';
-      return `<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openGmailMessage('${msg.id}')">
+      const count=msgs.length;
+      return `<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openGmailThread('${thread.id}','${pid}')">
         <div class="card-header" style="padding:10px 16px">
           <div style="flex:1">
-            <div style="font-size:14px;font-weight:600">${gh('Subject')||'(ללא נושא)'}</div>
-            <div style="font-size:12px;color:var(--g400)">${gh('From')} · ${ds}</div>
+            <div style="font-size:14px;font-weight:600">${gh('Subject')||'(ללא נושא)'}${count>1?` <span style="font-size:12px;color:var(--g400);font-weight:400">(${count})</span>`:''}</div>
+            <div style="font-size:12px;color:var(--g400)">${gh('From')||gh('To')} · ${ds}</div>
           </div>
           <i data-lucide="chevron-left" style="color:var(--g300)"></i>
         </div>
-        <div style="padding:8px 16px;font-size:13px;color:var(--g500)">${msg.snippet||''}</div>
+        <div style="padding:8px 16px;font-size:13px;color:var(--g500)">${last?.snippet||''}</div>
       </div>`;
     }).join('');
     lucide.createIcons();
@@ -3272,33 +3284,94 @@ async function loadPatientInbox(pid){
   }
 }
 
+let gmailThreadState={threadId:null,to:'',subject:'',lastMsgId:''};
+
+function extractBody(payload){
+  let body='';
+  function ex(part){
+    if(part.mimeType==='text/html'&&part.body?.data){
+      try{ body=decodeURIComponent(escape(atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'))));}catch(e){}
+    } else if(part.mimeType==='text/plain'&&!body&&part.body?.data){
+      try{ body='<pre style="white-space:pre-wrap;font-family:inherit">'+decodeURIComponent(escape(atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'))))+'</pre>';}catch(e){}
+    }
+    if(part.parts) part.parts.forEach(ex);
+  }
+  ex(payload);
+  if(!body&&payload?.body?.data){
+    try{ body=decodeURIComponent(escape(atob(payload.body.data.replace(/-/g,'+').replace(/_/g,'/'))));}catch(e){}
+  }
+  return body||'<em style="color:var(--g400)">תוכן לא זמין</em>';
+}
+
+async function openGmailThread(threadId, pid){
+  if(!isGmailReady()) return;
+  const messagesEl=document.getElementById('gmail-thread-messages');
+  messagesEl.innerHTML='<div style="text-align:center;padding:30px;color:var(--g400)"><i data-lucide="loader"></i> טוען שרשור...</div>';
+  openModal('modal-gmail-view'); lucide.createIcons();
+  try{
+    const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/threads/'+threadId+'?format=full',
+      {headers:{'Authorization':'Bearer '+gmailToken}});
+    const thread=await r.json();
+    const msgs=thread.messages||[];
+    if(!msgs.length){ messagesEl.innerHTML='<em>אין הודעות</em>'; return; }
+
+    const firstHh=msgs[0].payload?.headers||[];
+    const firstGh=n=>firstHh.find(h=>h.name===n)?.value||'';
+    document.getElementById('gmail-view-subject').textContent=firstGh('Subject')||'(ללא נושא)';
+
+    const lastMsg=msgs[msgs.length-1];
+    const lastHh=lastMsg.payload?.headers||[];
+    const lastGh=n=>lastHh.find(h=>h.name===n)?.value||'';
+    const replyTo=lastGh('Reply-To')||lastGh('From');
+    const lastMsgId=lastGh('Message-ID');
+    const refs=lastGh('References');
+    gmailThreadState={threadId,to:replyTo,subject:'Re: '+firstGh('Subject'),lastMsgId,references:(refs?refs+' ':'')+lastMsgId};
+
+    messagesEl.innerHTML=msgs.map((msg,i)=>{
+      const hh=msg.payload?.headers||[];
+      const gh=n=>hh.find(h=>h.name===n)?.value||'';
+      const d=gh('Date'); const ds=d?new Date(d).toLocaleString('he-IL'):'';
+      const fromMe=gh('From').includes(gmailUser);
+      const body=extractBody(msg.payload);
+      const isLast=i===msgs.length-1;
+      return `<div style="border:1px solid var(--g200);border-radius:10px;overflow:hidden;${isLast?'border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-light,#e8f0fe)':''}">
+        <div style="padding:10px 14px;background:${fromMe?'var(--primary-light,#e8f0fe)':'var(--surface)'};display:flex;justify-content:space-between;align-items:center;font-size:13px">
+          <div>
+            <strong>${fromMe?'אני':gh('From')}</strong>
+            ${fromMe?'':'→ '+gh('To')}
+          </div>
+          <span style="color:var(--g400);font-size:12px">${ds}</span>
+        </div>
+        <div style="padding:14px;font-size:14px;line-height:1.7;overflow-x:auto">${body}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('gmail-reply-body').innerHTML='';
+    lucide.createIcons();
+  }catch(e){ toast('שגיאה בטעינת שרשור: '+e.message,'error'); closeModal('modal-gmail-view'); }
+}
+
+async function sendThreadReply(){
+  if(!isGmailReady()) return toast('Gmail לא מחובר','error');
+  const bodyEl=document.getElementById('gmail-reply-body');
+  const bodyHtml=bodyEl.innerHTML.trim();
+  if(!bodyHtml||bodyHtml==='<br>') return toast('נא לכתוב תשובה','error');
+  const {threadId,to,subject,lastMsgId,references}=gmailThreadState;
+  if(!threadId||!to) return toast('שגיאה: מצב שרשור חסר','error');
+  try{
+    await sendViaGmailAPI(to,subject,bodyHtml,{threadId,inReplyTo:lastMsgId,references});
+    toast('תשובה נשלחה','success');
+    bodyEl.innerHTML='';
+    await openGmailThread(threadId);
+  }catch(e){ toast('שגיאה בשליחה: '+e.message,'error'); }
+}
+
 async function openGmailMessage(msgId){
   if(!isGmailReady()) return;
   try{
     const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+msgId+'?format=full',
       {headers:{'Authorization':'Bearer '+gmailToken}});
     const msg=await r.json();
-    const hh=msg.payload?.headers||[];
-    const gh=n=>hh.find(h=>h.name===n)?.value||'';
-    let body='';
-    function ex(part){
-      if(part.mimeType==='text/html'&&part.body?.data){
-        try{ body=decodeURIComponent(escape(atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'))));}catch(e){}
-      } else if(part.mimeType==='text/plain'&&!body&&part.body?.data){
-        try{ body='<pre style="white-space:pre-wrap">'+decodeURIComponent(escape(atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'))))+'</pre>';}catch(e){}
-      }
-      if(part.parts) part.parts.forEach(ex);
-    }
-    ex(msg.payload);
-    if(!body&&msg.payload?.body?.data){
-      try{ body=decodeURIComponent(escape(atob(msg.payload.body.data.replace(/-/g,'+').replace(/_/g,'/'))));}catch(e){}
-    }
-    const d=gh('Date');
-    document.getElementById('gmail-view-subject').textContent=gh('Subject')||'(ללא נושא)';
-    document.getElementById('gmail-view-from').textContent=gh('From');
-    document.getElementById('gmail-view-date').textContent=d?new Date(d).toLocaleString('he-IL'):'';
-    document.getElementById('gmail-view-body').innerHTML=body||'<em>תוכן לא זמין</em>';
-    openModal('modal-gmail-view'); lucide.createIcons();
+    if(msg.threadId) return openGmailThread(msg.threadId);
   }catch(e){ toast('שגיאה בטעינת מייל: '+e.message,'error'); }
 }
 
