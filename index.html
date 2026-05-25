@@ -1057,11 +1057,10 @@ const CATEGORY_LABELS={clinic:'קליניקה',vizhnitz:'ויזניץ',education
 function renderAssignInstitutions(uid){
   const assigned=allUserInstitutions.filter(x=>x.user_id===uid).map(x=>x.institution_id);
   const el=document.getElementById('eu-institutions');
-  const cats=['clinic','vizhnitz','education','ponivez','general'];
-  const catRows=cats.map(cat=>{
+  const mainCats=['clinic','vizhnitz','education','ponivez'];
+  const catRows=mainCats.map(cat=>{
     const typeInsts=allInstitutions.filter(i=>(i.type||'general')===cat);
-    if(typeInsts.length===0) return '';
-    const allOn=typeInsts.every(i=>assigned.includes(i.id));
+    const allOn=typeInsts.length>0&&typeInsts.every(i=>assigned.includes(i.id));
     const someOn=typeInsts.some(i=>assigned.includes(i.id));
     const catBtn=`<button onclick="toggleCategoryAccess('${uid}','${cat}',${!allOn})" style="padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;border:1.5px solid ${allOn?'var(--crimson)':someOn?'var(--blue2)':'var(--g300)'};background:${allOn?'#fee2e2':someOn?'var(--blue-light)':'var(--g50)'};cursor:pointer;color:${allOn?'var(--crimson)':someOn?'var(--blue2)':'var(--g600)'}">${allOn?'✓ ':''}${CATEGORY_LABELS[cat]}</button>`;
     const instSpans=typeInsts.map(inst=>{
@@ -1069,8 +1068,14 @@ function renderAssignInstitutions(uid){
       return`<span onclick="toggleUserInstitution('${uid}','${inst.id}',${!on})" style="padding:3px 10px;border-radius:999px;font-size:12px;cursor:pointer;border:1.5px solid ${on?'var(--blue2)':'var(--g200)'};background:${on?'var(--blue-light)':'white'};color:${on?'var(--blue2)':'var(--g600)'}">${on?'✓ ':''}${inst.name}</span>`;
     }).join('');
     return`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${catBtn}${instSpans}</div>`;
-  }).filter(Boolean).join('');
-  el.innerHTML=catRows||'<span style="color:var(--g400);font-size:13px">אין מוסדות במערכת</span>';
+  });
+  // also show 'general' if any exist
+  const genInsts=allInstitutions.filter(i=>!i.type||i.type==='general');
+  if(genInsts.length>0){
+    const genSpans=genInsts.map(inst=>{const on=assigned.includes(inst.id);return`<span onclick="toggleUserInstitution('${uid}','${inst.id}',${!on})" style="padding:3px 10px;border-radius:999px;font-size:12px;cursor:pointer;border:1.5px solid ${on?'var(--blue2)':'var(--g200)'};background:${on?'var(--blue-light)':'white'};color:${on?'var(--blue2)':'var(--g600)'}">${on?'✓ ':''}${inst.name}</span>`;}).join('');
+    catRows.push(`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;background:var(--g50);color:var(--g600)">כללי</span>${genSpans}</div>`);
+  }
+  el.innerHTML=catRows.join('');
 }
 
 async function toggleCategoryAccess(uid,cat,add){
