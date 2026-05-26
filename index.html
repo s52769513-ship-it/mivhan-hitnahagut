@@ -911,7 +911,7 @@ async function sbDelete(table, id){
 async function loadAll(){
   const [p,a,t,pay,inst,cls,n,obs,g,q,files,emails,profiles] = await Promise.all([
     sb('patients','?order=name'),
-    sb('appointments','?order=start_time.desc'),
+    sb('appointments','?order=start_time.asc'),
     sb('tasks','?order=due_date'),
     sb('payments','?order=created_at.desc'),
     sb('institutions','?order=name'),
@@ -1931,7 +1931,7 @@ let patientAptView='list';
 let patientCalDate=new Date();
 
 function renderPatientAppointments(pid){
-  const apts=allAppointments.filter(a=>a.patient_id===pid);
+  const apts=[...allAppointments.filter(a=>a.patient_id===pid)].sort((a,b)=>new Date(a.start_time||0)-new Date(b.start_time||0));
   const toggleBtns=`<div style="display:flex;gap:4px"><button class="btn btn-sm ${patientAptView==='list'?'btn-primary':'btn-secondary'}" onclick="patientAptView='list';renderPatientAppointments('${pid}')"><i data-lucide="clipboard-list"></i> רשימה</button><button class="btn btn-sm ${patientAptView==='calendar'?'btn-primary':'btn-secondary'}" onclick="patientAptView='calendar';renderPatientAppointments('${pid}')"><i data-lucide="calendar"></i> יומן</button></div>`;
   if(patientAptView==='calendar'){
     document.getElementById('tab-appointments').innerHTML=`
@@ -2710,7 +2710,8 @@ async function renderAppointments(){
   await loadAll(); populateSelects();
   const tb=document.getElementById('apts-tbody');
   if(allAppointments.length===0){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><i data-lucide="calendar"></i><p>אין פגישות</p></div></td></tr>`;return;}
-  tb.innerHTML=allAppointments.map(a=>{const p=allPatients.find(x=>x.id===a.patient_id);return`<tr>
+  const sorted=[...allAppointments].sort((a,b)=>new Date(a.start_time||0)-new Date(b.start_time||0));
+  tb.innerHTML=sorted.map(a=>{const p=allPatients.find(x=>x.id===a.patient_id);return`<tr>
     <td style="font-weight:600">${a.name||'פגישה'}</td>
     <td>${p?p.name:'-'}</td>
     <td>${a.start_time?fmtDate(a.start_time):'-'}</td>
