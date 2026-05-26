@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ArrowRight, User, Phone, MapPin, Calendar, BookOpen, Star } from "lucide-react";
 import { notFound } from "next/navigation";
+import DeleteStudentButton from "../DeleteStudentButton";
 
 export default async function StudentDetailPage({
   params,
@@ -64,10 +65,18 @@ export default async function StudentDetailPage({
           <ArrowRight size={14} />
           חזרה לבחורים
         </Link>
-        <h1 className="text-3xl font-bold text-[#1e3a5f]">
-          {student.first_name} {student.last_name}
-        </h1>
-        <p className="text-gray-500 mt-1">פרופיל בחור</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-[#1e3a5f]">
+              {student.first_name} {student.last_name}
+            </h1>
+            <p className="text-gray-500 mt-1">פרופיל בחור</p>
+          </div>
+          <DeleteStudentButton
+            studentId={student.id}
+            studentName={`${student.first_name} ${student.last_name}`}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
