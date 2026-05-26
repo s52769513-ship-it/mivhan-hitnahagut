@@ -2814,13 +2814,18 @@ async function createAppointment(){
       const endDt=new Date(d.getTime()+durMs);
       return {name:name||(i===0?'פגישה 1 מ-4':`פגישה ${i+1} מ-4`),patient_id:patId||null,start_time:d.toISOString(),end_time:endDt.toISOString(),price,arrived:false,description:desc||null};
     });
+    console.log('[series] rows to insert:', JSON.stringify(rows));
     const r=await sbAdminInsert('appointments',rows);
+    console.log('[series] result:', JSON.stringify(r));
     btn.disabled=false; btn.textContent='צור 4 פגישות';
     if(r.error){
       const msg=typeof r.error==='string'?r.error:JSON.stringify(r.error);
-      toast('שגיאה: '+msg.slice(0,120),'error');
+      console.error('[series] error:', msg);
+      alert('שגיאה ביצירת סדרה:\n\n'+msg);
     } else {
-      toast('סדרה נוצרה! 4 פגישות שבועיות נרשמו ✓','success');
+      const created=Array.isArray(r.data)?r.data.length:0;
+      console.log('[series] created', created, 'records');
+      toast(`סדרה נוצרה! ${created} פגישות נרשמו ✓`,'success');
       closeModal('modal-new-appointment'); resetForm();
     }
   } else {
