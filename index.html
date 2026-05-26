@@ -524,16 +524,13 @@ tr:last-child td{border-bottom:none}
       <div class="form-group"><label class="form-label">שם פגישה</label><input type="text" class="form-control" id="na-name"></div>
       <div class="form-group"><label class="form-label">מטופל</label><select class="form-control" id="na-patient"><option value="">-- בחר מטופל --</option></select></div>
       <div class="form-grid">
-        <div class="form-group"><label class="form-label">תחילת פגישה</label><input type="datetime-local" class="form-control" id="na-start" dir="ltr" oninput="if(naAppType==='series')updateSeriesPreview()"></div>
-        <div class="form-group"><label class="form-label">סיום פגישה</label><input type="datetime-local" class="form-control" id="na-end" dir="ltr"></div>
+        <div class="form-group"><label class="form-label">תחילת פגישה</label><input type="datetime-local" class="form-control" id="na-start" dir="ltr" oninput="if(naAppType==='series')naInitSlots()"></div>
+        <div class="form-group"><label class="form-label">סיום פגישה</label><input type="datetime-local" class="form-control" id="na-end" dir="ltr" oninput="if(naAppType==='series')updateSeriesPreview()"></div>
       </div>
       <div id="na-series-preview" style="display:none;background:var(--g50);border:1px solid var(--g200);border-radius:10px;padding:14px;margin-bottom:14px;">
-        <div style="font-size:13px;font-weight:700;color:var(--g700);margin-bottom:10px;display:flex;align-items:center;gap:6px;"><i data-lucide="calendar-range" style="width:15px;height:15px;"></i> 4 פגישות שייווצרו:</div>
+        <div style="font-size:13px;font-weight:700;color:var(--g700);margin-bottom:10px;display:flex;align-items:center;gap:6px;"><i data-lucide="calendar-range" style="width:15px;height:15px;"></i> <span id="na-series-count">4</span> פגישות שייווצרו:</div>
         <div id="na-series-dates" style="display:flex;flex-direction:column;gap:6px;"></div>
-        <div id="na-series-conflict-box" style="display:none;margin-top:12px;padding:10px 12px;background:var(--amber-light);border:1px solid #d97706;border-radius:8px;">
-          <div style="font-size:13px;font-weight:700;color:var(--amber);margin-bottom:4px;">⚠️ התנגשויות — פגישות קיימות באותה שעה:</div>
-          <div id="na-series-conflict-list" style="font-size:12px;color:#92400e;line-height:1.8;"></div>
-        </div>
+        <button type="button" onclick="naAddSlot()" style="margin-top:8px;width:100%;padding:7px;border:1px dashed var(--g300);border-radius:7px;background:white;color:var(--blue2);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background='white'">+ הוסף שבוע נוסף</button>
       </div>
       <div class="form-group"><label class="form-label">מחיר (₪)</label><input type="number" class="form-control" id="na-price" dir="ltr"></div>
       <div id="na-arrived-wrap" class="form-group" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="na-arrived" style="width:16px;height:16px"><label class="form-label" style="margin:0;cursor:pointer" for="na-arrived">הגיע לפגישה</label></div>
@@ -2726,6 +2723,40 @@ async function renderAppointments(){
 }
 
 let naAppType='once';
+let naSeriesSlots=[]; // [{date:Date, timeOverride:string|null}]
+
+const JEWISH_HOLIDAYS={
+  '2025-09-23':'ראש השנה','2025-09-24':'ראש השנה',
+  '2025-10-02':'יום כיפור',
+  '2025-10-07':'סוכות','2025-10-08':'סוכות','2025-10-09':'חול המועד סוכות',
+  '2025-10-10':'חול המועד סוכות','2025-10-11':'חול המועד סוכות','2025-10-12':'חול המועד סוכות',
+  '2025-10-13':'הושענא רבה','2025-10-14':'שמחת תורה',
+  '2025-12-15':'חנוכה','2025-12-16':'חנוכה','2025-12-17':'חנוכה','2025-12-18':'חנוכה',
+  '2025-12-19':'חנוכה','2025-12-20':'חנוכה','2025-12-21':'חנוכה','2025-12-22':'חנוכה',
+  '2026-03-03':'פורים',
+  '2026-04-02':'פסח','2026-04-03':'פסח','2026-04-04':'חול המועד פסח',
+  '2026-04-05':'חול המועד פסח','2026-04-06':'חול המועד פסח','2026-04-07':'חול המועד פסח',
+  '2026-04-08':'שביעי של פסח','2026-04-09':'אחרון של פסח',
+  '2026-04-20':'יום הזיכרון לשואה',
+  '2026-04-28':'יום הזיכרון','2026-04-29':'יום העצמאות',
+  '2026-05-14':'ל"ג בעומר',
+  '2026-05-22':'שבועות','2026-05-23':'שבועות',
+  '2026-09-12':'ראש השנה','2026-09-13':'ראש השנה',
+  '2026-09-21':'יום כיפור',
+  '2026-09-26':'סוכות','2026-09-27':'סוכות',
+  '2026-10-03':'שמחת תורה',
+  '2026-12-05':'חנוכה','2026-12-06':'חנוכה','2026-12-07':'חנוכה','2026-12-08':'חנוכה',
+  '2026-12-09':'חנוכה','2026-12-10':'חנוכה','2026-12-11':'חנוכה','2026-12-12':'חנוכה',
+  '2027-02-19':'פורים',
+  '2027-03-21':'פסח','2027-03-22':'פסח','2027-03-28':'שביעי של פסח',
+  '2027-05-12':'שבועות',
+};
+
+function getJewishHoliday(date){
+  const d=new Date(date);
+  const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return JEWISH_HOLIDAYS[key]||null;
+}
 
 function setAppType(type){
   naAppType=type;
@@ -2737,51 +2768,107 @@ function setAppType(type){
     document.getElementById('na-series-preview').style.display='none';
     document.getElementById('na-arrived-wrap').style.display='flex';
     document.getElementById('na-submit-btn').textContent='צור פגישה';
+    naSeriesSlots=[];
   } else {
     series.style.background='var(--blue2)';series.style.color='white';series.style.fontWeight='600';
     once.style.background='white';once.style.color='var(--g500)';once.style.fontWeight='500';
     document.getElementById('na-series-preview').style.display='block';
     document.getElementById('na-arrived-wrap').style.display='none';
-    document.getElementById('na-submit-btn').textContent='צור 4 פגישות';
-    updateSeriesPreview();
+    naInitSlots();
   }
   lucide.createIcons();
 }
 
-function updateSeriesPreview(){
+function naInitSlots(){
   const startVal=document.getElementById('na-start').value;
-  const datesEl=document.getElementById('na-series-dates');
-  const conflictBox=document.getElementById('na-series-conflict-box');
-  const conflictList=document.getElementById('na-series-conflict-list');
-  if(!startVal){datesEl.innerHTML='<div style="font-size:12px;color:var(--g400)">הכנס תחילת פגישה לצפייה בתאריכים</div>';conflictBox.style.display='none';return;}
+  if(!startVal){naSeriesSlots=[];updateSeriesPreview();return;}
   const base=new Date(startVal);
+  naSeriesSlots=[0,7,14,21].map(d=>{const dt=new Date(base);dt.setDate(dt.getDate()+d);return{date:dt,timeOverride:null};});
+  updateSeriesPreview();
+}
+
+function naSlotGetStart(slot){
+  const d=new Date(slot.date);
+  if(slot.timeOverride){const[h,m]=slot.timeOverride.split(':').map(Number);d.setHours(h,m,0,0);}
+  return d;
+}
+
+function naDurMs(){
+  const s=document.getElementById('na-start').value;
+  const e=document.getElementById('na-end').value;
+  if(s&&e){const dur=new Date(e)-new Date(s);if(dur>0)return dur;}
+  return 60*60*1000;
+}
+
+function naSlotHasConflict(slot){
+  const slotStart=naSlotGetStart(slot);
+  const slotEnd=new Date(slotStart.getTime()+naDurMs());
+  return (allAppointments||[]).some(a=>{
+    if(!a.start_time)return false;
+    const aStart=new Date(a.start_time);
+    const aEnd=a.end_time?new Date(a.end_time):new Date(aStart.getTime()+60*60*1000);
+    return aStart<slotEnd&&aEnd>slotStart;
+  });
+}
+
+function naRemoveSlot(idx){
+  naSeriesSlots.splice(idx,1);
+  updateSeriesPreview();
+}
+
+function naAddSlot(){
+  if(naSeriesSlots.length===0)return;
+  const last=naSeriesSlots[naSeriesSlots.length-1];
+  const newDate=new Date(last.date);
+  newDate.setDate(newDate.getDate()+7);
+  naSeriesSlots.push({date:newDate,timeOverride:null});
+  updateSeriesPreview();
+}
+
+function naSlotTimeChange(idx,val){
+  naSeriesSlots[idx].timeOverride=val||null;
+  updateSeriesPreview();
+}
+
+function updateSeriesPreview(){
+  const datesEl=document.getElementById('na-series-dates');
+  const countEl=document.getElementById('na-series-count');
+  const submitBtn=document.getElementById('na-submit-btn');
+  if(naSeriesSlots.length===0){
+    datesEl.innerHTML='<div style="font-size:12px;color:var(--g400)">הכנס תחילת פגישה לצפייה בתאריכים</div>';
+    if(countEl)countEl.textContent='0';
+    if(submitBtn&&naAppType==='series')submitBtn.textContent='צור פגישות';
+    return;
+  }
   const dayNames=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-  const dates=[0,7,14,21].map(d=>{const dt=new Date(base);dt.setDate(dt.getDate()+d);return dt;});
-  const conflicts=[];
-  datesEl.innerHTML=dates.map((d,i)=>{
-    const sameTime=(allAppointments||[]).filter(a=>{
-      if(!a.start_time)return false;
-      const at=new Date(a.start_time);
-      return at.getFullYear()===d.getFullYear()&&at.getMonth()===d.getMonth()&&at.getDate()===d.getDate()&&at.getHours()===d.getHours()&&at.getMinutes()===d.getMinutes();
-    });
-    sameTime.forEach(c=>conflicts.push({apt:c,date:d}));
-    const hasConflict=sameTime.length>0;
-    const timeStr=d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
-    const dateStr=d.toLocaleDateString('he-IL',{day:'numeric',month:'long'});
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:6px;background:${hasConflict?'#fef3c7':'white'};border:1px solid ${hasConflict?'#d97706':'var(--g200)'};">
-      <div style="font-size:13px;color:var(--g700);"><span style="font-weight:600;color:var(--blue2);">שבוע ${i+1}</span> · יום ${dayNames[d.getDay()]} ${dateStr} · ${timeStr}</div>
-      ${hasConflict?`<span style="font-size:11px;font-weight:700;color:#b45309;white-space:nowrap;margin-right:8px;">⚠️ תפוס</span>`:`<span style="font-size:11px;color:var(--green);font-weight:600;">✓ פנוי</span>`}
+  datesEl.innerHTML=naSeriesSlots.map((slot,i)=>{
+    const slotStart=naSlotGetStart(slot);
+    const conflict=naSlotHasConflict(slot);
+    const dateStr=slotStart.toLocaleDateString('he-IL',{day:'numeric',month:'long'});
+    const dayStr=dayNames[slotStart.getDay()];
+    const holiday=getJewishHoliday(slotStart);
+    const h=String(slotStart.getHours()).padStart(2,'0');
+    const m=String(slotStart.getMinutes()).padStart(2,'0');
+    const timeInputVal=slot.timeOverride||`${h}:${m}`;
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:7px;background:${conflict?'#fef3c7':'white'};border:1px solid ${conflict?'#d97706':'var(--g200)'};">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;color:var(--g700);display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+          <span style="font-weight:700;color:var(--blue2);">שבוע ${i+1}</span>
+          <span style="color:var(--g500);">יום ${dayStr} ${dateStr}</span>
+          ${holiday?`<span style="font-size:11px;font-weight:700;background:#fef9c3;color:#92400e;padding:1px 7px;border-radius:4px;">🗓 ${holiday}</span>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:5px;">
+          <input type="time" value="${timeInputVal}" onchange="naSlotTimeChange(${i},this.value)" style="font-size:13px;border:1px solid ${conflict?'#d97706':'var(--g200)'};border-radius:5px;padding:3px 7px;background:white;font-family:inherit;color:var(--g800);" dir="ltr">
+          ${conflict
+            ?`<span style="font-size:11px;font-weight:700;color:#b45309;">⚠️ התנגשות — שנה את השעה</span>`
+            :`<span style="font-size:11px;color:var(--green);font-weight:600;">✓ פנוי</span>`}
+        </div>
+      </div>
+      <button type="button" onclick="naRemoveSlot(${i})" title="הסר פגישה" style="flex-shrink:0;margin-top:2px;width:22px;height:22px;border:1px solid var(--g200);border-radius:5px;background:white;cursor:pointer;font-size:15px;color:var(--g400);line-height:1;padding:0;" onmouseover="this.style.background='#fee2e2';this.style.color='#ef4444'" onmouseout="this.style.background='white';this.style.color='var(--g400)'">×</button>
     </div>`;
   }).join('');
-  if(conflicts.length>0){
-    conflictBox.style.display='block';
-    conflictList.innerHTML=conflicts.map(({apt,date})=>{
-      const p=(allPatients||[]).find(x=>x.id===apt.patient_id);
-      return `• ${apt.name||'פגישה'} ${p?'('+p.name+')':''} — ${date.toLocaleDateString('he-IL')}`;
-    }).join('<br>');
-  } else {
-    conflictBox.style.display='none';
-  }
+  if(countEl)countEl.textContent=naSeriesSlots.length;
+  if(submitBtn&&naAppType==='series')submitBtn.textContent=`צור ${naSeriesSlots.length} פגישות`;
 }
 
 async function createAppointment(){
@@ -2795,40 +2882,32 @@ async function createAppointment(){
   function resetForm(){
     ['na-name','na-start','na-end','na-price','na-desc'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('na-arrived').checked=false;
+    naSeriesSlots=[];
     naAppType='once'; setAppType('once');
   }
 
   if(naAppType==='series'){
-    if(!startVal) return toast('יש לבחור תאריך ושעה','error');
-    const base=new Date(startVal);
-    const dates=[0,7,14,21].map(d=>{const dt=new Date(base);dt.setDate(dt.getDate()+d);return dt;});
-    const conflicts=dates.flatMap(d=>(allAppointments||[]).filter(a=>{
-      if(!a.start_time)return false;
-      const at=new Date(a.start_time);
-      return at.getFullYear()===d.getFullYear()&&at.getMonth()===d.getMonth()&&at.getDate()===d.getDate()&&at.getHours()===d.getHours()&&at.getMinutes()===d.getMinutes();
-    }));
-    if(conflicts.length>0){
-      if(!confirm(`נמצאו ${conflicts.length} פגישות קיימות באותה שעה.\nהאם להמשיך וליצור את הסדרה בכל זאת?`)) return;
+    if(naSeriesSlots.length===0) return toast('יש לבחור תאריך ושעה','error');
+    const conflictCount=naSeriesSlots.filter(s=>naSlotHasConflict(s)).length;
+    if(conflictCount>0){
+      if(!confirm(`${conflictCount} פגישות עם התנגשות עם פגישה קיימת.\nהאם להמשיך וליצור בכל זאת?`)) return;
     }
-    const endBase=endVal?new Date(endVal):null;
-    const durMs=endBase?endBase-new Date(startVal):60*60*1000;
+    const durMs=naDurMs();
     const btn=document.getElementById('na-submit-btn');
     btn.disabled=true; btn.textContent='יוצר...';
-    const rows=dates.map((d,i)=>{
-      const endDt=new Date(d.getTime()+durMs);
-      return {name:name||(i===0?'פגישה 1 מ-4':`פגישה ${i+1} מ-4`),patient_id:patId||null,start_time:d.toISOString(),end_time:endDt.toISOString(),price,arrived:false,description:desc||null};
+    const total=naSeriesSlots.length;
+    const rows=naSeriesSlots.map((slot,i)=>{
+      const slotStart=naSlotGetStart(slot);
+      const slotEnd=new Date(slotStart.getTime()+durMs);
+      return {name:name||`פגישה ${i+1} מ-${total}`,patient_id:patId||null,start_time:slotStart.toISOString(),end_time:slotEnd.toISOString(),price,arrived:false,description:desc||null};
     });
-    console.log('[series] rows to insert:', JSON.stringify(rows));
     const r=await sbAdminInsert('appointments',rows);
-    console.log('[series] result:', JSON.stringify(r));
-    btn.disabled=false; btn.textContent='צור 4 פגישות';
+    btn.disabled=false; btn.textContent=`צור ${total} פגישות`;
     if(r.error){
       const msg=typeof r.error==='string'?r.error:JSON.stringify(r.error);
-      console.error('[series] error:', msg);
       alert('שגיאה ביצירת סדרה:\n\n'+msg);
     } else {
       const created=Array.isArray(r.data)?r.data.length:0;
-      console.log('[series] created', created, 'records');
       toast(`סדרה נוצרה! ${created} פגישות נרשמו ✓`,'success');
       closeModal('modal-new-appointment'); resetForm();
     }
