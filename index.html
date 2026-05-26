@@ -2810,17 +2810,17 @@ async function createAppointment(){
     const durMs=endBase?endBase-new Date(startVal):60*60*1000;
     const btn=document.getElementById('na-submit-btn');
     btn.disabled=true; btn.textContent='יוצר...';
-    const results=await Promise.all(dates.map((d,i)=>{
+    const rows=dates.map((d,i)=>{
       const endDt=new Date(d.getTime()+durMs);
-      return sbInsert('appointments',{name:name||(i===0?'פגישה 1 מ-4':`פגישה ${i+1} מ-4`),patient_id:patId||null,start_time:d.toISOString(),end_time:endDt.toISOString(),price,arrived:false,description:desc});
-    }));
+      return {name:name||(i===0?'פגישה 1 מ-4':`פגישה ${i+1} מ-4`),patient_id:patId||null,start_time:d.toISOString(),end_time:endDt.toISOString(),price,arrived:false,description:desc||null};
+    });
+    const r=await sbAdminInsert('appointments',rows);
     btn.disabled=false; btn.textContent='צור 4 פגישות';
-    const errs=results.filter(r=>r.error);
-    if(errs.length){
-      const firstErr=errs[0].error;
-      toast(`שגיאה ביצירת ${errs.length} פגישות: ${typeof firstErr==='string'?firstErr.slice(0,80):JSON.stringify(firstErr).slice(0,80)}`,'error');
+    if(r.error){
+      const msg=typeof r.error==='string'?r.error:JSON.stringify(r.error);
+      toast('שגיאה: '+msg.slice(0,120),'error');
     } else {
-      toast(`סדרה נוצרה! 4 פגישות שבועיות נרשמו ✓`,'success');
+      toast('סדרה נוצרה! 4 פגישות שבועיות נרשמו ✓','success');
       closeModal('modal-new-appointment'); resetForm();
     }
   } else {
