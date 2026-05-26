@@ -2806,21 +2806,23 @@ async function createAppointment(){
     if(conflicts.length>0){
       if(!confirm(`נמצאו ${conflicts.length} פגישות קיימות באותה שעה.\nהאם להמשיך וליצור את הסדרה בכל זאת?`)) return;
     }
-    const seriesId=crypto.randomUUID();
-    const base2=new Date(startVal);
     const endBase=endVal?new Date(endVal):null;
-    const durMs=endBase?endBase-base2:60*60*1000;
+    const durMs=endBase?endBase-new Date(startVal):60*60*1000;
     const btn=document.getElementById('na-submit-btn');
     btn.disabled=true; btn.textContent='יוצר...';
     const results=await Promise.all(dates.map((d,i)=>{
       const endDt=new Date(d.getTime()+durMs);
-      return sbInsert('appointments',{name:name||(i===0?'פגישה ראשונה':`המשך סדרה ${i+1}`),patient_id:patId||null,start_time:d.toISOString(),end_time:endDt.toISOString(),price,arrived:false,description:desc,series_id:seriesId,appointment_type:'series'});
+      return sbInsert('appointments',{name:name||(i===0?'פגישה 1 מ-4':`פגישה ${i+1} מ-4`),patient_id:patId||null,start_time:d.toISOString(),end_time:endDt.toISOString(),price,arrived:false,description:desc});
     }));
-    btn.disabled=false;
+    btn.disabled=false; btn.textContent='צור 4 פגישות';
     const errs=results.filter(r=>r.error);
-    if(errs.length) toast(`שגיאה ביצירת ${errs.length} פגישות`,'error');
-    else toast(`סדרה נוצרה! 4 פגישות שבועיות נרשמו ✓`,'success');
-    closeModal('modal-new-appointment'); resetForm();
+    if(errs.length){
+      const firstErr=errs[0].error;
+      toast(`שגיאה ביצירת ${errs.length} פגישות: ${typeof firstErr==='string'?firstErr.slice(0,80):JSON.stringify(firstErr).slice(0,80)}`,'error');
+    } else {
+      toast(`סדרה נוצרה! 4 פגישות שבועיות נרשמו ✓`,'success');
+      closeModal('modal-new-appointment'); resetForm();
+    }
   } else {
     const body={name,patient_id:patId||null,start_time:localInputToISO(startVal),end_time:localInputToISO(endVal),price,arrived:document.getElementById('na-arrived').checked,description:desc};
     const r=await sbInsert('appointments',body);
