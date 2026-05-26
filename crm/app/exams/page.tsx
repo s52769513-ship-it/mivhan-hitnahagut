@@ -8,7 +8,7 @@ export default async function ExamsPage() {
   const { data: exams } = await supabase
     .from("exams")
     .select("*")
-    .order("exam_date", { ascending: false });
+    .order("exam_date", { ascending: true });
 
   const examIds = (exams ?? []).map((e) => e.id);
 

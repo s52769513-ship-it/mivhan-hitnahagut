@@ -146,7 +146,16 @@ export default function AttendanceClient({
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(s);
     });
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0], "he"));
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], "he"))
+      .map(([coordName, records]) => [
+        coordName,
+        [...records].sort((a, b) => {
+          const nameA = `${a.student?.first_name ?? ""} ${a.student?.last_name ?? ""}`;
+          const nameB = `${b.student?.first_name ?? ""} ${b.student?.last_name ?? ""}`;
+          return nameA.localeCompare(nameB, "he");
+        }),
+      ] as [string, Score[]]);
   }, [filteredScores]);
 
   // Progress stats

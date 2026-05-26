@@ -10,13 +10,12 @@ export default async function AttendancePage({
   const { exam: examId } = await searchParams;
   const supabase = await createClient();
 
-  // Fetch exams sorted newest first
   const { data: exams } = await supabase
     .from("exams")
     .select("id, parasha, exam_date")
-    .order("exam_date", { ascending: false });
+    .order("exam_date", { ascending: true });
 
-  const selectedExamId = examId ?? exams?.[0]?.id ?? null;
+  const selectedExamId = examId ?? exams?.[exams.length - 1]?.id ?? null;
 
   // Fetch scores for the selected exam with full student + coordinator info
   const { data: scores } = selectedExamId
