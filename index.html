@@ -2576,6 +2576,7 @@ async function downloadQPDF(pid, qtype){
 
 // === REPORTS TAB ===
 let repCurrentPid=null;
+let repLogoSrc='';
 
 function renderReportsTab(pid){
   repCurrentPid=pid;
@@ -2630,17 +2631,28 @@ async function repDownloadAllQuestionnaires(pid){
 
 function openFullReportModal(pid){
   repCurrentPid=pid;
-  // show/hide payments based on admin
   const pl=document.getElementById('rep-payments-lbl');
   if(pl)pl.style.display=isAdmin?'flex':'none';
   document.getElementById('modal-full-report').style.display='flex';
   lucide.createIcons();
 }
 
+// ---- report helpers ----
+function repPageHeader(){
+  const logoHtml=repLogoSrc
+    ?`<img src="${repLogoSrc}" style="height:28px;width:auto;object-fit:contain;">`
+    :`<span style="font-size:12px;font-weight:700;color:#1e3a5f;">מכון התנהגות</span>`;
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:16px;">
+    ${logoHtml}
+    <span style="font-size:10px;color:#aaa;font-weight:500;">בס"ד</span>
+  </div>`;
+}
+
 function repBuildSection(title,html){
-  return `<div style="margin-bottom:28px;page-break-inside:avoid">
-    <div style="font-size:17px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:5px;margin-bottom:14px;">${title}</div>
-    ${html}
+  return `<div style="break-before:page;page-break-before:always;">
+    ${repPageHeader()}
+    <div style="font-size:17px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:5px;margin-bottom:16px;">${title}</div>
+    <div>${html}</div>
   </div>`;
 }
 function repRow(label,val){
@@ -2653,6 +2665,8 @@ function generateFullReport(){
   const pid=repCurrentPid;
   const p=allPatients.find(x=>x.id===pid);
   if(!p)return;
+  // get logo from DOM
+  repLogoSrc=document.querySelector('img.welcome-logo')?.src||'';
   const inst=allInstitutions.find(i=>i.id===p.institution_id);
   const cls=allClasses.find(c=>c.id===p.class_id);
   const include={
@@ -2668,10 +2682,20 @@ function generateFullReport(){
   closeModal('modal-full-report');
   const today=new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric'});
 
-  let body=`<div style="text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid #1e3a5f;">
-    <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">ב"ה</div>
-    <div style="font-size:26px;font-weight:700;color:#1e3a5f;margin-bottom:4px;">תיק מטופל — ${p.name}</div>
-    <div style="font-size:13px;color:#64748b;">הופק: ${today}</div>
+  // COVER PAGE
+  const logoHtml=repLogoSrc
+    ?`<img src="${repLogoSrc}" style="height:32px;width:auto;object-fit:contain;">`
+    :`<span style="font-size:13px;font-weight:700;color:#1e3a5f;">מכון התנהגות</span>`;
+  let body=`<div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:60px;">
+      ${logoHtml}
+      <span style="font-size:10px;color:#aaa;font-weight:500;">בס"ד</span>
+    </div>
+    <div style="text-align:center;margin-top:40px;padding-bottom:24px;border-bottom:3px solid #1e3a5f;">
+      <div style="font-size:28px;font-weight:700;color:#1e3a5f;margin-bottom:8px;">תיק מטופל</div>
+      <div style="font-size:22px;font-weight:600;color:#334155;margin-bottom:12px;">${p.name}</div>
+      <div style="font-size:13px;color:#64748b;">הופק: ${today}</div>
+    </div>
   </div>`;
 
   // PERSONAL
@@ -2679,14 +2703,9 @@ function generateFullReport(){
     const calcDebt=allAppointments.filter(a=>a.patient_id===pid).reduce((s,a)=>s+(a.price||0),0);
     const calcPaid=allPayments.filter(pay=>pay.patient_id===pid).reduce((s,pay)=>s+(pay.amount||0),0);
     body+=repBuildSection('פרטים אישיים',
-      repRow('שם מלא',p.name)+
-      repRow('ת.ז.',p.identity_number)+
-      repRow('טלפון',p.phone)+
-      repRow('כתובת',p.address)+
-      repRow('אימייל',p.email)+
-      repRow('הורים / איש קשר',p.parents)+
-      repRow('מוסד',inst?.name)+
-      repRow('כיתה',cls?.name)+
+      repRow('שם מלא',p.name)+repRow('ת.ז.',p.identity_number)+repRow('טלפון',p.phone)+
+      repRow('כתובת',p.address)+repRow('אימייל',p.email)+repRow('הורים / איש קשר',p.parents)+
+      repRow('מוסד',inst?.name)+repRow('כיתה',cls?.name)+
       (isAdmin?repRow('חוב',`₪${calcDebt.toLocaleString()}`)+repRow('שולם',`₪${calcPaid.toLocaleString()}`)+repRow('יתרה',`₪${Math.max(0,calcDebt-calcPaid).toLocaleString()}`):'')
     );
   }
@@ -2701,9 +2720,7 @@ function generateFullReport(){
     const apts=allAppointments.filter(a=>a.patient_id===pid).sort((a,b)=>new Date(a.start_time)-new Date(b.start_time));
     const rows=apts.map(a=>{
       const d=new Date(a.start_time);
-      const dateStr=d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'});
-      const timeStr=d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
-      return`<tr><td style="padding:7px 10px;border:1px solid #e2e8f0;">${dateStr}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">${timeStr}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">${a.name||''}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">${a.arrived?'✓':''}</td>${isAdmin?`<td style="padding:7px 10px;border:1px solid #e2e8f0;">₪${(a.price||0).toLocaleString()}</td>`:''}</tr>`;
+      return`<tr><td style="padding:7px 10px;border:1px solid #e2e8f0;">${d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">${d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">${a.name||''}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">${a.arrived?'✓':''}</td>${isAdmin?`<td style="padding:7px 10px;border:1px solid #e2e8f0;">₪${(a.price||0).toLocaleString()}</td>`:''}</tr>`;
     }).join('');
     body+=repBuildSection('פגישות',apts.length===0?'<p style="color:#94a3b8">אין פגישות</p>':`
       <table style="width:100%;border-collapse:collapse;font-size:12px;">
@@ -2719,10 +2736,9 @@ function generateFullReport(){
 
   // PAYMENTS
   if(include.payments){
-    const pays=allPayments.filter(p=>p.patient_id===pid).sort((a,b)=>new Date(a.paid_at)-new Date(b.paid_at));
+    const pays=allPayments.filter(pp=>pp.patient_id===pid).sort((a,b)=>new Date(a.paid_at)-new Date(b.paid_at));
     const rows=pays.map(pay=>{
-      const d=new Date(pay.paid_at);
-      return`<tr><td style="padding:7px 10px;border:1px solid #e2e8f0;">${d.toLocaleDateString('he-IL')}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">₪${(pay.amount||0).toLocaleString()}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">${pay.description||''}</td></tr>`;
+      return`<tr><td style="padding:7px 10px;border:1px solid #e2e8f0;">${new Date(pay.paid_at).toLocaleDateString('he-IL')}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">₪${(pay.amount||0).toLocaleString()}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">${pay.description||''}</td></tr>`;
     }).join('');
     body+=repBuildSection('תשלומים',pays.length===0?'<p style="color:#94a3b8">אין תשלומים</p>':`
       <table style="width:100%;border-collapse:collapse;font-size:12px;">
@@ -2751,17 +2767,20 @@ function generateFullReport(){
       let d=null;try{if(o.circumstance&&o.circumstance.trim().startsWith('{'))d=JSON.parse(o.circumstance);}catch(e){}
       const dateStr=o.obs_date?new Date(o.obs_date).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}):'';
       if(d&&d.v===2&&d.rows){
-        const rowsHtml=d.rows.map(r=>`
-          <tr>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.c||''}</td>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.b||''}</td>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.o||''}</td>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.n||''}</td>
-          </tr>`).join('');
-        return`<div style="margin-bottom:14px;"><div style="font-size:12px;font-weight:600;color:#1e3a5f;margin-bottom:6px;">תצפית ${i+1}${dateStr?' — '+dateStr:''}</div>
+        const rowsHtml=d.rows.map(r=>`<tr>
+          <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.c||''}</td>
+          <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.b||''}</td>
+          <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.o||''}</td>
+          <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.n||''}</td>
+        </tr>`).join('');
+        return`<div style="margin-bottom:16px;"><div style="font-size:12px;font-weight:600;color:#1e3a5f;margin-bottom:6px;">תצפית ${i+1}${dateStr?' — '+dateStr:''}</div>
           <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <thead><tr style="background:#f0f4f8;"><th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">A – נסיבות</th><th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">B – התנהגות</th><th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">C – תוצאה</th><th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">הערות</th></tr></thead>
-            <tbody>${rowsHtml}</tbody></table></div>`;
+            <thead><tr style="background:#f0f4f8;">
+              <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">A – נסיבות</th>
+              <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">B – התנהגות</th>
+              <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">C – תוצאה</th>
+              <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">הערות</th>
+            </tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
       }
       return`<div style="margin-bottom:12px;padding:10px;border:1px solid #e2e8f0;border-radius:6px;">
         <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">תצפית ${i+1}${dateStr?' — '+dateStr:''}</div>
@@ -2770,13 +2789,18 @@ function generateFullReport(){
     }).join(''));
   }
 
-  // QUESTIONNAIRES
+  // QUESTIONNAIRES — deduplicate by q_type (keep latest)
   if(include.questionnaires){
-    const allQ=allQuestionnaires.filter(q=>q.patient_id===pid);
-    if(allQ.length===0){
+    const qMap=new Map();
+    allQuestionnaires.filter(q=>q.patient_id===pid).forEach(q=>{
+      const ex=qMap.get(q.q_type);
+      if(!ex||new Date(q.created_at)>new Date(ex.created_at))qMap.set(q.q_type,q);
+    });
+    const orderedQs=Object.keys(Q_LABELS).map(t=>qMap.get(t)).filter(Boolean);
+    if(orderedQs.length===0){
       body+=repBuildSection('שאלונים','<p style="color:#94a3b8">אין שאלונים</p>');
     } else {
-      allQ.forEach(q=>{
+      orderedQs.forEach(q=>{
         const fields=Q_FIELDS[q.q_type]||[];
         const c=q.content||{};
         let qHtml='';
@@ -2809,15 +2833,15 @@ function repPrintHtml(bodyHtml,title){
   if(!win){toast('אפשר חלונות קופצים בדפדפן','error');return;}
   win.document.write(`<!DOCTYPE html><html lang="he" dir="rtl"><head>
     <meta charset="UTF-8"><title>${title}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
       *{box-sizing:border-box;margin:0;padding:0;}
-      body{font-family:'Rubik',Arial,sans-serif;font-size:13px;color:#1e293b;direction:rtl;padding:15mm 20mm;background:white;}
-      @media print{body{padding:10mm 15mm;}.no-print{display:none!important;}}
+      body{font-family:'Rubik',Arial,sans-serif;font-size:13px;color:#1e293b;direction:rtl;background:white;}
+      @page{margin:15mm 18mm;}
+      @media print{.no-print{display:none!important;}}
     </style>
   </head><body>
-    <div class="no-print" style="position:fixed;bottom:16px;left:16px;z-index:999;display:flex;gap:8px;">
+    <div class="no-print" style="position:fixed;bottom:16px;left:16px;z-index:999;">
       <button onclick="window.print()" style="padding:9px 22px;background:#1e3a5f;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit;font-weight:600;">🖨️ הדפס / שמור PDF</button>
     </div>
     ${bodyHtml}
@@ -2825,6 +2849,7 @@ function repPrintHtml(bodyHtml,title){
   </body></html>`);
   win.document.close();
 }
+
 
 // === TANK FORM ===
 const TANK_FIELDS=[
