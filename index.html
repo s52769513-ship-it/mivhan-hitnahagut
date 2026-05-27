@@ -163,11 +163,12 @@ tr:last-child td{border-bottom:none}
 .cat-btn.active{border-color:var(--blue2);background:var(--blue-light)}
 .cat-btn .ci{font-size:36px}.cat-btn span{font-size:14px;font-weight:600;color:var(--g700)}
 .cat-btn.active span{color:var(--blue2)}
-.main-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.main-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
 .main-tab-btn{padding:12px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:600;font-family:'Rubik',sans-serif;transition:all .15s}
 .main-tab-btn.blue{background:var(--g100);color:var(--g700)}.main-tab-btn.blue.active{background:var(--blue2);color:white}
 .main-tab-btn.green{background:var(--g100);color:var(--g700)}.main-tab-btn.green.active{background:var(--green);color:white}
 .main-tab-btn.purple{background:var(--g100);color:var(--g700)}.main-tab-btn.purple.active{background:#533AB7;color:white}
+.main-tab-btn.orange{background:var(--g100);color:var(--g700)}.main-tab-btn.orange.active{background:#b45309;color:white}
 .obs-card{background:white;border-radius:10px;border:1px solid var(--g200);margin-bottom:14px}
 .obs-header{padding:12px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .obs-body{padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -325,6 +326,7 @@ tr:last-child td{border-bottom:none}
           <button class="main-tab-btn blue active" onclick="showMainTab('clinical')"><i data-lucide="clipboard-list"></i> תיק קליני</button>
           <button class="main-tab-btn green" onclick="showMainTab('data')"><i data-lucide="bar-chart-2"></i> איסוף נתונים</button>
           <button class="main-tab-btn purple" onclick="showMainTab('intervention')"><i data-lucide="target"></i> תוכנית התערבות</button>
+          <button class="main-tab-btn orange" onclick="showMainTab('reports')"><i data-lucide="file-text"></i> דוחות</button>
         </div>
         <div id="main-tab-clinical">
           <div class="tabs" id="clinical-tabs">
@@ -364,6 +366,7 @@ tr:last-child td{border-bottom:none}
           <div id="it-tank" class="tab-content"></div>
           <div id="it-docs" class="tab-content"></div>
         </div>
+        <div id="main-tab-reports" style="display:none"></div>
       </div>
 
       <!-- DIARY -->
@@ -537,6 +540,29 @@ tr:last-child td{border-bottom:none}
       <div class="form-group"><label class="form-label">תיאור</label><textarea class="form-control" id="na-desc" rows="2"></textarea></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-appointment')">ביטול</button><button class="btn btn-primary" id="na-submit-btn" onclick="createAppointment()">צור פגישה</button></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-full-report" style="display:none" onclick="closeModal('modal-full-report')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:460px">
+    <div class="modal-header"><h2><i data-lucide="file-plus"></i> הגדר דוח מלא</h2><button class="btn btn-icon" onclick="closeModal('modal-full-report')"><i data-lucide="x"></i></button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--g500);margin-bottom:18px;">בחר אילו סעיפים לכלול בדוח:</p>
+      <div style="display:flex;flex-direction:column;gap:10px;" id="rep-sections">
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-personal" checked style="width:16px;height:16px"> פרטים אישיים</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-background" checked style="width:16px;height:16px"> רקע</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-appointments" checked style="width:16px;height:16px"> פגישות</label>
+        <label id="rep-payments-lbl" style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-payments" checked style="width:16px;height:16px"> כספים ותשלומים</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-notes" checked style="width:16px;height:16px"> הערות</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-observations" checked style="width:16px;height:16px"> תצפיות ABC</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-questionnaires" checked style="width:16px;height:16px"> שאלונים (מפורט)</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-goals" checked style="width:16px;height:16px"> מטרות טיפוליות</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-full-report')">ביטול</button>
+      <button class="btn btn-primary" onclick="generateFullReport()"><i data-lucide="download"></i> הורד דוח</button>
+    </div>
   </div>
 </div>
 
@@ -1849,11 +1875,14 @@ async function openPatient(id){
 
 function showMainTab(tab){
   currentMainTab=tab;
-  ['clinical','data','intervention'].forEach(t=>{
-    document.getElementById('main-tab-'+t).style.display=t===tab?'block':'none';
-    const btn=document.querySelector(`.main-tab-btn.${t==='clinical'?'blue':t==='data'?'green':'purple'}`);
-    if(btn){btn.classList.toggle('active',t===tab);}
+  const colorMap={clinical:'blue',data:'green',intervention:'purple',reports:'orange'};
+  ['clinical','data','intervention','reports'].forEach(t=>{
+    const el=document.getElementById('main-tab-'+t);
+    if(el)el.style.display=t===tab?'block':'none';
+    const btn=document.querySelector(`.main-tab-btn.${colorMap[t]}`);
+    if(btn)btn.classList.toggle('active',t===tab);
   });
+  if(tab==='reports'&&currentPatientId)renderReportsTab(currentPatientId);
 }
 
 function showTab(id){
@@ -2543,6 +2572,258 @@ async function downloadQPDF(pid, qtype){
   }finally{
     document.body.removeChild(wrapper);
   }
+}
+
+// === REPORTS TAB ===
+let repCurrentPid=null;
+
+function renderReportsTab(pid){
+  repCurrentPid=pid;
+  const p=allPatients.find(x=>x.id===pid);
+  if(!p)return;
+  const el=document.getElementById('main-tab-reports');
+  if(!el)return;
+
+  const qTypes=Object.keys(Q_LABELS);
+  const existingQs=qTypes.filter(t=>allQuestionnaires.find(q=>q.patient_id===pid&&q.q_type===t));
+
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3><i data-lucide="file-text"></i> הורדת שאלונים</h3></div>
+      <div class="card-body">
+        ${existingQs.length===0
+          ?'<div class="empty"><i data-lucide="file-text"></i><p>אין שאלונים שמורים עדיין</p></div>'
+          :`<div style="display:flex;flex-direction:column;gap:8px;">
+              ${existingQs.map(t=>`
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border:1px solid var(--g200);border-radius:8px;background:white;">
+                  <span style="font-size:14px;font-weight:500;color:var(--g700);">${Q_LABELS[t]}</span>
+                  <button class="btn btn-secondary btn-sm" onclick="downloadQPDF('${pid}','${t}')"><i data-lucide="download"></i> הורד PDF</button>
+                </div>`).join('')}
+              ${existingQs.length>1?`
+                <button class="btn btn-primary" onclick="repDownloadAllQuestionnaires('${pid}')" style="margin-top:4px;">
+                  <i data-lucide="layers"></i> הורד את כל השאלונים בקובץ אחד
+                </button>`:''}
+            </div>`
+        }
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i data-lucide="folder-open"></i> דוח מלא</h3></div>
+      <div class="card-body">
+        <p style="font-size:13px;color:var(--g500);margin-bottom:16px;">בחר אילו חלקים לכלול בדוח ולחץ הורדה</p>
+        <button class="btn btn-primary" onclick="openFullReportModal('${pid}')">
+          <i data-lucide="file-plus"></i> הגדר והורד דוח מלא
+        </button>
+      </div>
+    </div>`;
+  lucide.createIcons();
+}
+
+async function repDownloadAllQuestionnaires(pid){
+  const qTypes=Object.keys(Q_LABELS);
+  const existingQs=qTypes.filter(t=>allQuestionnaires.find(q=>q.patient_id===pid&&q.q_type===t));
+  if(existingQs.length===0)return toast('אין שאלונים','error');
+  toast('מכין את כל השאלונים...','');
+  for(const t of existingQs){ await downloadQPDF(pid,t); await new Promise(r=>setTimeout(r,800)); }
+  toast('כל השאלונים הורדו ✓','success');
+}
+
+function openFullReportModal(pid){
+  repCurrentPid=pid;
+  // show/hide payments based on admin
+  const pl=document.getElementById('rep-payments-lbl');
+  if(pl)pl.style.display=isAdmin?'flex':'none';
+  document.getElementById('modal-full-report').style.display='flex';
+  lucide.createIcons();
+}
+
+function repBuildSection(title,html){
+  return `<div style="margin-bottom:28px;page-break-inside:avoid">
+    <div style="font-size:17px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:5px;margin-bottom:14px;">${title}</div>
+    ${html}
+  </div>`;
+}
+function repRow(label,val){
+  if(!val&&val!==0)return'';
+  return`<div style="display:flex;gap:12px;margin-bottom:7px;font-size:13px;"><span style="color:#64748b;min-width:130px;flex-shrink:0;">${label}</span><span style="color:#1e293b;flex:1;">${val}</span></div>`;
+}
+function repStripHtml(s){return s?s.replace(/<[^>]+>/g,''):''}
+
+function generateFullReport(){
+  const pid=repCurrentPid;
+  const p=allPatients.find(x=>x.id===pid);
+  if(!p)return;
+  const inst=allInstitutions.find(i=>i.id===p.institution_id);
+  const cls=allClasses.find(c=>c.id===p.class_id);
+  const include={
+    personal:document.getElementById('rep-personal')?.checked,
+    background:document.getElementById('rep-background')?.checked,
+    appointments:document.getElementById('rep-appointments')?.checked,
+    payments:document.getElementById('rep-payments')?.checked&&isAdmin,
+    notes:document.getElementById('rep-notes')?.checked,
+    observations:document.getElementById('rep-observations')?.checked,
+    questionnaires:document.getElementById('rep-questionnaires')?.checked,
+    goals:document.getElementById('rep-goals')?.checked,
+  };
+  closeModal('modal-full-report');
+  const today=new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric'});
+
+  let body=`<div style="text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid #1e3a5f;">
+    <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">ב"ה</div>
+    <div style="font-size:26px;font-weight:700;color:#1e3a5f;margin-bottom:4px;">תיק מטופל — ${p.name}</div>
+    <div style="font-size:13px;color:#64748b;">הופק: ${today}</div>
+  </div>`;
+
+  // PERSONAL
+  if(include.personal){
+    const calcDebt=allAppointments.filter(a=>a.patient_id===pid).reduce((s,a)=>s+(a.price||0),0);
+    const calcPaid=allPayments.filter(pay=>pay.patient_id===pid).reduce((s,pay)=>s+(pay.amount||0),0);
+    body+=repBuildSection('פרטים אישיים',
+      repRow('שם מלא',p.name)+
+      repRow('ת.ז.',p.identity_number)+
+      repRow('טלפון',p.phone)+
+      repRow('כתובת',p.address)+
+      repRow('אימייל',p.email)+
+      repRow('הורים / איש קשר',p.parents)+
+      repRow('מוסד',inst?.name)+
+      repRow('כיתה',cls?.name)+
+      (isAdmin?repRow('חוב',`₪${calcDebt.toLocaleString()}`)+repRow('שולם',`₪${calcPaid.toLocaleString()}`)+repRow('יתרה',`₪${Math.max(0,calcDebt-calcPaid).toLocaleString()}`):'')
+    );
+  }
+
+  // BACKGROUND
+  if(include.background&&p.background){
+    body+=repBuildSection('רקע',`<div style="font-size:13px;line-height:1.8;white-space:pre-wrap;color:#1e293b;">${p.background}</div>`);
+  }
+
+  // APPOINTMENTS
+  if(include.appointments){
+    const apts=allAppointments.filter(a=>a.patient_id===pid).sort((a,b)=>new Date(a.start_time)-new Date(b.start_time));
+    const rows=apts.map(a=>{
+      const d=new Date(a.start_time);
+      const dateStr=d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'});
+      const timeStr=d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+      return`<tr><td style="padding:7px 10px;border:1px solid #e2e8f0;">${dateStr}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">${timeStr}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">${a.name||''}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">${a.arrived?'✓':''}</td>${isAdmin?`<td style="padding:7px 10px;border:1px solid #e2e8f0;">₪${(a.price||0).toLocaleString()}</td>`:''}</tr>`;
+    }).join('');
+    body+=repBuildSection('פגישות',apts.length===0?'<p style="color:#94a3b8">אין פגישות</p>':`
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#f0f4f8;">
+          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">תאריך</th>
+          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">שעה</th>
+          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">שם פגישה</th>
+          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">הגיע</th>
+          ${isAdmin?'<th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">מחיר</th>':''}
+        </tr></thead><tbody>${rows}</tbody>
+      </table>`);
+  }
+
+  // PAYMENTS
+  if(include.payments){
+    const pays=allPayments.filter(p=>p.patient_id===pid).sort((a,b)=>new Date(a.paid_at)-new Date(b.paid_at));
+    const rows=pays.map(pay=>{
+      const d=new Date(pay.paid_at);
+      return`<tr><td style="padding:7px 10px;border:1px solid #e2e8f0;">${d.toLocaleDateString('he-IL')}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">₪${(pay.amount||0).toLocaleString()}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">${pay.description||''}</td></tr>`;
+    }).join('');
+    body+=repBuildSection('תשלומים',pays.length===0?'<p style="color:#94a3b8">אין תשלומים</p>':`
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#f0f4f8;">
+          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">תאריך</th>
+          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">סכום</th>
+          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">תיאור</th>
+        </tr></thead><tbody>${rows}</tbody>
+      </table>`);
+  }
+
+  // NOTES
+  if(include.notes){
+    const notes=allNotes.filter(n=>n.patient_id===pid).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+    body+=repBuildSection('הערות',notes.length===0?'<p style="color:#94a3b8">אין הערות</p>':notes.map(n=>`
+      <div style="margin-bottom:12px;padding:12px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:5px;">${new Date(n.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</div>
+        <div style="font-size:13px;line-height:1.7;white-space:pre-wrap;color:#1e293b;">${n.content||''}</div>
+      </div>`).join(''));
+  }
+
+  // OBSERVATIONS
+  if(include.observations){
+    const obs=allObservations.filter(o=>o.patient_id===pid).sort((a,b)=>new Date(a.obs_date)-new Date(b.obs_date));
+    body+=repBuildSection('תצפיות ABC',obs.length===0?'<p style="color:#94a3b8">אין תצפיות</p>':obs.map((o,i)=>{
+      let d=null;try{if(o.circumstance&&o.circumstance.trim().startsWith('{'))d=JSON.parse(o.circumstance);}catch(e){}
+      const dateStr=o.obs_date?new Date(o.obs_date).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}):'';
+      if(d&&d.v===2&&d.rows){
+        const rowsHtml=d.rows.map(r=>`
+          <tr>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.c||''}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.b||''}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.o||''}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.n||''}</td>
+          </tr>`).join('');
+        return`<div style="margin-bottom:14px;"><div style="font-size:12px;font-weight:600;color:#1e3a5f;margin-bottom:6px;">תצפית ${i+1}${dateStr?' — '+dateStr:''}</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr style="background:#f0f4f8;"><th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">A – נסיבות</th><th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">B – התנהגות</th><th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">C – תוצאה</th><th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">הערות</th></tr></thead>
+            <tbody>${rowsHtml}</tbody></table></div>`;
+      }
+      return`<div style="margin-bottom:12px;padding:10px;border:1px solid #e2e8f0;border-radius:6px;">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">תצפית ${i+1}${dateStr?' — '+dateStr:''}</div>
+        ${repRow('A – נסיבות',o.circumstance)}${repRow('B – התנהגות',o.behavior)}${repRow('C – תוצאה',o.outcome)}${repRow('הערות',o.notes)}
+      </div>`;
+    }).join(''));
+  }
+
+  // QUESTIONNAIRES
+  if(include.questionnaires){
+    const allQ=allQuestionnaires.filter(q=>q.patient_id===pid);
+    if(allQ.length===0){
+      body+=repBuildSection('שאלונים','<p style="color:#94a3b8">אין שאלונים</p>');
+    } else {
+      allQ.forEach(q=>{
+        const fields=Q_FIELDS[q.q_type]||[];
+        const c=q.content||{};
+        let qHtml='';
+        fields.forEach(f=>{
+          if(f.type==='section'){qHtml+=`<div style="font-size:13px;font-weight:700;color:#1e3a5f;margin:16px 0 8px;border-bottom:1px solid #e2e8f0;padding-bottom:3px;">${f.label}</div>`;return;}
+          if(f.type==='info')return;
+          const val=c[f.id];
+          if(val)qHtml+=`<div style="margin-bottom:10px;"><div style="font-size:10px;font-weight:600;color:#64748b;margin-bottom:2px;">${repStripHtml(f.label)}</div><div style="font-size:13px;line-height:1.6;color:#1e293b;white-space:pre-wrap;">${val}</div></div>`;
+        });
+        body+=repBuildSection(Q_LABELS[q.q_type]||q.title,qHtml||'<p style="color:#94a3b8">לא מולא</p>');
+      });
+    }
+  }
+
+  // GOALS
+  if(include.goals){
+    const goals=allGoals.filter(g=>g.patient_id===pid);
+    body+=repBuildSection('מטרות טיפוליות',goals.length===0?'<p style="color:#94a3b8">אין מטרות</p>':goals.map((g,i)=>`
+      <div style="margin-bottom:14px;padding:12px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#1e3a5f;">מטרה #${i+1}</div>
+        ${repRow('תיאור',g.description)}${repRow('ניתוח פונקציונלי',g.functional_analysis)}${repRow('השערה',g.hypothesis)}${repRow('מטרה',g.target)}${repRow('מטרה התנהגותית',g.behavioral_goal)}${repRow('מסלול',g.path)}
+      </div>`).join(''));
+  }
+
+  repPrintHtml(body,`תיק מטופל — ${p.name}`);
+}
+
+function repPrintHtml(bodyHtml,title){
+  const win=window.open('','_blank');
+  if(!win){toast('אפשר חלונות קופצים בדפדפן','error');return;}
+  win.document.write(`<!DOCTYPE html><html lang="he" dir="rtl"><head>
+    <meta charset="UTF-8"><title>${title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{font-family:'Rubik',Arial,sans-serif;font-size:13px;color:#1e293b;direction:rtl;padding:15mm 20mm;background:white;}
+      @media print{body{padding:10mm 15mm;}.no-print{display:none!important;}}
+    </style>
+  </head><body>
+    <div class="no-print" style="position:fixed;bottom:16px;left:16px;z-index:999;display:flex;gap:8px;">
+      <button onclick="window.print()" style="padding:9px 22px;background:#1e3a5f;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit;font-weight:600;">🖨️ הדפס / שמור PDF</button>
+    </div>
+    ${bodyHtml}
+    <script>setTimeout(()=>window.print(),700);<\/script>
+  </body></html>`);
+  win.document.close();
 }
 
 // === TANK FORM ===
