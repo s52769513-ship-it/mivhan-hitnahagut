@@ -561,7 +561,8 @@ tr:last-child td{border-bottom:none}
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-full-report')">ביטול</button>
-      <button class="btn btn-primary" onclick="generateFullReport()"><i data-lucide="download"></i> הורד דוח</button>
+      <button class="btn btn-secondary" onclick="generateFullReport('print')"><i data-lucide="printer"></i> תצוגה להדפסה</button>
+      <button class="btn btn-primary" onclick="generateFullReport('pdf')"><i data-lucide="download"></i> הורד PDF</button>
     </div>
   </div>
 </div>
@@ -2640,36 +2641,31 @@ function openFullReportModal(pid){
 // ---- report helpers ----
 function repPageHeader(){
   const logoHtml=repLogoSrc
-    ?`<img src="${repLogoSrc}" style="height:28px;width:auto;object-fit:contain;">`
-    :`<span style="font-size:12px;font-weight:700;color:#1e3a5f;">מכון התנהגות</span>`;
-  return `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:16px;">
+    ?`<img src="${repLogoSrc}" style="height:30px;width:auto;object-fit:contain;">`
+    :`<span style="font-size:13px;font-weight:700;color:#1e3a5f;">מכון התנהגות</span>`;
+  // RTL: first element=RIGHT, last element=LEFT → בס"ד RIGHT, logo LEFT
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:9px;border-bottom:1px solid #e2e8f0;margin-bottom:18px;">
+    <span style="font-size:11px;color:#aaa;font-weight:500;">בס"ד</span>
     ${logoHtml}
-    <span style="font-size:10px;color:#aaa;font-weight:500;">בס"ד</span>
   </div>`;
 }
 
 function repBuildSection(title,html){
-  return `<div style="break-before:page;page-break-before:always;">
+  return `<div style="break-before:page;page-break-before:always;padding-top:4px;">
     ${repPageHeader()}
-    <div style="font-size:17px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:5px;margin-bottom:16px;">${title}</div>
+    <div style="font-size:19px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:7px;margin-bottom:18px;">${title}</div>
     <div>${html}</div>
   </div>`;
 }
+
 function repRow(label,val){
   if(!val&&val!==0)return'';
-  return`<div style="display:flex;gap:12px;margin-bottom:7px;font-size:13px;"><span style="color:#64748b;min-width:130px;flex-shrink:0;">${label}</span><span style="color:#1e293b;flex:1;">${val}</span></div>`;
+  return`<div style="display:flex;gap:14px;margin-bottom:9px;font-size:15px;"><span style="color:#64748b;min-width:145px;flex-shrink:0;">${label}</span><span style="color:#1e293b;flex:1;">${val}</span></div>`;
 }
 function repStripHtml(s){return s?s.replace(/<[^>]+>/g,''):''}
 
-function generateFullReport(){
-  const pid=repCurrentPid;
-  const p=allPatients.find(x=>x.id===pid);
-  if(!p)return;
-  // get logo from DOM
-  repLogoSrc=document.querySelector('img.welcome-logo')?.src||'';
-  const inst=allInstitutions.find(i=>i.id===p.institution_id);
-  const cls=allClasses.find(c=>c.id===p.class_id);
-  const include={
+function _repReadIncludes(){
+  return{
     personal:document.getElementById('rep-personal')?.checked,
     background:document.getElementById('rep-background')?.checked,
     appointments:document.getElementById('rep-appointments')?.checked,
@@ -2679,26 +2675,30 @@ function generateFullReport(){
     questionnaires:document.getElementById('rep-questionnaires')?.checked,
     goals:document.getElementById('rep-goals')?.checked,
   };
-  closeModal('modal-full-report');
+}
+
+function _repBuildBody(include,pid){
+  const p=allPatients.find(x=>x.id===pid); if(!p)return'';
+  const inst=allInstitutions.find(i=>i.id===p.institution_id);
+  const cls=allClasses.find(c=>c.id===p.class_id);
   const today=new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric'});
 
-  // COVER PAGE
   const logoHtml=repLogoSrc
-    ?`<img src="${repLogoSrc}" style="height:32px;width:auto;object-fit:contain;">`
-    :`<span style="font-size:13px;font-weight:700;color:#1e3a5f;">מכון התנהגות</span>`;
+    ?`<img src="${repLogoSrc}" style="height:34px;width:auto;object-fit:contain;">`
+    :`<span style="font-size:14px;font-weight:700;color:#1e3a5f;">מכון התנהגות</span>`;
+  // COVER — בס"ד RIGHT (first), logo LEFT (last)
   let body=`<div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:60px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1px solid #e2e8f0;margin-bottom:70px;">
+      <span style="font-size:11px;color:#aaa;font-weight:500;">בס"ד</span>
       ${logoHtml}
-      <span style="font-size:10px;color:#aaa;font-weight:500;">בס"ד</span>
     </div>
     <div style="text-align:center;margin-top:40px;padding-bottom:24px;border-bottom:3px solid #1e3a5f;">
-      <div style="font-size:28px;font-weight:700;color:#1e3a5f;margin-bottom:8px;">תיק מטופל</div>
-      <div style="font-size:22px;font-weight:600;color:#334155;margin-bottom:12px;">${p.name}</div>
-      <div style="font-size:13px;color:#64748b;">הופק: ${today}</div>
+      <div style="font-size:32px;font-weight:700;color:#1e3a5f;margin-bottom:10px;">תיק מטופל</div>
+      <div style="font-size:26px;font-weight:600;color:#334155;margin-bottom:14px;">${p.name}</div>
+      <div style="font-size:15px;color:#64748b;">הופק: ${today}</div>
     </div>
   </div>`;
 
-  // PERSONAL
   if(include.personal){
     const calcDebt=allAppointments.filter(a=>a.patient_id===pid).reduce((s,a)=>s+(a.price||0),0);
     const calcPaid=allPayments.filter(pay=>pay.patient_id===pid).reduce((s,pay)=>s+(pay.amount||0),0);
@@ -2710,86 +2710,90 @@ function generateFullReport(){
     );
   }
 
-  // BACKGROUND
   if(include.background&&p.background){
-    body+=repBuildSection('רקע',`<div style="font-size:13px;line-height:1.8;white-space:pre-wrap;color:#1e293b;">${p.background}</div>`);
+    body+=repBuildSection('רקע',`<div style="font-size:15px;line-height:1.9;white-space:pre-wrap;color:#1e293b;">${p.background}</div>`);
   }
 
-  // APPOINTMENTS
   if(include.appointments){
     const apts=allAppointments.filter(a=>a.patient_id===pid).sort((a,b)=>new Date(a.start_time)-new Date(b.start_time));
     const rows=apts.map(a=>{
       const d=new Date(a.start_time);
-      return`<tr><td style="padding:7px 10px;border:1px solid #e2e8f0;">${d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">${d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">${a.name||''}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">${a.arrived?'✓':''}</td>${isAdmin?`<td style="padding:7px 10px;border:1px solid #e2e8f0;">₪${(a.price||0).toLocaleString()}</td>`:''}</tr>`;
+      return`<tr>
+        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</td>
+        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</td>
+        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${a.name||''}</td>
+        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;text-align:center;">${a.arrived?'✓':''}</td>
+        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${a.description||''}</td>
+        ${isAdmin?`<td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">₪${(a.price||0).toLocaleString()}</td>`:''}
+      </tr>`;
     }).join('');
-    body+=repBuildSection('פגישות',apts.length===0?'<p style="color:#94a3b8">אין פגישות</p>':`
-      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+    body+=repBuildSection('פגישות',apts.length===0?'<p style="color:#94a3b8;font-size:15px;">אין פגישות</p>':`
+      <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#f0f4f8;">
-          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">תאריך</th>
-          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">שעה</th>
-          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">שם פגישה</th>
-          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">הגיע</th>
-          ${isAdmin?'<th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">מחיר</th>':''}
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">תאריך</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">שעה</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">שם פגישה</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-size:14px;">הגיע</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">סיכום פגישה</th>
+          ${isAdmin?'<th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">מחיר</th>':''}
         </tr></thead><tbody>${rows}</tbody>
       </table>`);
   }
 
-  // PAYMENTS
   if(include.payments){
     const pays=allPayments.filter(pp=>pp.patient_id===pid).sort((a,b)=>new Date(a.paid_at)-new Date(b.paid_at));
-    const rows=pays.map(pay=>{
-      return`<tr><td style="padding:7px 10px;border:1px solid #e2e8f0;">${new Date(pay.paid_at).toLocaleDateString('he-IL')}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">₪${(pay.amount||0).toLocaleString()}</td><td style="padding:7px 10px;border:1px solid #e2e8f0;">${pay.description||''}</td></tr>`;
-    }).join('');
-    body+=repBuildSection('תשלומים',pays.length===0?'<p style="color:#94a3b8">אין תשלומים</p>':`
-      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+    const rows=pays.map(pay=>`<tr>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${new Date(pay.paid_at).toLocaleDateString('he-IL')}</td>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">₪${(pay.amount||0).toLocaleString()}</td>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${pay.description||''}</td>
+    </tr>`).join('');
+    body+=repBuildSection('תשלומים',pays.length===0?'<p style="color:#94a3b8;font-size:15px;">אין תשלומים</p>':`
+      <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#f0f4f8;">
-          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">תאריך</th>
-          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">סכום</th>
-          <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">תיאור</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">תאריך</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">סכום</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">תיאור</th>
         </tr></thead><tbody>${rows}</tbody>
       </table>`);
   }
 
-  // NOTES
   if(include.notes){
     const notes=allNotes.filter(n=>n.patient_id===pid).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-    body+=repBuildSection('הערות',notes.length===0?'<p style="color:#94a3b8">אין הערות</p>':notes.map(n=>`
-      <div style="margin-bottom:12px;padding:12px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;">
-        <div style="font-size:11px;color:#94a3b8;margin-bottom:5px;">${new Date(n.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</div>
-        <div style="font-size:13px;line-height:1.7;white-space:pre-wrap;color:#1e293b;">${n.content||''}</div>
+    body+=repBuildSection('הערות',notes.length===0?'<p style="color:#94a3b8;font-size:15px;">אין הערות</p>':notes.map(n=>`
+      <div style="margin-bottom:14px;padding:14px;border:1px solid #e2e8f0;border-radius:7px;background:#f8fafc;">
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">${new Date(n.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</div>
+        <div style="font-size:15px;line-height:1.9;white-space:pre-wrap;color:#1e293b;">${n.content||''}</div>
       </div>`).join(''));
   }
 
-  // OBSERVATIONS
   if(include.observations){
     const obs=allObservations.filter(o=>o.patient_id===pid).sort((a,b)=>new Date(a.obs_date)-new Date(b.obs_date));
-    body+=repBuildSection('תצפיות ABC',obs.length===0?'<p style="color:#94a3b8">אין תצפיות</p>':obs.map((o,i)=>{
+    body+=repBuildSection('תצפיות ABC',obs.length===0?'<p style="color:#94a3b8;font-size:15px;">אין תצפיות</p>':obs.map((o,i)=>{
       let d=null;try{if(o.circumstance&&o.circumstance.trim().startsWith('{'))d=JSON.parse(o.circumstance);}catch(e){}
       const dateStr=o.obs_date?new Date(o.obs_date).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}):'';
       if(d&&d.v===2&&d.rows){
         const rowsHtml=d.rows.map(r=>`<tr>
-          <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.c||''}</td>
-          <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.b||''}</td>
-          <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.o||''}</td>
-          <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:12px;">${r.n||''}</td>
+          <td style="padding:8px 9px;border:1px solid #e2e8f0;font-size:14px;">${r.c||''}</td>
+          <td style="padding:8px 9px;border:1px solid #e2e8f0;font-size:14px;">${r.b||''}</td>
+          <td style="padding:8px 9px;border:1px solid #e2e8f0;font-size:14px;">${r.o||''}</td>
+          <td style="padding:8px 9px;border:1px solid #e2e8f0;font-size:14px;">${r.n||''}</td>
         </tr>`).join('');
-        return`<div style="margin-bottom:16px;"><div style="font-size:12px;font-weight:600;color:#1e3a5f;margin-bottom:6px;">תצפית ${i+1}${dateStr?' — '+dateStr:''}</div>
-          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        return`<div style="margin-bottom:18px;"><div style="font-size:14px;font-weight:600;color:#1e3a5f;margin-bottom:8px;">תצפית ${i+1}${dateStr?' — '+dateStr:''}</div>
+          <table style="width:100%;border-collapse:collapse;">
             <thead><tr style="background:#f0f4f8;">
-              <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">A – נסיבות</th>
-              <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">B – התנהגות</th>
-              <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">C – תוצאה</th>
-              <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;">הערות</th>
+              <th style="padding:8px 9px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">A – נסיבות</th>
+              <th style="padding:8px 9px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">B – התנהגות</th>
+              <th style="padding:8px 9px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">C – תוצאה</th>
+              <th style="padding:8px 9px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">הערות</th>
             </tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
       }
-      return`<div style="margin-bottom:12px;padding:10px;border:1px solid #e2e8f0;border-radius:6px;">
-        <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">תצפית ${i+1}${dateStr?' — '+dateStr:''}</div>
+      return`<div style="margin-bottom:14px;padding:12px;border:1px solid #e2e8f0;border-radius:6px;">
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:7px;">תצפית ${i+1}${dateStr?' — '+dateStr:''}</div>
         ${repRow('A – נסיבות',o.circumstance)}${repRow('B – התנהגות',o.behavior)}${repRow('C – תוצאה',o.outcome)}${repRow('הערות',o.notes)}
       </div>`;
     }).join(''));
   }
 
-  // QUESTIONNAIRES — deduplicate by q_type (keep latest)
   if(include.questionnaires){
     const qMap=new Map();
     allQuestionnaires.filter(q=>q.patient_id===pid).forEach(q=>{
@@ -2798,34 +2802,77 @@ function generateFullReport(){
     });
     const orderedQs=Object.keys(Q_LABELS).map(t=>qMap.get(t)).filter(Boolean);
     if(orderedQs.length===0){
-      body+=repBuildSection('שאלונים','<p style="color:#94a3b8">אין שאלונים</p>');
+      body+=repBuildSection('שאלונים','<p style="color:#94a3b8;font-size:15px;">אין שאלונים</p>');
     } else {
       orderedQs.forEach(q=>{
         const fields=Q_FIELDS[q.q_type]||[];
         const c=q.content||{};
         let qHtml='';
         fields.forEach(f=>{
-          if(f.type==='section'){qHtml+=`<div style="font-size:13px;font-weight:700;color:#1e3a5f;margin:16px 0 8px;border-bottom:1px solid #e2e8f0;padding-bottom:3px;">${f.label}</div>`;return;}
+          if(f.type==='section'){qHtml+=`<div style="font-size:15px;font-weight:700;color:#1e3a5f;margin:18px 0 10px;border-bottom:1px solid #e2e8f0;padding-bottom:4px;">${f.label}</div>`;return;}
           if(f.type==='info')return;
           const val=c[f.id];
-          if(val)qHtml+=`<div style="margin-bottom:10px;"><div style="font-size:10px;font-weight:600;color:#64748b;margin-bottom:2px;">${repStripHtml(f.label)}</div><div style="font-size:13px;line-height:1.6;color:#1e293b;white-space:pre-wrap;">${val}</div></div>`;
+          if(val)qHtml+=`<div style="margin-bottom:13px;"><div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:3px;">${repStripHtml(f.label)}</div><div style="font-size:15px;line-height:1.8;color:#1e293b;white-space:pre-wrap;">${val}</div></div>`;
         });
-        body+=repBuildSection(Q_LABELS[q.q_type]||q.title,qHtml||'<p style="color:#94a3b8">לא מולא</p>');
+        body+=repBuildSection(Q_LABELS[q.q_type]||q.title,qHtml||'<p style="color:#94a3b8;font-size:15px;">לא מולא</p>');
       });
     }
   }
 
-  // GOALS
   if(include.goals){
     const goals=allGoals.filter(g=>g.patient_id===pid);
-    body+=repBuildSection('מטרות טיפוליות',goals.length===0?'<p style="color:#94a3b8">אין מטרות</p>':goals.map((g,i)=>`
-      <div style="margin-bottom:14px;padding:12px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;">
-        <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#1e3a5f;">מטרה #${i+1}</div>
+    body+=repBuildSection('מטרות טיפוליות',goals.length===0?'<p style="color:#94a3b8;font-size:15px;">אין מטרות</p>':goals.map((g,i)=>`
+      <div style="margin-bottom:16px;padding:14px;border:1px solid #e2e8f0;border-radius:7px;background:#f8fafc;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:10px;color:#1e3a5f;">מטרה #${i+1}</div>
         ${repRow('תיאור',g.description)}${repRow('ניתוח פונקציונלי',g.functional_analysis)}${repRow('השערה',g.hypothesis)}${repRow('מטרה',g.target)}${repRow('מטרה התנהגותית',g.behavioral_goal)}${repRow('מסלול',g.path)}
       </div>`).join(''));
   }
 
-  repPrintHtml(body,`תיק מטופל — ${p.name}`);
+  return body;
+}
+
+async function generateFullReport(mode){
+  const pid=repCurrentPid;
+  const p=allPatients.find(x=>x.id===pid); if(!p)return;
+  repLogoSrc=document.querySelector('img.welcome-logo')?.src||'';
+  const include=_repReadIncludes();
+  closeModal('modal-full-report');
+  const body=_repBuildBody(include,pid);
+
+  if(mode==='print'){
+    repPrintHtml(body,`תיק מטופל — ${p.name}`);
+    return;
+  }
+
+  // Direct PDF download via html2canvas + jsPDF
+  toast('מכין PDF...','');
+  window.scrollTo(0,0);
+  const wrapper=document.createElement('div');
+  wrapper.style.cssText='position:absolute;top:0;left:0;width:794px;padding:18mm 20mm;font-family:Arial,Helvetica,sans-serif;direction:rtl;color:#1e293b;background:white;box-sizing:border-box;z-index:99999;font-size:15px;line-height:1.7;';
+  wrapper.innerHTML=body;
+  document.body.appendChild(wrapper);
+  await new Promise(r=>setTimeout(r,700));
+  try{
+    const canvas=await html2canvas(wrapper,{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff'});
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pw=pdf.internal.pageSize.getWidth();
+    const ph=pdf.internal.pageSize.getHeight();
+    const imgH=(canvas.height*pw)/canvas.width;
+    let pageStart=0;
+    while(pageStart<imgH){
+      if(pageStart>0)pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.93),'JPEG',0,-pageStart,pw,imgH);
+      pageStart+=ph;
+    }
+    pdf.save(`תיק-${p.name}.pdf`);
+    toast('PDF הורד ✓','success');
+  }catch(e){
+    console.error('PDF error:',e);
+    toast('שגיאה ביצירת PDF','error');
+  }finally{
+    document.body.removeChild(wrapper);
+  }
 }
 
 function repPrintHtml(bodyHtml,title){
@@ -2836,16 +2883,15 @@ function repPrintHtml(bodyHtml,title){
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
       *{box-sizing:border-box;margin:0;padding:0;}
-      body{font-family:'Rubik',Arial,sans-serif;font-size:13px;color:#1e293b;direction:rtl;background:white;}
+      body{font-family:'Rubik',Arial,sans-serif;font-size:15px;color:#1e293b;direction:rtl;background:white;}
       @page{margin:15mm 18mm;}
       @media print{.no-print{display:none!important;}}
     </style>
   </head><body>
     <div class="no-print" style="position:fixed;bottom:16px;left:16px;z-index:999;">
-      <button onclick="window.print()" style="padding:9px 22px;background:#1e3a5f;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit;font-weight:600;">🖨️ הדפס / שמור PDF</button>
+      <button onclick="window.print()" style="padding:9px 22px;background:#1e3a5f;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit;font-weight:600;">🖨️ הדפס</button>
     </div>
     ${bodyHtml}
-    <script>setTimeout(()=>window.print(),700);<\/script>
   </body></html>`);
   win.document.close();
 }
