@@ -2677,8 +2677,8 @@ function _repReadIncludes(){
   };
 }
 
-function _repBuildBody(include,pid){
-  const p=allPatients.find(x=>x.id===pid); if(!p)return'';
+function _repBuildSections(include,pid){
+  const p=allPatients.find(x=>x.id===pid); if(!p)return[];
   const inst=allInstitutions.find(i=>i.id===p.institution_id);
   const cls=allClasses.find(c=>c.id===p.class_id);
   const today=new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric'});
@@ -2686,8 +2686,9 @@ function _repBuildBody(include,pid){
   const logoHtml=repLogoSrc
     ?`<img src="${repLogoSrc}" style="height:34px;width:auto;object-fit:contain;">`
     :`<span style="font-size:14px;font-weight:700;color:#1e3a5f;">מכון התנהגות</span>`;
+  const sections=[];
   // COVER — בס"ד RIGHT (first), logo LEFT (last)
-  let body=`<div>
+  sections.push(`<div>
     <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1px solid #e2e8f0;margin-bottom:70px;">
       <span style="font-size:11px;color:#aaa;font-weight:500;">בס"ד</span>
       ${logoHtml}
@@ -2697,21 +2698,21 @@ function _repBuildBody(include,pid){
       <div style="font-size:26px;font-weight:600;color:#334155;margin-bottom:14px;">${p.name}</div>
       <div style="font-size:15px;color:#64748b;">הופק: ${today}</div>
     </div>
-  </div>`;
+  </div>`);
 
   if(include.personal){
     const calcDebt=allAppointments.filter(a=>a.patient_id===pid).reduce((s,a)=>s+(a.price||0),0);
     const calcPaid=allPayments.filter(pay=>pay.patient_id===pid).reduce((s,pay)=>s+(pay.amount||0),0);
-    body+=repBuildSection('פרטים אישיים',
+    sections.push(repBuildSection('פרטים אישיים',
       repRow('שם מלא',p.name)+repRow('ת.ז.',p.identity_number)+repRow('טלפון',p.phone)+
       repRow('כתובת',p.address)+repRow('אימייל',p.email)+repRow('הורים / איש קשר',p.parents)+
       repRow('מוסד',inst?.name)+repRow('כיתה',cls?.name)+
       (isAdmin?repRow('חוב',`₪${calcDebt.toLocaleString()}`)+repRow('שולם',`₪${calcPaid.toLocaleString()}`)+repRow('יתרה',`₪${Math.max(0,calcDebt-calcPaid).toLocaleString()}`):'')
-    );
+    ));
   }
 
   if(include.background&&p.background){
-    body+=repBuildSection('רקע',`<div style="font-size:15px;line-height:1.9;white-space:pre-wrap;color:#1e293b;">${p.background}</div>`);
+    sections.push(repBuildSection('רקע',`<div style="font-size:15px;line-height:1.9;white-space:pre-wrap;color:#1e293b;">${p.background}</div>`));
   }
 
   if(include.appointments){
@@ -2727,7 +2728,7 @@ function _repBuildBody(include,pid){
         ${isAdmin?`<td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">₪${(a.price||0).toLocaleString()}</td>`:''}
       </tr>`;
     }).join('');
-    body+=repBuildSection('פגישות',apts.length===0?'<p style="color:#94a3b8;font-size:15px;">אין פגישות</p>':`
+    sections.push(repBuildSection('פגישות',apts.length===0?'<p style="color:#94a3b8;font-size:15px;">אין פגישות</p>':`
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#f0f4f8;">
           <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">תאריך</th>
@@ -2737,7 +2738,7 @@ function _repBuildBody(include,pid){
           <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">סיכום פגישה</th>
           ${isAdmin?'<th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">מחיר</th>':''}
         </tr></thead><tbody>${rows}</tbody>
-      </table>`);
+      </table>`));
   }
 
   if(include.payments){
@@ -2747,28 +2748,28 @@ function _repBuildBody(include,pid){
       <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">₪${(pay.amount||0).toLocaleString()}</td>
       <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${pay.description||''}</td>
     </tr>`).join('');
-    body+=repBuildSection('תשלומים',pays.length===0?'<p style="color:#94a3b8;font-size:15px;">אין תשלומים</p>':`
+    sections.push(repBuildSection('תשלומים',pays.length===0?'<p style="color:#94a3b8;font-size:15px;">אין תשלומים</p>':`
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#f0f4f8;">
           <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">תאריך</th>
           <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">סכום</th>
           <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">תיאור</th>
         </tr></thead><tbody>${rows}</tbody>
-      </table>`);
+      </table>`));
   }
 
   if(include.notes){
     const notes=allNotes.filter(n=>n.patient_id===pid).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-    body+=repBuildSection('הערות',notes.length===0?'<p style="color:#94a3b8;font-size:15px;">אין הערות</p>':notes.map(n=>`
+    sections.push(repBuildSection('הערות',notes.length===0?'<p style="color:#94a3b8;font-size:15px;">אין הערות</p>':notes.map(n=>`
       <div style="margin-bottom:14px;padding:14px;border:1px solid #e2e8f0;border-radius:7px;background:#f8fafc;">
         <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">${new Date(n.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</div>
         <div style="font-size:15px;line-height:1.9;white-space:pre-wrap;color:#1e293b;">${n.content||''}</div>
-      </div>`).join(''));
+      </div>`).join('')));
   }
 
   if(include.observations){
     const obs=allObservations.filter(o=>o.patient_id===pid).sort((a,b)=>new Date(a.obs_date)-new Date(b.obs_date));
-    body+=repBuildSection('תצפיות ABC',obs.length===0?'<p style="color:#94a3b8;font-size:15px;">אין תצפיות</p>':obs.map((o,i)=>{
+    sections.push(repBuildSection('תצפיות ABC',obs.length===0?'<p style="color:#94a3b8;font-size:15px;">אין תצפיות</p>':obs.map((o,i)=>{
       let d=null;try{if(o.circumstance&&o.circumstance.trim().startsWith('{'))d=JSON.parse(o.circumstance);}catch(e){}
       const dateStr=o.obs_date?new Date(o.obs_date).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}):'';
       if(d&&d.v===2&&d.rows){
@@ -2791,7 +2792,7 @@ function _repBuildBody(include,pid){
         <div style="font-size:12px;color:#94a3b8;margin-bottom:7px;">תצפית ${i+1}${dateStr?' — '+dateStr:''}</div>
         ${repRow('A – נסיבות',o.circumstance)}${repRow('B – התנהגות',o.behavior)}${repRow('C – תוצאה',o.outcome)}${repRow('הערות',o.notes)}
       </div>`;
-    }).join(''));
+    }).join('')));
   }
 
   if(include.questionnaires){
@@ -2802,7 +2803,7 @@ function _repBuildBody(include,pid){
     });
     const orderedQs=Object.keys(Q_LABELS).map(t=>qMap.get(t)).filter(Boolean);
     if(orderedQs.length===0){
-      body+=repBuildSection('שאלונים','<p style="color:#94a3b8;font-size:15px;">אין שאלונים</p>');
+      sections.push(repBuildSection('שאלונים','<p style="color:#94a3b8;font-size:15px;">אין שאלונים</p>'));
     } else {
       orderedQs.forEach(q=>{
         const fields=Q_FIELDS[q.q_type]||[];
@@ -2814,21 +2815,25 @@ function _repBuildBody(include,pid){
           const val=c[f.id];
           if(val)qHtml+=`<div style="margin-bottom:13px;"><div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:3px;">${repStripHtml(f.label)}</div><div style="font-size:15px;line-height:1.8;color:#1e293b;white-space:pre-wrap;">${val}</div></div>`;
         });
-        body+=repBuildSection(Q_LABELS[q.q_type]||q.title,qHtml||'<p style="color:#94a3b8;font-size:15px;">לא מולא</p>');
+        sections.push(repBuildSection(Q_LABELS[q.q_type]||q.title,qHtml||'<p style="color:#94a3b8;font-size:15px;">לא מולא</p>'));
       });
     }
   }
 
   if(include.goals){
     const goals=allGoals.filter(g=>g.patient_id===pid);
-    body+=repBuildSection('מטרות טיפוליות',goals.length===0?'<p style="color:#94a3b8;font-size:15px;">אין מטרות</p>':goals.map((g,i)=>`
+    sections.push(repBuildSection('מטרות טיפוליות',goals.length===0?'<p style="color:#94a3b8;font-size:15px;">אין מטרות</p>':goals.map((g,i)=>`
       <div style="margin-bottom:16px;padding:14px;border:1px solid #e2e8f0;border-radius:7px;background:#f8fafc;">
         <div style="font-size:15px;font-weight:700;margin-bottom:10px;color:#1e3a5f;">מטרה #${i+1}</div>
         ${repRow('תיאור',g.description)}${repRow('ניתוח פונקציונלי',g.functional_analysis)}${repRow('השערה',g.hypothesis)}${repRow('מטרה',g.target)}${repRow('מטרה התנהגותית',g.behavioral_goal)}${repRow('מסלול',g.path)}
-      </div>`).join(''));
+      </div>`).join('')));
   }
 
-  return body;
+  return sections;
+}
+
+function _repBuildBody(include,pid){
+  return _repBuildSections(include,pid).join('');
 }
 
 async function generateFullReport(mode){
@@ -2844,34 +2849,43 @@ async function generateFullReport(mode){
     return;
   }
 
-  // Direct PDF download via html2canvas + jsPDF
+  // Direct PDF download — render each section separately → guaranteed page break per section
   toast('מכין PDF...','');
   window.scrollTo(0,0);
-  const wrapper=document.createElement('div');
-  wrapper.style.cssText='position:absolute;top:0;left:0;width:794px;padding:18mm 20mm;font-family:Arial,Helvetica,sans-serif;direction:rtl;color:#1e293b;background:white;box-sizing:border-box;z-index:99999;font-size:15px;line-height:1.7;';
-  wrapper.innerHTML=body;
-  document.body.appendChild(wrapper);
-  await new Promise(r=>setTimeout(r,700));
+  const sections=_repBuildSections(include,pid);
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF('p','mm','a4');
+  const pw=pdf.internal.pageSize.getWidth();
+  const ph=pdf.internal.pageSize.getHeight();
+  let isFirstPage=true;
+  const wrapStyle='position:absolute;top:-9999px;left:0;width:794px;padding:14mm 18mm;font-family:Arial,Helvetica,sans-serif;direction:rtl;color:#1e293b;background:white;box-sizing:border-box;font-size:15px;line-height:1.7;';
   try{
-    const canvas=await html2canvas(wrapper,{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff'});
-    const {jsPDF}=window.jspdf;
-    const pdf=new jsPDF('p','mm','a4');
-    const pw=pdf.internal.pageSize.getWidth();
-    const ph=pdf.internal.pageSize.getHeight();
-    const imgH=(canvas.height*pw)/canvas.width;
-    let pageStart=0;
-    while(pageStart<imgH){
-      if(pageStart>0)pdf.addPage();
-      pdf.addImage(canvas.toDataURL('image/jpeg',0.93),'JPEG',0,-pageStart,pw,imgH);
-      pageStart+=ph;
+    for(const secHtml of sections){
+      const wrapper=document.createElement('div');
+      wrapper.style.cssText=wrapStyle;
+      wrapper.innerHTML=secHtml;
+      document.body.appendChild(wrapper);
+      await new Promise(r=>setTimeout(r,120));
+      try{
+        const canvas=await html2canvas(wrapper,{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff'});
+        const imgH=(canvas.height*pw)/canvas.width;
+        const imgData=canvas.toDataURL('image/jpeg',0.93);
+        let sliceY=0;
+        while(sliceY<imgH){
+          if(!isFirstPage)pdf.addPage();
+          isFirstPage=false;
+          pdf.addImage(imgData,'JPEG',0,-sliceY,pw,imgH);
+          sliceY+=ph;
+        }
+      }finally{
+        document.body.removeChild(wrapper);
+      }
     }
     pdf.save(`תיק-${p.name}.pdf`);
     toast('PDF הורד ✓','success');
   }catch(e){
     console.error('PDF error:',e);
     toast('שגיאה ביצירת PDF','error');
-  }finally{
-    document.body.removeChild(wrapper);
   }
 }
 
