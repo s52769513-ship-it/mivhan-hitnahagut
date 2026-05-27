@@ -1125,7 +1125,7 @@ async function renderUserDashboard(){
   const pList=document.getElementById('user-patients-list');
   pList.innerHTML=myPats.length===0?'<div class="empty"><i data-lucide="users"></i><p>אין מטופלים מוקצים</p></div>':myPats.map(p=>`<div onclick="openPatient('${p.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><div class="avatar" style="background:var(--blue2)">${initials(p.name)}</div><div style="font-size:14px;font-weight:600">${p.name}</div></div>`).join('');
   const tList=document.getElementById('user-tasks-list');
-  tList.innerHTML=myTasks.length===0?'<div class="empty"><i data-lucide="check-circle"></i><p>אין משימות</p></div>':myTasks.map(t=>`<div style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span><button onclick="openEditTask('${t.id}')" class="btn btn-secondary btn-sm"><i data-lucide="pencil"></i></button></div>`).join('');
+  tList.innerHTML=myTasks.length===0?'<div class="empty"><i data-lucide="check-circle"></i><p>אין משימות</p></div>':myTasks.map(t=>`<div onclick="openEditTask('${t.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0" onclick="event.stopPropagation()"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span><i data-lucide="chevron-left" style="color:var(--g400);flex-shrink:0;width:16px;height:16px;"></i></div>`).join('');
 }
 
 // === USER MANAGEMENT (ADMIN) ===
@@ -1478,7 +1478,7 @@ async function renderDashboard(){
   const aptEl=document.getElementById('today-apts');
   aptEl.innerHTML=todayApts.length===0?'<div class="empty">📭<p>אין פגישות להיום</p></div>':todayApts.map(a=>{const p=allPatients.find(x=>x.id===a.patient_id);const t=a.start_time?fmtTime(a.start_time):'';return`<div onclick="openEditApt('${a.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><div><div style="font-size:14px;font-weight:600">${a.name||'פגישה'}</div><div style="font-size:12px;color:var(--g500)">${p?p.name:''} ${t?'· '+t:''}</div></div><div style="display:flex;align-items:center;gap:8px"><span class="badge ${a.arrived?'badge-green':'badge-amber'}">${a.arrived?'הגיע':'ממתין'}</span><span style="font-size:12px;color:var(--g400)"><i data-lucide="pencil"></i></span></div></div>`;}).join('');
   const taskEl=document.getElementById('today-tasks');
-  taskEl.innerHTML=todayTasks.length===0?'<div class="empty"><i data-lucide="check-circle"></i><p>אין משימות להיום</p></div>':todayTasks.map(t=>`<div style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px;transition:background .1s" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0" onclick="event.stopPropagation()"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span><button onclick="openEditTask('${t.id}')" class="btn btn-secondary btn-sm" style="flex-shrink:0"><i data-lucide="pencil"></i></button></div>`).join('');
+  taskEl.innerHTML=todayTasks.length===0?'<div class="empty"><i data-lucide="check-circle"></i><p>אין משימות להיום</p></div>':todayTasks.map(t=>`<div onclick="openEditTask('${t.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px;transition:background .1s;cursor:pointer" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0" onclick="event.stopPropagation()"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span><i data-lucide="chevron-left" style="color:var(--g400);flex-shrink:0;width:16px;height:16px;"></i></div>`).join('');
   renderQueueWidget();
   renderCalendar('calendar-grid','cal-month-title');
   fetchAndCacheHolidays(calDate.getFullYear(),calDate.getMonth());
@@ -3323,12 +3323,12 @@ function renderTasksTable(){
   if(taskFilter==='done') tasks=allTasks.filter(t=>t.done);
   const tb=document.getElementById('tasks-tbody');
   if(tasks.length===0){tb.innerHTML=`<tr><td colspan="5"><div class="empty"><p>אין משימות</p></div></td></tr>`;return;}
-  tb.innerHTML=tasks.map(t=>{const d=t.due_date?new Date(t.due_date):null;const isOverdue=d&&d<today&&!t.done;return`<tr>
+  tb.innerHTML=tasks.map(t=>{const d=t.due_date?new Date(t.due_date):null;const isOverdue=d&&d<today&&!t.done;return`<tr onclick="openEditTask('${t.id}')" style="cursor:pointer">
     <td style="font-weight:600;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</td>
     <td style="color:var(--g500)">${t.detail||'-'}</td>
     <td>${d?fmtDateStr(t.due_date):'-'}</td>
     <td><span class="badge ${t.done?'badge-green':isOverdue?'badge-red':'badge-amber'}">${t.done?'בוצע':isOverdue?'באיחור':'ממתין'}</span></td>
-    <td style="display:flex;gap:6px"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px"><button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')"><i data-lucide="trash-2"></i></button></td>
+    <td style="display:flex;gap:6px" onclick="event.stopPropagation()"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px"><button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')"><i data-lucide="trash-2"></i></button></td>
   </tr>`;}).join('');
 }
 
