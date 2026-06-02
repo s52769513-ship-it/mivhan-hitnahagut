@@ -200,6 +200,7 @@ tr:last-child td{border-bottom:none}
 .email-toolbar select{padding:4px 8px;border:1px solid var(--g200);border-radius:5px;font-size:13px;font-family:'Rubik',sans-serif;background:white}
 .email-body-editor{min-height:140px;border:1px solid var(--g200);border-radius:0 0 8px 8px;padding:12px;font-size:14px;font-family:'Rubik',sans-serif;direction:rtl;outline:none;background:white}
 .email-body-editor:focus{border-color:var(--blue2)}
+.rich-editor-wrap{border:1px solid var(--g200);border-radius:8px;overflow:hidden}.rich-editor-wrap .rich-toolbar{display:flex;gap:4px;align-items:center;padding:6px 10px;background:var(--g50);border-bottom:1px solid var(--g200);flex-wrap:wrap}.rich-toolbar button{padding:3px 8px;border:1px solid var(--g200);background:white;border-radius:4px;cursor:pointer;font-size:13px;font-family:'Rubik',sans-serif;min-width:28px;transition:all .1s}.rich-toolbar button:hover{background:var(--blue-light);border-color:var(--blue2)}.rich-editor{min-height:100px;padding:10px 12px;font-size:14px;font-family:'Rubik',sans-serif;direction:rtl;outline:none;background:white;line-height:1.8}.rich-editor:empty:before{content:attr(placeholder);color:var(--g400);pointer-events:none;display:block}
 .drive-connect-banner{background:var(--blue-light);border:1px solid var(--blue2);border-radius:10px;padding:18px;text-align:center;margin-bottom:16px}
 .file-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--g100)}
 .file-item:last-child{border-bottom:none}
@@ -334,7 +335,7 @@ tr:last-child td{border-bottom:none}
             <button class="tab-btn" onclick="showTab('tab-appointments')">פגישות</button>
             <button class="tab-btn" data-admin-tab onclick="showTab('tab-payments')">תשלומים</button>
             <button class="tab-btn" onclick="showTab('tab-tasks')">משימות</button>
-            <button class="tab-btn" onclick="showTab('tab-notes')">הערות</button>
+            <button class="tab-btn" onclick="showTab('tab-notes')">עדכונים</button>
             <button class="tab-btn" onclick="showTab('tab-emails')"><i data-lucide="mail"></i> מיילים</button>
           </div>
           <div class="tab-content active" id="tab-personal"></div>
@@ -603,8 +604,36 @@ tr:last-child td{border-bottom:none}
         <div class="form-group"><label class="form-label">מחיר (₪)</label><input type="number" class="form-control" id="ea-price" dir="ltr"></div>
         <div class="form-group" style="display:flex;gap:8px;align-items:center;padding-top:28px"><input type="checkbox" id="ea-arrived" style="width:16px;height:16px"><label class="form-label" style="margin:0;cursor:pointer" for="ea-arrived">הגיע לפגישה</label></div>
       </div>
-      <div class="form-group"><label class="form-label"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px"></i> תיעוד הפגישה</label><textarea class="form-control" id="ea-desc" rows="6" placeholder="רשום כאן את תיעוד הפגישה..."></textarea></div>
-      <div class="form-group"><label class="form-label"><i data-lucide="user-check" style="width:14px;height:14px;vertical-align:-2px"></i> הערות מדריך</label><textarea class="form-control" id="ea-supervisor" rows="4" placeholder="הערות מדריך / סופרויזר..."></textarea></div>
+      <div class="form-group">
+        <label class="form-label"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px"></i> תיעוד הפגישה</label>
+        <div class="rich-editor-wrap">
+          <div class="rich-toolbar">
+            <button onclick="richFmt('ea-desc','bold')" title="מודגש"><b>B</b></button>
+            <button onclick="richFmt('ea-desc','italic')" title="נטוי"><i>I</i></button>
+            <button onclick="richFmt('ea-desc','underline')" title="קו תחתון"><u>U</u></button>
+            <button onclick="richFmtBlock('ea-desc','h3')" title="כותרת">H</button>
+            <button onclick="richFmt('ea-desc','justifyRight')" title="ימין">⇒</button>
+            <button onclick="richFmt('ea-desc','justifyCenter')" title="מרכז">≡</button>
+            <button onclick="richFmt('ea-desc','justifyLeft')" title="שמאל">⇐</button>
+          </div>
+          <div class="rich-editor" id="ea-desc" contenteditable="true" dir="rtl" placeholder="רשום כאן את תיעוד הפגישה..." style="min-height:120px"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i data-lucide="user-check" style="width:14px;height:14px;vertical-align:-2px"></i> הערות מדריך</label>
+        <div class="rich-editor-wrap">
+          <div class="rich-toolbar">
+            <button onclick="richFmt('ea-supervisor','bold')" title="מודגש"><b>B</b></button>
+            <button onclick="richFmt('ea-supervisor','italic')" title="נטוי"><i>I</i></button>
+            <button onclick="richFmt('ea-supervisor','underline')" title="קו תחתון"><u>U</u></button>
+            <button onclick="richFmtBlock('ea-supervisor','h3')" title="כותרת">H</button>
+            <button onclick="richFmt('ea-supervisor','justifyRight')" title="ימין">⇒</button>
+            <button onclick="richFmt('ea-supervisor','justifyCenter')" title="מרכז">≡</button>
+            <button onclick="richFmt('ea-supervisor','justifyLeft')" title="שמאל">⇐</button>
+          </div>
+          <div class="rich-editor" id="ea-supervisor" contenteditable="true" dir="rtl" placeholder="הערות מדריך / סופרויזר..." style="min-height:80px"></div>
+        </div>
+      </div>
       <div class="form-group">
         <label class="form-label"><i data-lucide="paperclip" style="width:14px;height:14px;vertical-align:-2px"></i> קבצים מצורפים לפגישה</label>
         <div id="ea-files-list" style="margin-bottom:10px"></div>
@@ -651,13 +680,14 @@ tr:last-child td{border-bottom:none}
 
 <div class="modal-backdrop" id="modal-new-note" style="display:none" onclick="closeModal('modal-new-note')">
   <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header"><h2><i data-lucide="plus-circle"></i> הערה חדשה</h2><button class="btn btn-icon" onclick="closeModal('modal-new-note')"><i data-lucide="x"></i></button></div>
+    <div class="modal-header"><h2 id="nn-modal-title"><i data-lucide="plus-circle"></i> עדכון חדש</h2><button class="btn btn-icon" onclick="closeModal('modal-new-note')"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
+      <input type="hidden" id="nn-note-id" value="">
       <div class="form-group"><label class="form-label">כותרת</label><input type="text" class="form-control" id="nn-title"></div>
       <div class="form-group"><label class="form-label">סוג</label><select class="form-control" id="nn-type"><option value="general">כללי</option><option value="clinical">קליני</option><option value="observation">תצפית</option></select></div>
       <div class="form-group"><label class="form-label">תוכן</label><textarea class="form-control" id="nn-content" rows="4"></textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-note')">ביטול</button><button class="btn btn-primary" onclick="createNote()">הוסף הערה</button></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-note')">ביטול</button><button class="btn btn-primary" id="nn-submit-btn" onclick="saveNoteModal()">הוסף עדכון</button></div>
   </div>
 </div>
 
@@ -1691,8 +1721,11 @@ function renderInstitutionFilter(){
       const accessTypes=new Set(allInstitutions.filter(i=>accessInsts.includes(i.id)).map(i=>i.type||'general'));
       visibleCats=allCats.filter(c=>accessTypes.has(c.cat));
     }
+    const customInsts=allInstitutions.filter(i=>!['clinic','vizhnitz','education','ponivez'].includes(i.type||''));
     el.innerHTML=visibleCats.map(c=>`<button class="cat-btn" onclick="selectCategory('${c.cat}')"><span class="ci"><i data-lucide="${c.icon}"></i></span><span>${c.label}</span></button>`).join('')
-      +(isAdmin?`<button class="cat-btn" onclick="selectCategory('all')"><span class="ci"><i data-lucide="users"></i></span><span>כולם</span></button>`:'');
+      +customInsts.map(ci=>`<button class="cat-btn" onclick="selectCustomInstitution('${ci.id}','${(ci.name||'').replace(/'/g,"\\'")}')"><span class="ci"><i data-lucide="building-2"></i></span><span>${ci.name||''}</span></button>`).join('')
+      +(isAdmin?`<button class="cat-btn" onclick="selectCategory('all')"><span class="ci"><i data-lucide="users"></i></span><span>כולם</span></button>`:'')
+      +(isAdmin?`<button class="cat-btn" onclick="openModal('modal-new-institution')" style="border-style:dashed"><span class="ci"><i data-lucide="plus-circle"></i></span><span>סוג חדש</span></button>`:'');
     ps.style.display='none';
     return;
   }
@@ -1803,6 +1836,13 @@ function selectEduInstitution(instId, instName){
 function backToMain(){ patientView='main'; selectedInstitution=null; selectedClass=null; currentContextType=null; currentContextInstitutionId=null; currentContextClassId=null; renderInstitutionFilter(); }
 function backToVizhnitz(){ patientView='vizhnitz-classes'; currentContextClassId=null; renderInstitutionFilter(); }
 function backToEducation(){ patientView='education-institutions'; currentContextInstitutionId=null; renderInstitutionFilter(); }
+function selectCustomInstitution(instId, instName){
+  patientView='patients-list';
+  patientListData=allPatients.filter(p=>p.institution_id===instId);
+  patientListTitle=instName; patientListBackFn='backToMain';
+  currentContextInstitutionId=instId; currentContextType=null; currentContextClassId=null;
+  renderInstitutionFilter();
+}
 
 function renderClassFilter(){ /* handled in renderInstitutionFilter now */ }
 function selectInstitution(id){ selectedInstitution=id; }
@@ -1811,13 +1851,18 @@ function selectClass(id){ selectedClass=id; }
 function renderPatientsTable(patients){
   document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="${patientListBackFn}()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> ${patientListTitle} <span style="font-size:13px;color:var(--g500)">(${patients.length})</span>`;
   const tb=document.getElementById('patients-tbody');
-  if(patients.length===0){tb.innerHTML=`<tr><td colspan="${isAdmin?6:3}"><div class="empty"><i data-lucide="users"></i><p>אין מטופלים</p></div></td></tr>`;return;}
-  tb.innerHTML=patients.map(p=>`<tr onclick="openPatient('${p.id}')">
-    <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div><strong>${p.name||''}</strong></div></td>
-    <td>${p.phone||'-'}</td>
-    ${isAdmin?`<td>₪${(p.debt||0).toLocaleString()}</td><td style="color:var(--green)">₪${(p.paid||0).toLocaleString()}</td><td><span class="badge ${(p.remaining||0)>0?'badge-red':'badge-green'}">₪${(p.remaining||0).toLocaleString()}</span></td>`:''}
-    <td onclick="event.stopPropagation()">${isAdmin?`<button class="btn btn-danger btn-sm" onclick="deletePatient('${p.id}')"><i data-lucide="trash-2"></i></button>`:''}</td>
-  </tr>`).join('');
+  if(patients.length===0){tb.innerHTML=`<tr><td colspan="1"><div class="empty"><i data-lucide="users"></i><p>אין מטופלים</p></div></td></tr>`;return;}
+  tb.innerHTML=`<tr><td style="padding:16px;border:none"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
+    ${patients.map(p=>`<div style="position:relative">
+      <button class="cat-btn" onclick="openPatient('${p.id}')" style="width:100%;padding:16px 10px">
+        <div class="avatar" style="background:${avatarColor(p.name)};width:44px;height:44px;font-size:16px;border-radius:50%">${initials(p.name)}</div>
+        <span style="font-size:13px;font-weight:600;text-align:center;line-height:1.3">${p.name||''}</span>
+        ${p.phone?`<span style="font-size:11px;color:var(--g400)">${p.phone}</span>`:''}
+      </button>
+      ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="deletePatient('${p.id}')" style="position:absolute;top:6px;left:6px;padding:3px 6px;font-size:11px"><i data-lucide="trash-2"></i></button>`:''}
+    </div>`).join('')}
+  </div></td></tr>`;
+  if(window.lucide) lucide.createIcons();
 }
 
 function filterPatients(q){
@@ -2198,32 +2243,27 @@ async function renderPatientNotes(pid){
     const r=await sbAdmin('user_profiles','?select=*');
     if(r.data?.length) allUserProfiles=r.data;
   }
-  const NOTE_TYPE_HE={clinical:'קליני',observation:'תצפית'};
+  const NOTE_TYPE_HE={clinical:'קליני',observation:'תצפית',general:'כללי'};
   document.getElementById('tab-notes').innerHTML=`
-    <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openNoteForPatient('${pid}')">+ הערה</button></div>
-    ${notes.length===0?'<div class="empty"><i data-lucide="file-text"></i><p>אין הערות</p></div>':`<div class="card" style="padding:0;overflow:hidden">${notes.map(n=>{
+    <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openNoteForPatient('${pid}')">+ עדכון</button></div>
+    ${notes.length===0?'<div class="empty"><i data-lucide="file-text"></i><p>אין עדכונים</p></div>':`<div class="card" style="padding:0;overflow:hidden">${notes.map(n=>{
       const profile=allUserProfiles.find(u=>u.id===n.user_id||u.user_id===n.user_id);
       const userName=profile?.display_name||profile?.name||'';
-      const typeBadge=NOTE_TYPE_HE[n.note_type]||(userName||'כללי');
-      return`<div class="note-row" onclick="toggleNote('note-body-${n.id}')">
+      const typeBadge=NOTE_TYPE_HE[n.note_type]||'כללי';
+      return`<div class="note-row" onclick="openNoteEdit('${n.id}','${pid}')">
         <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
-          <span style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.title||'הערה'}</span>
+          <span style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.title||'עדכון'}</span>
           <span class="badge badge-teal" style="font-size:11px;flex-shrink:0">${typeBadge}</span>
+          ${userName?`<span style="font-size:11px;color:var(--g400);flex-shrink:0">${userName}</span>`:''}
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
           <span style="font-size:12px;color:var(--g400)">${n.created_at?fmtDate(n.created_at):''}</span>
           ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteNote('${n.id}','${pid}')"><i data-lucide="trash-2"></i></button>`:''}
-          <span style="color:var(--g400);font-size:12px"><i data-lucide="chevron-down"></i></span>
+          <span style="color:var(--g400);font-size:12px"><i data-lucide="pencil"></i></span>
         </div>
-      </div>
-      <div id="note-body-${n.id}" class="note-body" style="display:none">${(n.content||'').replace(/</g,'&lt;')}</div>`;
+      </div>`;
     }).join('')}</div>`}`;
   if(window.lucide) lucide.createIcons();
-}
-
-function toggleNote(id){
-  const el=document.getElementById(id);
-  if(el) el.style.display=el.style.display==='none'?'':'none';
 }
 
 async function deleteNote(id,pid){
@@ -2237,12 +2277,26 @@ function renderBackground(p){
   document.getElementById('dt-background').innerHTML=`
     <div class="card">
       <div class="card-header"><h3>רקע</h3><button class="btn btn-primary btn-sm" onclick="saveBackground('${p.id}')"><i data-lucide="save"></i> שמור</button></div>
-      <div class="card-body"><textarea class="form-control" id="bg-text" rows="12" style="width:100%">${p.background||''}</textarea></div>
+      <div class="card-body">
+        <div class="rich-editor-wrap">
+          <div class="rich-toolbar">
+            <button onclick="richFmt('bg-text','bold')" title="מודגש"><b>B</b></button>
+            <button onclick="richFmt('bg-text','italic')" title="נטוי"><i>I</i></button>
+            <button onclick="richFmt('bg-text','underline')" title="קו תחתון"><u>U</u></button>
+            <button onclick="richFmtBlock('bg-text','h3')" title="כותרת">H</button>
+            <button onclick="richFmt('bg-text','justifyRight')" title="ימין">⇒</button>
+            <button onclick="richFmt('bg-text','justifyCenter')" title="מרכז">≡</button>
+            <button onclick="richFmt('bg-text','justifyLeft')" title="שמאל">⇐</button>
+          </div>
+          <div class="rich-editor" id="bg-text" contenteditable="true" dir="rtl" style="min-height:220px">${p.background||''}</div>
+        </div>
+      </div>
     </div>`;
+  if(window.lucide) lucide.createIcons();
 }
 
 async function saveBackground(id){
-  const bg=document.getElementById('bg-text').value;
+  const bg=document.getElementById('bg-text').innerHTML;
   const r=await sbUpdate('patients',id,{background:bg});
   if(r.error) return toast('שגיאה','error');
   toast('רקע נשמר <i data-lucide="check-circle"></i>','success');
@@ -2707,7 +2761,7 @@ function _repBuildSections(include,pid){
       repRow('שם מלא',p.name)+repRow('ת.ז.',p.identity_number)+repRow('טלפון',p.phone)+
       repRow('כתובת',p.address)+repRow('אימייל',p.email)+repRow('הורים / איש קשר',p.parents)+
       repRow('מוסד',inst?.name)+repRow('כיתה',cls?.name)+
-      (isAdmin?repRow('חוב',`₪${calcDebt.toLocaleString()}`)+repRow('שולם',`₪${calcPaid.toLocaleString()}`)+repRow('יתרה',`₪${Math.max(0,calcDebt-calcPaid).toLocaleString()}`):'')
+      (isAdmin&&include.payments?repRow('חוב',`₪${calcDebt.toLocaleString()}`)+repRow('שולם',`₪${calcPaid.toLocaleString()}`)+repRow('יתרה',`₪${Math.max(0,calcDebt-calcPaid).toLocaleString()}`):'')
     ));
   }
 
@@ -2725,7 +2779,7 @@ function _repBuildSections(include,pid){
         <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${a.name||''}</td>
         <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;text-align:center;">${a.arrived?'✓':''}</td>
         <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${a.description||''}</td>
-        ${isAdmin?`<td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">₪${(a.price||0).toLocaleString()}</td>`:''}
+        ${isAdmin&&include.payments?`<td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">₪${(a.price||0).toLocaleString()}</td>`:''}
       </tr>`;
     }).join('');
     sections.push(repBuildSection('פגישות',apts.length===0?'<p style="color:#94a3b8;font-size:15px;">אין פגישות</p>':`
@@ -2736,15 +2790,15 @@ function _repBuildSections(include,pid){
           <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">שם פגישה</th>
           <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-size:14px;">הגיע</th>
           <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">סיכום פגישה</th>
-          ${isAdmin?'<th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">מחיר</th>':''}
+          ${isAdmin&&include.payments?'<th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">מחיר</th>':''}
         </tr></thead><tbody>${rows}</tbody>
       </table>`));
   }
 
   if(include.payments){
-    const pays=allPayments.filter(pp=>pp.patient_id===pid).sort((a,b)=>new Date(a.paid_at)-new Date(b.paid_at));
+    const pays=allPayments.filter(pp=>pp.patient_id===pid).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
     const rows=pays.map(pay=>`<tr>
-      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${new Date(pay.paid_at).toLocaleDateString('he-IL')}</td>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${pay.created_at?new Date(pay.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}):'-'}</td>
       <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">₪${(pay.amount||0).toLocaleString()}</td>
       <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${pay.description||''}</td>
     </tr>`).join('');
@@ -2760,7 +2814,7 @@ function _repBuildSections(include,pid){
 
   if(include.notes){
     const notes=allNotes.filter(n=>n.patient_id===pid).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-    sections.push(repBuildSection('הערות',notes.length===0?'<p style="color:#94a3b8;font-size:15px;">אין הערות</p>':notes.map(n=>`
+    sections.push(repBuildSection('עדכונים',notes.length===0?'<p style="color:#94a3b8;font-size:15px;">אין עדכונים</p>':notes.map(n=>`
       <div style="margin-bottom:14px;padding:14px;border:1px solid #e2e8f0;border-radius:7px;background:#f8fafc;">
         <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">${new Date(n.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</div>
         <div style="font-size:15px;line-height:1.9;white-space:pre-wrap;color:#1e293b;">${n.content||''}</div>
@@ -3407,8 +3461,8 @@ function openEditApt(id){
   document.getElementById('ea-arrived').checked=a.arrived||false;
   let notes='',sup='';
   try{const parsed=JSON.parse(a.description||'{}');notes=parsed.notes||'';sup=parsed.sup||'';}catch{notes=a.description||'';}
-  document.getElementById('ea-desc').value=notes;
-  document.getElementById('ea-supervisor').value=sup;
+  document.getElementById('ea-desc').innerHTML=notes;
+  document.getElementById('ea-supervisor').innerHTML=sup;
   const hasCloud=!!cloudName&&!!cloudPreset;
   document.getElementById('ea-upload-label').style.display=hasCloud?'':'none';
   openModal('modal-edit-appointment');
@@ -3418,8 +3472,8 @@ function openEditApt(id){
 }
 async function saveEditApt(){
   if(!editAptId) return;
-  const notes=document.getElementById('ea-desc').value;
-  const sup=document.getElementById('ea-supervisor').value;
+  const notes=document.getElementById('ea-desc').innerHTML;
+  const sup=document.getElementById('ea-supervisor').innerHTML;
   const description=sup?JSON.stringify({notes,sup}):notes;
   const body={name:document.getElementById('ea-name').value,patient_id:document.getElementById('ea-patient').value||null,start_time:localInputToISO(document.getElementById('ea-start').value),end_time:localInputToISO(document.getElementById('ea-end').value),price:parseFloat(document.getElementById('ea-price').value)||0,arrived:document.getElementById('ea-arrived').checked,description};
   const r=await sbUpdate('appointments',editAptId,body);
@@ -3532,15 +3586,48 @@ async function deletePayment(payId,pid){
 }
 
 // === NOTES ===
-function openNoteForPatient(pid){ currentPayPatientId=pid; openModal('modal-new-note'); }
-async function createNote(){
-  const base={patient_id:currentPayPatientId,title:document.getElementById('nn-title').value,content:document.getElementById('nn-content').value,note_type:document.getElementById('nn-type').value};
-  let r=await sbAdminInsert('notes',{...base,user_id:currentUser?.id||null});
-  if(r.error) r=await sbAdminInsert('notes',base); // fallback: column may not exist yet
-  if(r.error) return toast('שגיאה: '+r.error,'error');
-  toast('הערה נוצרה <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-note');
+function openNoteForPatient(pid){
+  currentPayPatientId=pid;
+  document.getElementById('nn-note-id').value='';
+  document.getElementById('nn-modal-title').innerHTML='<i data-lucide="plus-circle"></i> עדכון חדש';
+  document.getElementById('nn-submit-btn').textContent='הוסף עדכון';
   ['nn-title','nn-content'].forEach(id=>document.getElementById(id).value='');
-  await loadAll(); renderPatientNotes(currentPayPatientId);
+  document.getElementById('nn-type').value='general';
+  openModal('modal-new-note');
+  if(window.lucide) lucide.createIcons();
+}
+function openNoteEdit(noteId, pid){
+  currentPayPatientId=pid;
+  const n=allNotes.find(x=>x.id===noteId); if(!n) return;
+  document.getElementById('nn-note-id').value=noteId;
+  document.getElementById('nn-modal-title').innerHTML='<i data-lucide="pencil"></i> עריכת עדכון';
+  document.getElementById('nn-submit-btn').textContent='שמור שינויים';
+  document.getElementById('nn-title').value=n.title||'';
+  document.getElementById('nn-content').value=n.content||'';
+  document.getElementById('nn-type').value=n.note_type||'general';
+  openModal('modal-new-note');
+  if(window.lucide) lucide.createIcons();
+}
+async function saveNoteModal(){
+  const noteId=document.getElementById('nn-note-id').value;
+  const title=document.getElementById('nn-title').value;
+  const content=document.getElementById('nn-content').value;
+  const note_type=document.getElementById('nn-type').value;
+  if(noteId){
+    const r=await sbUpdate('notes',noteId,{title,content,note_type});
+    if(r.error) return toast('שגיאה: '+r.error,'error');
+    toast('עדכון נשמר <i data-lucide="check-circle"></i>','success');
+    allNotes=allNotes.map(n=>n.id===noteId?{...n,title,content,note_type}:n);
+  } else {
+    const base={patient_id:currentPayPatientId,title,content,note_type};
+    let r=await sbAdminInsert('notes',{...base,user_id:currentUser?.id||null});
+    if(r.error) r=await sbAdminInsert('notes',base);
+    if(r.error) return toast('שגיאה: '+r.error,'error');
+    toast('עדכון נוצר <i data-lucide="check-circle"></i>','success');
+    await loadAll();
+  }
+  closeModal('modal-new-note');
+  renderPatientNotes(currentPayPatientId);
 }
 
 // === OBSERVATIONS ===
@@ -4047,6 +4134,8 @@ function applySmartToGoal(){
 // === EMAIL ===
 function emailFmt(cmd){ document.execCommand(cmd,false,null); document.getElementById('email-body').focus(); }
 function emailFontSize(size){ if(size) document.execCommand('fontSize',false,size); }
+function richFmt(editorId,cmd){ document.getElementById(editorId).focus(); document.execCommand(cmd,false,null); }
+function richFmtBlock(editorId,tag){ document.getElementById(editorId).focus(); document.execCommand('formatBlock',false,tag); }
 
 async function sendEmail(pid){
   const to=document.getElementById('email-to').value.trim();
