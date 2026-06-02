@@ -3,12 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="version" content="2026-05-26-2">
 <title>מכון התנהגות</title>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<link rel="icon" type="image/jpeg" href="data:image/jpeg;base64,/9j/7QAsUGhvdG9zaG9wIDMuMAA4QklNA+0AAAAAABABLAAAAAEAAQEsAAAAAQAB/+IMWElDQ19QUk9GSUxFAAEBAAAMSExpbm8CEAAAbW50clJHQiBYWVogB84AAgAJAAYAMQAAYWNzcE1TRlQAAAAASUVDIHNSR0IAAAAAAAAAAAAAAAAAAPbWAAEAAAAA0y1IUCAg...">
+<script src="https://accounts.google.com/gsi/client" async></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230D2645'/><g transform='translate(50,44) rotate(-28)'><rect x='-38' y='-38' width='22' height='72' rx='11' fill='white' transform='translate(-14,0)'/><rect x='-38' y='-38' width='22' height='76' rx='11' fill='%236BBFD8' transform='translate(8,-4)'/><rect x='-38' y='-38' width='22' height='72' rx='11' fill='%238B1A4A' transform='translate(30,-2)'/></g><circle cx='50' cy='84' r='9' fill='white'/></svg>">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap');
 :root{--blue:#0C3A5F;--blue2:#185FA5;--blue-light:#E6F1FB;--teal:#4DA8C2;--crimson:#8B1A4A;--green:#1D9E75;--green-light:#EAF3DE;--red:#A32D2D;--red-light:#FCEBEB;--amber:#854F0B;--amber-light:#FAEEDA;--g50:#F8FAFC;--g100:#F1F5F9;--g200:#E2E8F0;--g300:#CBD5E1;--g400:#94A3B8;--g500:#64748B;--g600:#475569;--g700:#334155;--g800:#1E293B;--g900:#0F172A;--white:#fff;--sw:220px;--hh:60px}
@@ -99,6 +104,7 @@ tr:last-child td{border-bottom:none}
 .qf-input:focus{border-bottom-color:var(--blue2);background:var(--g50);border-radius:4px 4px 0 0;padding:5px 6px}
 .qf-select{border:1px solid var(--g300)!important;border-radius:6px;padding:6px 8px;background:white;width:auto;min-width:160px}
 .q-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid var(--g100)}
+.qf-hint{display:block;font-size:11.5px;color:var(--g400);margin-top:2px;font-style:italic;line-height:1.4}
 .tab-content{display:none}.tab-content.active{display:block}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--g200);border-radius:12px;overflow:hidden}
 .cal-header{background:var(--g50);padding:10px 4px;text-align:center;font-size:12px;font-weight:600;color:var(--g500)}
@@ -157,17 +163,26 @@ tr:last-child td{border-bottom:none}
 .cat-btn.active{border-color:var(--blue2);background:var(--blue-light)}
 .cat-btn .ci{font-size:36px}.cat-btn span{font-size:14px;font-weight:600;color:var(--g700)}
 .cat-btn.active span{color:var(--blue2)}
-.main-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.main-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
 .main-tab-btn{padding:12px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:600;font-family:'Rubik',sans-serif;transition:all .15s}
 .main-tab-btn.blue{background:var(--g100);color:var(--g700)}.main-tab-btn.blue.active{background:var(--blue2);color:white}
 .main-tab-btn.green{background:var(--g100);color:var(--g700)}.main-tab-btn.green.active{background:var(--green);color:white}
 .main-tab-btn.purple{background:var(--g100);color:var(--g700)}.main-tab-btn.purple.active{background:#533AB7;color:white}
+.main-tab-btn.orange{background:var(--g100);color:var(--g700)}.main-tab-btn.orange.active{background:#b45309;color:white}
 .obs-card{background:white;border-radius:10px;border:1px solid var(--g200);margin-bottom:14px}
-.obs-header{padding:12px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between}
+.obs-header{padding:12px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .obs-body{padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .obs-field{padding:8px;background:var(--g50);border-radius:6px}
 .obs-field label{font-size:11px;color:var(--g400);display:block;margin-bottom:3px}
 .obs-field p{font-size:13px;color:var(--g700)}
+.obs-table{width:100%;border-collapse:collapse;font-size:13px}
+.obs-table th{background:var(--g50);padding:7px 10px;text-align:right;font-size:12px;font-weight:600;color:var(--g500);border:1px solid var(--g200)}
+.obs-table td{border:1px solid var(--g200);vertical-align:top;padding:3px}
+.obs-table td textarea{width:100%;border:none;outline:none;resize:none;font-size:12px;font-family:'Rubik',sans-serif;direction:rtl;color:var(--g800);background:transparent;min-height:52px;padding:4px 6px}
+.obs-table td textarea:focus{background:var(--blue-light)}
+.obs-table-ro td{padding:7px 10px;font-size:13px;color:var(--g700);min-height:30px}
+.obs-summary{padding:10px 14px;font-size:13px;color:var(--g700);background:var(--g50);margin:8px 0 0;border-top:1px solid var(--g100)}
+.obs-pat-info{font-size:12px;color:var(--g500);padding:7px 16px;background:var(--g50);border-bottom:1px solid var(--g100)}
 .goal-card{background:white;border-radius:10px;border:1px solid var(--g200);margin-bottom:14px}
 .goal-header{padding:12px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between;background:var(--g50)}
 .goal-body{padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -185,6 +200,7 @@ tr:last-child td{border-bottom:none}
 .email-toolbar select{padding:4px 8px;border:1px solid var(--g200);border-radius:5px;font-size:13px;font-family:'Rubik',sans-serif;background:white}
 .email-body-editor{min-height:140px;border:1px solid var(--g200);border-radius:0 0 8px 8px;padding:12px;font-size:14px;font-family:'Rubik',sans-serif;direction:rtl;outline:none;background:white}
 .email-body-editor:focus{border-color:var(--blue2)}
+.rich-editor-wrap{border:1px solid var(--g200);border-radius:8px;overflow:hidden}.rich-editor-wrap .rich-toolbar{display:flex;gap:4px;align-items:center;padding:6px 10px;background:var(--g50);border-bottom:1px solid var(--g200);flex-wrap:wrap}.rich-toolbar button{padding:3px 8px;border:1px solid var(--g200);background:white;border-radius:4px;cursor:pointer;font-size:13px;font-family:'Rubik',sans-serif;min-width:28px;transition:all .1s}.rich-toolbar button:hover{background:var(--blue-light);border-color:var(--blue2)}.rich-editor{min-height:100px;padding:10px 12px;font-size:14px;font-family:'Rubik',sans-serif;direction:rtl;outline:none;background:white;line-height:1.8}.rich-editor:empty:before{content:attr(placeholder);color:var(--g400);pointer-events:none;display:block}
 .drive-connect-banner{background:var(--blue-light);border:1px solid var(--blue2);border-radius:10px;padding:18px;text-align:center;margin-bottom:16px}
 .file-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--g100)}
 .file-item:last-child{border-bottom:none}
@@ -239,9 +255,19 @@ tr:last-child td{border-bottom:none}
   </aside>
 
   <main class="main">
+    <div id="impersonate-banner" style="display:none;background:var(--amber-light);border-bottom:2px solid var(--amber);padding:5px 24px;font-size:13px;color:var(--amber);display:flex;align-items:center;justify-content:space-between">
+      <span>👁 מצב הצגה כ: <strong id="impersonate-name"></strong></span>
+      <button onclick="setViewAs('')" style="background:none;border:1px solid var(--amber);border-radius:6px;padding:2px 10px;font-size:12px;cursor:pointer;color:var(--amber);font-family:'Rubik',sans-serif">חזור לתצוגת מנהל</button>
+    </div>
     <div class="topbar">
       <span class="topbar-title" id="topbar-title">לוח בקרה</span>
-      <div id="topbar-actions">
+      <div id="topbar-actions" style="display:flex;align-items:center;gap:16px">
+        <div id="view-as-container" style="display:none;align-items:center;gap:6px">
+          <span style="font-size:12px;color:var(--g500);white-space:nowrap">הצגה כ:</span>
+          <select id="view-as-select" onchange="setViewAs(this.value)" style="font-size:12px;padding:4px 8px;border:1px solid var(--g200);border-radius:6px;font-family:'Rubik',sans-serif;color:var(--g700);max-width:160px">
+            <option value="">עצמי (מנהל)</option>
+          </select>
+        </div>
         <div id="clock-widget">
           <div id="clock-time"></div>
           <div id="clock-date-he"></div>
@@ -286,7 +312,7 @@ tr:last-child td{border-bottom:none}
               </div>
             </div>
             <div style="overflow-x:auto">
-              <table><thead><tr><th>שם</th><th>טלפון</th><th>חוב</th><th>שולם</th><th>יתרה</th><th></th></tr></thead>
+              <table id="patients-table"><thead><tr><th>שם</th><th>טלפון</th><th class="col-finance">חוב</th><th class="col-finance">שולם</th><th class="col-finance">יתרה</th><th></th></tr></thead>
               <tbody id="patients-tbody"></tbody></table>
             </div>
           </div>
@@ -301,6 +327,7 @@ tr:last-child td{border-bottom:none}
           <button class="main-tab-btn blue active" onclick="showMainTab('clinical')"><i data-lucide="clipboard-list"></i> תיק קליני</button>
           <button class="main-tab-btn green" onclick="showMainTab('data')"><i data-lucide="bar-chart-2"></i> איסוף נתונים</button>
           <button class="main-tab-btn purple" onclick="showMainTab('intervention')"><i data-lucide="target"></i> תוכנית התערבות</button>
+          <button class="main-tab-btn orange" onclick="showMainTab('reports')"><i data-lucide="file-text"></i> דוחות</button>
         </div>
         <div id="main-tab-clinical">
           <div class="tabs" id="clinical-tabs">
@@ -308,7 +335,7 @@ tr:last-child td{border-bottom:none}
             <button class="tab-btn" onclick="showTab('tab-appointments')">פגישות</button>
             <button class="tab-btn" data-admin-tab onclick="showTab('tab-payments')">תשלומים</button>
             <button class="tab-btn" onclick="showTab('tab-tasks')">משימות</button>
-            <button class="tab-btn" onclick="showTab('tab-notes')">הערות</button>
+            <button class="tab-btn" onclick="showTab('tab-notes')">עדכונים</button>
             <button class="tab-btn" onclick="showTab('tab-emails')"><i data-lucide="mail"></i> מיילים</button>
           </div>
           <div class="tab-content active" id="tab-personal"></div>
@@ -333,9 +360,14 @@ tr:last-child td{border-bottom:none}
         <div id="main-tab-intervention" style="display:none">
           <div class="tabs">
             <button class="tab-btn active" onclick="showIntTab('it-treatment')">תוכנית טיפול</button>
+            <button class="tab-btn" onclick="showIntTab('it-tank')">טנ"ק</button>
+            <button class="tab-btn" onclick="showIntTab('it-docs')">מסמכים</button>
           </div>
           <div id="it-treatment" class="tab-content active"></div>
+          <div id="it-tank" class="tab-content"></div>
+          <div id="it-docs" class="tab-content"></div>
         </div>
+        <div id="main-tab-reports" style="display:none"></div>
       </div>
 
       <!-- DIARY -->
@@ -408,7 +440,30 @@ tr:last-child td{border-bottom:none}
             <div id="email-settings-status" style="margin-top:10px;font-size:13px"></div>
           </div>
         </div>
-        <div class="card" style="max-width:560px">
+        <div class="card" style="max-width:560px;margin-bottom:20px">
+          <div class="card-header"><h3><i data-lucide="mail"></i> Gmail – שליחה וקבלה</h3></div>
+          <div class="card-body">
+            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">ב-<strong>console.cloud.google.com</strong> → APIs &amp; Services → Credentials → צור OAuth 2.0 Client ID מסוג <strong>Web application</strong>.<br>הוסף ל-Authorized JavaScript origins: <code>https://s52769513-ship-it.github.io</code></p>
+            <div class="form-group"><label class="form-label">Google Client ID</label><input type="text" class="form-control" id="settings-google-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com" dir="ltr"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+              <button class="btn btn-primary" onclick="saveGoogleClientId()"><i data-lucide="save"></i> שמור</button>
+              <button class="btn btn-secondary" id="gmail-connect-btn" onclick="connectGmail()" style="display:none"><i data-lucide="log-in"></i> התחבר לGmail</button>
+              <button class="btn btn-danger" id="gmail-disconnect-btn" onclick="disconnectGmail()" style="display:none"><i data-lucide="log-out"></i> התנתק</button>
+            </div>
+            <div id="gmail-settings-status" style="margin-top:10px;font-size:13px"></div>
+          </div>
+        </div>
+        <div class="card" style="max-width:560px;margin-bottom:20px">
+          <div class="card-header"><h3><i data-lucide="sparkles"></i> עוזר AI – מטרות SMART (Gemini)</h3></div>
+          <div class="card-body">
+            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">קבל מפתח API חינמי ב-<strong>aistudio.google.com</strong> → "Get API key" → "Create API key". המפתח מתחיל ב-<code>AIza...</code></p>
+            <div class="form-group"><label class="form-label">Gemini API Key</label><input type="text" class="form-control" id="settings-gemini-key" placeholder="AIza..." dir="ltr"></div>
+            <div class="form-group"><label class="form-label">מודל AI (ברירת מחדל: gemini-2.0-flash)</label><input type="text" class="form-control" id="settings-ai-model" placeholder="gemini-2.0-flash" dir="ltr"></div>
+            <button class="btn btn-primary" onclick="saveGeminiSettings()"><i data-lucide="save"></i> שמור</button>
+            <div id="gemini-settings-status" style="margin-top:10px;font-size:13px"></div>
+          </div>
+        </div>
+        <div class="card" style="max-width:560px;margin-bottom:20px">
           <div class="card-header"><h3><i data-lucide="folder"></i> הגדרות אחסון קבצים (Cloudinary)</h3></div>
           <div class="card-body">
             <p style="font-size:14px;color:var(--g500);margin-bottom:14px">הירשם בחינם ב-cloudinary.com (25GB חינם), צור Upload Preset מסוג Unsigned והכנס כאן.</p>
@@ -451,7 +506,7 @@ tr:last-child td{border-bottom:none}
         <div class="form-group"><label class="form-label">כתובת</label><input type="text" class="form-control" id="np-address"></div>
       </div>
       <div class="form-group"><label class="form-label">הורים</label><input type="text" class="form-control" id="np-parents"></div>
-      <div class="form-group"><label class="form-label">שיוך ל:</label><select class="form-control" id="np-affiliation"><option value="">-- ללא --</option><option value="clinic">קליניקה</option><option value="vizhnitz">ויזניץ</option><option value="education">משרד החינוך</option><option value="ponivez">פוניבז</option></select></div>
+      <div class="form-group"><label class="form-label">שיוך ל:</label><select class="form-control" id="np-affiliation" onchange="updateNpClassOptions()"><option value="">-- ללא --</option><option value="clinic">קליניקה</option><option value="vizhnitz">ויזניץ</option><option value="education">משרד החינוך</option><option value="ponivez">פוניבז</option></select></div>
       <div class="form-group"><label class="form-label">מוסד</label><input type="text" class="form-control" id="np-institution" placeholder="שם המוסד..."></div>
       <div class="form-group" id="np-class-group"><label class="form-label">כיתה</label><select class="form-control" id="np-class"><option value="">-- ללא --</option></select></div>
     </div>
@@ -463,17 +518,53 @@ tr:last-child td{border-bottom:none}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header"><h2><i data-lucide="plus-circle"></i> פגישה חדשה</h2><button class="btn btn-icon" onclick="closeModal('modal-new-appointment')"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">סוג פגישה</label>
+        <div style="display:flex;gap:0;border:1px solid var(--g200);border-radius:8px;overflow:hidden;">
+          <button type="button" id="na-type-once" onclick="setAppType('once')" style="flex:1;padding:9px 12px;font-size:14px;font-weight:600;cursor:pointer;border:none;background:var(--blue2);color:white;font-family:inherit;transition:all .15s;">חד פעמי</button>
+          <button type="button" id="na-type-series" onclick="setAppType('series')" style="flex:1;padding:9px 12px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:white;color:var(--g500);font-family:inherit;transition:all .15s;">סדרה · 4 שבועות</button>
+        </div>
+      </div>
       <div class="form-group"><label class="form-label">שם פגישה</label><input type="text" class="form-control" id="na-name"></div>
       <div class="form-group"><label class="form-label">מטופל</label><select class="form-control" id="na-patient"><option value="">-- בחר מטופל --</option></select></div>
       <div class="form-grid">
-        <div class="form-group"><label class="form-label">תחילת פגישה</label><input type="datetime-local" class="form-control" id="na-start" dir="ltr"></div>
-        <div class="form-group"><label class="form-label">סיום פגישה</label><input type="datetime-local" class="form-control" id="na-end" dir="ltr"></div>
+        <div class="form-group"><label class="form-label">תחילת פגישה</label><input type="datetime-local" class="form-control" id="na-start" dir="ltr" oninput="naOnStartChange()"></div>
+        <div class="form-group"><label class="form-label">סיום פגישה</label><input type="datetime-local" class="form-control" id="na-end" dir="ltr" oninput="if(naAppType==='series')updateSeriesPreview()"></div>
+      </div>
+      <div id="na-series-preview" style="display:none;background:var(--g50);border:1px solid var(--g200);border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:700;color:var(--g700);margin-bottom:10px;display:flex;align-items:center;gap:6px;"><i data-lucide="calendar-range" style="width:15px;height:15px;"></i> <span id="na-series-count">4</span> פגישות שייווצרו:</div>
+        <div id="na-series-dates" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <button type="button" onclick="naAddSlot()" style="margin-top:8px;width:100%;padding:7px;border:1px dashed var(--g300);border-radius:7px;background:white;color:var(--blue2);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background='white'">+ הוסף שבוע נוסף</button>
       </div>
       <div class="form-group"><label class="form-label">מחיר (₪)</label><input type="number" class="form-control" id="na-price" dir="ltr"></div>
-      <div class="form-group" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="na-arrived" style="width:16px;height:16px"><label class="form-label" style="margin:0;cursor:pointer" for="na-arrived">הגיע לפגישה</label></div>
+      <div id="na-arrived-wrap" class="form-group" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="na-arrived" style="width:16px;height:16px"><label class="form-label" style="margin:0;cursor:pointer" for="na-arrived">הגיע לפגישה</label></div>
       <div class="form-group"><label class="form-label">תיאור</label><textarea class="form-control" id="na-desc" rows="2"></textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-appointment')">ביטול</button><button class="btn btn-primary" onclick="createAppointment()">צור פגישה</button></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-appointment')">ביטול</button><button class="btn btn-primary" id="na-submit-btn" onclick="createAppointment()">צור פגישה</button></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-full-report" style="display:none" onclick="closeModal('modal-full-report')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:460px">
+    <div class="modal-header"><h2><i data-lucide="file-plus"></i> הגדר דוח מלא</h2><button class="btn btn-icon" onclick="closeModal('modal-full-report')"><i data-lucide="x"></i></button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--g500);margin-bottom:18px;">בחר אילו סעיפים לכלול בדוח:</p>
+      <div style="display:flex;flex-direction:column;gap:10px;" id="rep-sections">
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-personal" checked style="width:16px;height:16px"> פרטים אישיים</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-background" checked style="width:16px;height:16px"> רקע</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-appointments" checked style="width:16px;height:16px"> פגישות</label>
+        <label id="rep-payments-lbl" style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-payments" checked style="width:16px;height:16px"> כספים ותשלומים</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-notes" checked style="width:16px;height:16px"> הערות</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-observations" checked style="width:16px;height:16px"> תצפיות ABC</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-questionnaires" checked style="width:16px;height:16px"> שאלונים (מפורט)</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-goals" checked style="width:16px;height:16px"> מטרות טיפוליות</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-full-report')">ביטול</button>
+      <button class="btn btn-secondary" onclick="generateFullReport('print')"><i data-lucide="printer"></i> תצוגה להדפסה</button>
+      <button class="btn btn-primary" onclick="generateFullReport('pdf')"><i data-lucide="download"></i> הורד PDF</button>
+    </div>
   </div>
 </div>
 
@@ -513,8 +604,36 @@ tr:last-child td{border-bottom:none}
         <div class="form-group"><label class="form-label">מחיר (₪)</label><input type="number" class="form-control" id="ea-price" dir="ltr"></div>
         <div class="form-group" style="display:flex;gap:8px;align-items:center;padding-top:28px"><input type="checkbox" id="ea-arrived" style="width:16px;height:16px"><label class="form-label" style="margin:0;cursor:pointer" for="ea-arrived">הגיע לפגישה</label></div>
       </div>
-      <div class="form-group"><label class="form-label"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px"></i> תיעוד הפגישה</label><textarea class="form-control" id="ea-desc" rows="6" placeholder="רשום כאן את תיעוד הפגישה..."></textarea></div>
-      <div class="form-group"><label class="form-label"><i data-lucide="user-check" style="width:14px;height:14px;vertical-align:-2px"></i> הערות מדריך</label><textarea class="form-control" id="ea-supervisor" rows="4" placeholder="הערות מדריך / סופרויזר..."></textarea></div>
+      <div class="form-group">
+        <label class="form-label"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px"></i> תיעוד הפגישה</label>
+        <div class="rich-editor-wrap">
+          <div class="rich-toolbar">
+            <button onclick="richFmt('ea-desc','bold')" title="מודגש"><b>B</b></button>
+            <button onclick="richFmt('ea-desc','italic')" title="נטוי"><i>I</i></button>
+            <button onclick="richFmt('ea-desc','underline')" title="קו תחתון"><u>U</u></button>
+            <button onclick="richFmtBlock('ea-desc','h3')" title="כותרת">H</button>
+            <button onclick="richFmt('ea-desc','justifyRight')" title="ימין">⇒</button>
+            <button onclick="richFmt('ea-desc','justifyCenter')" title="מרכז">≡</button>
+            <button onclick="richFmt('ea-desc','justifyLeft')" title="שמאל">⇐</button>
+          </div>
+          <div class="rich-editor" id="ea-desc" contenteditable="true" dir="rtl" placeholder="רשום כאן את תיעוד הפגישה..." style="min-height:120px"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i data-lucide="user-check" style="width:14px;height:14px;vertical-align:-2px"></i> הערות מדריך</label>
+        <div class="rich-editor-wrap">
+          <div class="rich-toolbar">
+            <button onclick="richFmt('ea-supervisor','bold')" title="מודגש"><b>B</b></button>
+            <button onclick="richFmt('ea-supervisor','italic')" title="נטוי"><i>I</i></button>
+            <button onclick="richFmt('ea-supervisor','underline')" title="קו תחתון"><u>U</u></button>
+            <button onclick="richFmtBlock('ea-supervisor','h3')" title="כותרת">H</button>
+            <button onclick="richFmt('ea-supervisor','justifyRight')" title="ימין">⇒</button>
+            <button onclick="richFmt('ea-supervisor','justifyCenter')" title="מרכז">≡</button>
+            <button onclick="richFmt('ea-supervisor','justifyLeft')" title="שמאל">⇐</button>
+          </div>
+          <div class="rich-editor" id="ea-supervisor" contenteditable="true" dir="rtl" placeholder="הערות מדריך / סופרויזר..." style="min-height:80px"></div>
+        </div>
+      </div>
       <div class="form-group">
         <label class="form-label"><i data-lucide="paperclip" style="width:14px;height:14px;vertical-align:-2px"></i> קבצים מצורפים לפגישה</label>
         <div id="ea-files-list" style="margin-bottom:10px"></div>
@@ -561,27 +680,41 @@ tr:last-child td{border-bottom:none}
 
 <div class="modal-backdrop" id="modal-new-note" style="display:none" onclick="closeModal('modal-new-note')">
   <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header"><h2><i data-lucide="plus-circle"></i> הערה חדשה</h2><button class="btn btn-icon" onclick="closeModal('modal-new-note')"><i data-lucide="x"></i></button></div>
+    <div class="modal-header"><h2 id="nn-modal-title"><i data-lucide="plus-circle"></i> עדכון חדש</h2><button class="btn btn-icon" onclick="closeModal('modal-new-note')"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
+      <input type="hidden" id="nn-note-id" value="">
       <div class="form-group"><label class="form-label">כותרת</label><input type="text" class="form-control" id="nn-title"></div>
       <div class="form-group"><label class="form-label">סוג</label><select class="form-control" id="nn-type"><option value="general">כללי</option><option value="clinical">קליני</option><option value="observation">תצפית</option></select></div>
       <div class="form-group"><label class="form-label">תוכן</label><textarea class="form-control" id="nn-content" rows="4"></textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-note')">ביטול</button><button class="btn btn-primary" onclick="createNote()">הוסף הערה</button></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-note')">ביטול</button><button class="btn btn-primary" id="nn-submit-btn" onclick="saveNoteModal()">הוסף עדכון</button></div>
   </div>
 </div>
 
 <div class="modal-backdrop" id="modal-new-obs" style="display:none" onclick="closeModal('modal-new-obs')">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header"><h2><i data-lucide="plus-circle"></i> תצפית חדשה</h2><button class="btn btn-icon" onclick="closeModal('modal-new-obs')"><i data-lucide="x"></i></button></div>
+  <div class="modal" style="max-width:820px" onclick="event.stopPropagation()">
+    <div class="modal-header"><h2 id="obs-modal-title"><i data-lucide="plus-circle"></i> טופס תצפית – ABC</h2><button class="btn btn-icon" onclick="closeModal('modal-new-obs')"><i data-lucide="x"></i></button></div>
+    <div id="no-patient-info" class="obs-pat-info"></div>
     <div class="modal-body">
-      <div class="form-group"><label class="form-label">תאריך ושעה</label><input type="datetime-local" class="form-control" id="no-date" dir="ltr"></div>
-      <div class="form-group"><label class="form-label">A – נסיבות (Antecedent)</label><textarea class="form-control" id="no-circumstance" rows="2"></textarea></div>
-      <div class="form-group"><label class="form-label">B – התנהגות (Behavior)</label><textarea class="form-control" id="no-behavior" rows="2"></textarea></div>
-      <div class="form-group"><label class="form-label">C – תוצאה (Consequence)</label><textarea class="form-control" id="no-outcome" rows="2"></textarea></div>
-      <div class="form-group"><label class="form-label">הערות</label><textarea class="form-control" id="no-notes" rows="2"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+        <div class="form-group" style="margin:0"><label class="form-label">מלמד</label><input type="text" class="form-control" id="no-teacher"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">שיעור</label><input type="text" class="form-control" id="no-lesson"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">תאריך</label><input type="date" class="form-control" id="no-date" dir="ltr"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">זמן תצפית</label><input type="time" class="form-control" id="no-time" dir="ltr"></div>
+      </div>
+      <table class="obs-table">
+        <thead><tr><th style="width:25%">נסיבות</th><th style="width:25%">התנהגות</th><th style="width:25%">תוצאה</th><th style="width:25%">הערות</th></tr></thead>
+        <tbody>
+          <tr><td><textarea id="no-c1"></textarea></td><td><textarea id="no-b1"></textarea></td><td><textarea id="no-o1"></textarea></td><td><textarea id="no-n1"></textarea></td></tr>
+          <tr><td><textarea id="no-c2"></textarea></td><td><textarea id="no-b2"></textarea></td><td><textarea id="no-o2"></textarea></td><td><textarea id="no-n2"></textarea></td></tr>
+          <tr><td><textarea id="no-c3"></textarea></td><td><textarea id="no-b3"></textarea></td><td><textarea id="no-o3"></textarea></td><td><textarea id="no-n3"></textarea></td></tr>
+          <tr><td><textarea id="no-c4"></textarea></td><td><textarea id="no-b4"></textarea></td><td><textarea id="no-o4"></textarea></td><td><textarea id="no-n4"></textarea></td></tr>
+          <tr><td><textarea id="no-c5"></textarea></td><td><textarea id="no-b5"></textarea></td><td><textarea id="no-o5"></textarea></td><td><textarea id="no-n5"></textarea></td></tr>
+        </tbody>
+      </table>
+      <div class="form-group" style="margin-top:14px"><label class="form-label">סיכום תצפית</label><textarea class="form-control" id="no-summary" rows="3"></textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-obs')">ביטול</button><button class="btn btn-primary" onclick="createObservation()">הוסף תצפית</button></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-obs')">ביטול</button><button class="btn btn-primary" onclick="createObservation()">שמור תצפית</button></div>
   </div>
 </div>
 
@@ -620,7 +753,7 @@ tr:last-child td{border-bottom:none}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header"><h2><i data-lucide="plus-circle"></i> כיתה חדשה</h2><button class="btn btn-icon" onclick="closeModal('modal-new-class')"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
-      <div class="form-group"><label class="form-label">שם כיתה *</label><input type="text" class="form-control" id="nc-name"></div>
+      <div class="form-group"><label class="form-label">כיתה *</label><select class="form-control" id="nc-name"><option value="">-- בחר --</option><option>ב</option><option>ג</option><option>ד</option><option>ה</option><option>ו</option><option>ז</option><option>ח</option><option>ט</option></select></div>
       <div class="form-group"><label class="form-label">מוסד</label><select class="form-control" id="nc-institution"><option value="">-- בחר --</option></select></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-class')">ביטול</button><button class="btn btn-primary" onclick="createClass()">צור כיתה</button></div>
@@ -681,6 +814,66 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<div class="modal-backdrop" id="modal-smart" style="display:none" onclick="closeModal('modal-smart')">
+  <div class="modal" style="max-width:680px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i data-lucide="sparkles"></i> עוזר SMART – מטרות התנהגותיות</h2>
+      <button class="btn btn-icon" onclick="closeModal('modal-smart')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--g500);margin-bottom:16px">מלא את הפרטים ועוזר ה-AI יעזור לך לנסח מטרה התנהגותית לפי מתכונת SMART.</p>
+      <div class="form-group">
+        <label class="form-label">תיאור ההתנהגות הבעייתית</label>
+        <textarea class="form-control" id="smart-behavior" rows="2" placeholder="תאר את ההתנהגות שרוצים לשנות..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ההקשר / מתי זה קורה?</label>
+        <textarea class="form-control" id="smart-context" rows="2" placeholder="באיזה מצבים, מתי, עם מי..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ההתנהגות החלופית הרצויה</label>
+        <textarea class="form-control" id="smart-desired" rows="2" placeholder="מה רוצים שהילד יעשה במקום..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">חוזק / משאב של הילד (לא חובה)</label>
+        <textarea class="form-control" id="smart-strength" rows="1" placeholder="נקודות חוזק שיכולות לעזור..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="callGeminiSMART()" id="smart-btn"><i data-lucide="sparkles"></i> צור מטרה SMART</button>
+      <div id="smart-loading" style="display:none;margin-top:12px;font-size:13px;color:var(--g500)">מחשב... <i data-lucide="loader"></i></div>
+      <div id="smart-result" style="display:none;margin-top:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--g700);margin-bottom:6px">המטרה שנוצרה:</div>
+        <div id="smart-result-text" style="background:var(--g50);border:1px solid var(--g200);border-radius:8px;padding:14px;font-size:14px;line-height:1.8;white-space:pre-wrap;direction:rtl"></div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn btn-primary btn-sm" onclick="copySmartResult()"><i data-lucide="copy"></i> העתק</button>
+          <button class="btn btn-secondary btn-sm" onclick="applySmartToGoal()"><i data-lucide="plus"></i> הוסף כמטרה חדשה</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-gmail-view" style="display:none" onclick="closeModal('modal-gmail-view')">
+  <div class="modal" style="max-width:700px;display:flex;flex-direction:column;max-height:90vh" onclick="event.stopPropagation()">
+    <div class="modal-header" style="flex-shrink:0">
+      <h2 id="gmail-view-subject" style="font-size:16px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></h2>
+      <button class="btn btn-icon" onclick="closeModal('modal-gmail-view')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body" style="flex:1;overflow-y:auto;padding:16px">
+      <div id="gmail-thread-messages" style="display:flex;flex-direction:column;gap:14px"></div>
+    </div>
+    <div style="flex-shrink:0;border-top:1px solid var(--g200);padding:12px 16px;background:var(--bg)">
+      <div contenteditable="true" id="gmail-reply-body" dir="rtl"
+        style="min-height:72px;border:1px solid var(--g200);border-radius:8px;padding:10px 12px;font-size:14px;outline:none;background:var(--surface);color:var(--text)"
+        data-placeholder="כתוב תשובה..."></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-primary btn-sm" onclick="sendThreadReply()">
+          <i data-lucide="send"></i> שלח תשובה
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toast-container"></div>
 
 <script>
@@ -696,7 +889,15 @@ let ejsServiceId=localStorage.getItem('ejs_service')||'service_dh62bba';
 let ejsTemplateId=localStorage.getItem('ejs_template')||'template_72ogmc7';
 let cloudName=localStorage.getItem('cloud_name')||'dyrcadfnn';
 let cloudPreset=localStorage.getItem('cloud_preset')||'ml_default';
+let geminiKey=localStorage.getItem('gemini_key')||'';
+let aiModel=localStorage.getItem('ai_model')||'gemini-2.0-flash';
+let googleClientId=localStorage.getItem('google_client_id')||'';
+let gmailToken=null;
+let gmailTokenExpiry=0;
+let gmailTokenClient=null;
+let gmailUser=localStorage.getItem('gmail_user')||'';
 try{ emailjs.init(ejsPublicKey); }catch(e){ console.warn('EmailJS not loaded:', e); }
+setTimeout(initGoogleAuth, 800);
 let calDate = new Date();
 const holidayCache = {};
 let taskFilter = 'all';
@@ -766,9 +967,9 @@ async function sbDelete(table, id){
 }
 
 async function loadAll(){
-  const [p,a,t,pay,inst,cls,n,obs,g,q,files,emails] = await Promise.all([
+  const [p,a,t,pay,inst,cls,n,obs,g,q,files,emails,profiles] = await Promise.all([
     sb('patients','?order=name'),
-    sb('appointments','?order=start_time.desc'),
+    sb('appointments','?order=start_time.asc'),
     sb('tasks','?order=due_date'),
     sb('payments','?order=created_at.desc'),
     sb('institutions','?order=name'),
@@ -778,7 +979,8 @@ async function loadAll(){
     sb('treatment_goals','?order=created_at'),
     sb('questionnaires','?order=created_at'),
     sb('patient_files','?order=created_at.desc'),
-    sb('patient_emails','?order=sent_at.desc')
+    sb('patient_emails','?order=sent_at.desc'),
+    sbAdmin('user_profiles','?select=*')
   ]);
   allPatients=p.data||[]; allAppointments=a.data||[];
   allTasks=t.data||[]; allPayments=pay.data||[];
@@ -786,8 +988,23 @@ async function loadAll(){
   allNotes=n.data||[]; allObservations=obs.data||[];
   allGoals=g.data||[]; allQuestionnaires=q.data||[];
   allFiles=files.data||[]; allEmails=emails.data||[];
-  // Filter for non-admin users
-  if(!isAdmin && currentUser){
+  if(profiles.data?.length) allUserProfiles=profiles.data;
+  // Filter for non-admin users or view-as mode
+  if(viewAsPermissions){
+    const visiblePats=new Set([
+      ...viewAsPermissions.patients,
+      ...allPatients.filter(p=>p.institution_id&&viewAsPermissions.institutions.includes(p.institution_id)).map(p=>p.id)
+    ]);
+    allPatients=allPatients.filter(p=>visiblePats.has(p.id));
+    allTasks=allTasks.filter(t=>t.assigned_to===viewAsUserId||visiblePats.has(t.patient_id));
+    allAppointments=allAppointments.filter(a=>visiblePats.has(a.patient_id));
+  } else if(!isAdmin && currentUser){
+    const [apRef,aiRef]=await Promise.all([
+      sbAdmin('user_patients',`?user_id=eq.${currentUser.id}&select=patient_id`),
+      sbAdmin('user_institutions',`?user_id=eq.${currentUser.id}&select=institution_id`)
+    ]);
+    userAssignedPatients=(apRef.data||[]).map(x=>x.patient_id);
+    userAssignedInstitutions=(aiRef.data||[]).map(x=>x.institution_id);
     const visiblePats=new Set([
       ...userAssignedPatients,
       ...allPatients.filter(p=>p.institution_id&&userAssignedInstitutions.includes(p.institution_id)).map(p=>p.id)
@@ -804,6 +1021,8 @@ let currentUser = null;
 let isAdmin = false;
 let userAssignedPatients = [];
 let userAssignedInstitutions = [];
+let viewAsUserId = null;
+let viewAsPermissions = null;
 let allUserProfiles = [];
 let allUserPatients = [];
 let allUserInstitutions = [];
@@ -880,6 +1099,7 @@ async function afterLogin(user){
   document.getElementById('welcome-screen').style.display='none';
   document.getElementById('main-app').style.display='flex';
   document.getElementById('sidebar-user').textContent=currentUser.display_name||currentUser.email;
+  if(isAdmin) populateViewAsSelect();
   setupUIForRole();
   await loadAll();
   requestNotificationPermission();
@@ -923,8 +1143,9 @@ async function checkStoredSession(){
 // === USER DASHBOARD ===
 async function renderUserDashboard(){
   await loadAll();
-  const myPats=allPatients.filter(p=>userAssignedPatients.includes(p.id));
-  const myTasks=allTasks.filter(t=>t.assigned_to===currentUser.id);
+  const myPats=viewAsPermissions?allPatients:allPatients.filter(p=>userAssignedPatients.includes(p.id));
+  const myUid=viewAsUserId||currentUser.id;
+  const myTasks=allTasks.filter(t=>t.assigned_to===myUid);
   const today=new Date(); today.setHours(0,0,0,0);
   const overdue=myTasks.filter(t=>t.due_date&&new Date(t.due_date)<today&&!t.done).length;
   document.getElementById('user-stats-grid').innerHTML=`
@@ -934,7 +1155,7 @@ async function renderUserDashboard(){
   const pList=document.getElementById('user-patients-list');
   pList.innerHTML=myPats.length===0?'<div class="empty"><i data-lucide="users"></i><p>אין מטופלים מוקצים</p></div>':myPats.map(p=>`<div onclick="openPatient('${p.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><div class="avatar" style="background:var(--blue2)">${initials(p.name)}</div><div style="font-size:14px;font-weight:600">${p.name}</div></div>`).join('');
   const tList=document.getElementById('user-tasks-list');
-  tList.innerHTML=myTasks.length===0?'<div class="empty"><i data-lucide="check-circle"></i><p>אין משימות</p></div>':myTasks.map(t=>`<div style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span><button onclick="openEditTask('${t.id}')" class="btn btn-secondary btn-sm"><i data-lucide="pencil"></i></button></div>`).join('');
+  tList.innerHTML=myTasks.length===0?'<div class="empty"><i data-lucide="check-circle"></i><p>אין משימות</p></div>':myTasks.map(t=>`<div onclick="openEditTask('${t.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0" onclick="event.stopPropagation()"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span><i data-lucide="chevron-left" style="color:var(--g400);flex-shrink:0;width:16px;height:16px;"></i></div>`).join('');
 }
 
 // === USER MANAGEMENT (ADMIN) ===
@@ -981,11 +1202,10 @@ const CATEGORY_LABELS={clinic:'קליניקה',vizhnitz:'ויזניץ',education
 function renderAssignInstitutions(uid){
   const assigned=allUserInstitutions.filter(x=>x.user_id===uid).map(x=>x.institution_id);
   const el=document.getElementById('eu-institutions');
-  const cats=['clinic','vizhnitz','education','ponivez','general'];
-  const catRows=cats.map(cat=>{
+  const mainCats=['clinic','vizhnitz','education','ponivez'];
+  const catRows=mainCats.map(cat=>{
     const typeInsts=allInstitutions.filter(i=>(i.type||'general')===cat);
-    if(typeInsts.length===0) return '';
-    const allOn=typeInsts.every(i=>assigned.includes(i.id));
+    const allOn=typeInsts.length>0&&typeInsts.every(i=>assigned.includes(i.id));
     const someOn=typeInsts.some(i=>assigned.includes(i.id));
     const catBtn=`<button onclick="toggleCategoryAccess('${uid}','${cat}',${!allOn})" style="padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;border:1.5px solid ${allOn?'var(--crimson)':someOn?'var(--blue2)':'var(--g300)'};background:${allOn?'#fee2e2':someOn?'var(--blue-light)':'var(--g50)'};cursor:pointer;color:${allOn?'var(--crimson)':someOn?'var(--blue2)':'var(--g600)'}">${allOn?'✓ ':''}${CATEGORY_LABELS[cat]}</button>`;
     const instSpans=typeInsts.map(inst=>{
@@ -993,12 +1213,24 @@ function renderAssignInstitutions(uid){
       return`<span onclick="toggleUserInstitution('${uid}','${inst.id}',${!on})" style="padding:3px 10px;border-radius:999px;font-size:12px;cursor:pointer;border:1.5px solid ${on?'var(--blue2)':'var(--g200)'};background:${on?'var(--blue-light)':'white'};color:${on?'var(--blue2)':'var(--g600)'}">${on?'✓ ':''}${inst.name}</span>`;
     }).join('');
     return`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${catBtn}${instSpans}</div>`;
-  }).filter(Boolean).join('');
-  el.innerHTML=catRows||'<span style="color:var(--g400);font-size:13px">אין מוסדות במערכת</span>';
+  });
+  // also show 'general' if any exist
+  const genInsts=allInstitutions.filter(i=>!i.type||i.type==='general');
+  if(genInsts.length>0){
+    const genSpans=genInsts.map(inst=>{const on=assigned.includes(inst.id);return`<span onclick="toggleUserInstitution('${uid}','${inst.id}',${!on})" style="padding:3px 10px;border-radius:999px;font-size:12px;cursor:pointer;border:1.5px solid ${on?'var(--blue2)':'var(--g200)'};background:${on?'var(--blue-light)':'white'};color:${on?'var(--blue2)':'var(--g600)'}">${on?'✓ ':''}${inst.name}</span>`;}).join('');
+    catRows.push(`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;background:var(--g50);color:var(--g600)">כללי</span>${genSpans}</div>`);
+  }
+  el.innerHTML=catRows.join('');
 }
 
 async function toggleCategoryAccess(uid,cat,add){
-  const typeInsts=allInstitutions.filter(i=>(i.type||'general')===cat);
+  let typeInsts=allInstitutions.filter(i=>(i.type||'general')===cat);
+  if(typeInsts.length===0&&add){
+    const names={clinic:'קליניקה',vizhnitz:'ויזניץ',education:'משרד החינוך',ponivez:'פוניבז'};
+    const r=await sbAdminInsert('institutions',{name:names[cat]||cat,type:cat});
+    if(!r.error&&r.data?.[0]){ allInstitutions.push(r.data[0]); typeInsts=[r.data[0]]; }
+    else{ toast('שגיאה ביצירת מוסד','error'); return; }
+  }
   for(const inst of typeInsts) await toggleUserInstitution(uid,inst.id,add);
   renderAssignInstitutions(uid);
 }
@@ -1020,6 +1252,8 @@ function renderAssignPatients(uid, q){
 
 async function toggleUserInstitution(uid,instId,add){
   if(add){
+    const alreadyExists=allUserInstitutions.some(x=>x.user_id===uid&&x.institution_id===instId);
+    if(alreadyExists){ renderAssignInstitutions(uid); return; }
     const r=await sbAdminInsert('user_institutions',{user_id:uid,institution_id:instId});
     if(!r.error) allUserInstitutions.push({user_id:uid,institution_id:instId});
     else toast('שגיאה: '+r.error,'error');
@@ -1274,7 +1508,7 @@ async function renderDashboard(){
   const aptEl=document.getElementById('today-apts');
   aptEl.innerHTML=todayApts.length===0?'<div class="empty">📭<p>אין פגישות להיום</p></div>':todayApts.map(a=>{const p=allPatients.find(x=>x.id===a.patient_id);const t=a.start_time?fmtTime(a.start_time):'';return`<div onclick="openEditApt('${a.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><div><div style="font-size:14px;font-weight:600">${a.name||'פגישה'}</div><div style="font-size:12px;color:var(--g500)">${p?p.name:''} ${t?'· '+t:''}</div></div><div style="display:flex;align-items:center;gap:8px"><span class="badge ${a.arrived?'badge-green':'badge-amber'}">${a.arrived?'הגיע':'ממתין'}</span><span style="font-size:12px;color:var(--g400)"><i data-lucide="pencil"></i></span></div></div>`;}).join('');
   const taskEl=document.getElementById('today-tasks');
-  taskEl.innerHTML=todayTasks.length===0?'<div class="empty"><i data-lucide="check-circle"></i><p>אין משימות להיום</p></div>':todayTasks.map(t=>`<div style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px;transition:background .1s" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0" onclick="event.stopPropagation()"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span><button onclick="openEditTask('${t.id}')" class="btn btn-secondary btn-sm" style="flex-shrink:0"><i data-lucide="pencil"></i></button></div>`).join('');
+  taskEl.innerHTML=todayTasks.length===0?'<div class="empty"><i data-lucide="check-circle"></i><p>אין משימות להיום</p></div>':todayTasks.map(t=>`<div onclick="openEditTask('${t.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px;transition:background .1s;cursor:pointer" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0" onclick="event.stopPropagation()"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span><i data-lucide="chevron-left" style="color:var(--g400);flex-shrink:0;width:16px;height:16px;"></i></div>`).join('');
   renderQueueWidget();
   renderCalendar('calendar-grid','cal-month-title');
   fetchAndCacheHolidays(calDate.getFullYear(),calDate.getMonth());
@@ -1414,7 +1648,7 @@ async function renderPatients(){
 }
 
 // State: null=main, 'clinic'/'vizhnitz'/'education'/'ponivez'=category, then sub-selection
-const CLASS_ORDER=['גנים','א','ב','ג','ד','ה','ו','ז','ח','ט','ישיבה קטנה','ישיבה גדולה','אברך'];
+const CLASS_ORDER=['ב','ג','ד','ה','ו','ז','ח','ט'];
 async function findOrCreateInstitution(name, type='general'){
   name=(name||'').trim();
   if(!name) return null;
@@ -1437,17 +1671,33 @@ function reapplyPatientFilter(){
     patientListData=allPatients.filter(p=>ponIds.has(p.institution_id));
   } else if(currentContextType==='vizhnitz'&&currentContextClassId){
     patientListData=allPatients.filter(p=>p.class_id===currentContextClassId);
+  } else if(currentContextType==='all'){
+    patientListData=filterAllPatients(allPatientsFilter);
   } else if(currentContextInstitutionId){
     patientListData=allPatients.filter(p=>p.institution_id===currentContextInstitutionId);
   }
+}
+function filterAllPatients(f){
+  if(f==='all') return [...allPatients];
+  const ids=new Set(allInstitutions.filter(i=>i.type===f).map(i=>i.id));
+  return allPatients.filter(p=>ids.has(p.institution_id));
+}
+function setAllPatientsFilter(f, btn){
+  allPatientsFilter=f;
+  patientListData=filterAllPatients(f);
+  document.querySelectorAll('#all-patients-pills .pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  renderPatientsTable(patientListData);
+  lucide.createIcons();
 }
 let patientView = 'main'; // 'main' | 'vizhnitz-classes' | 'education-institutions' | 'patients-list'
 let patientListTitle = '';
 let patientListBackFn = 'backToMain';
 let patientListData = [];
-let currentContextType = null; // 'clinic' | 'vizhnitz' | 'education' | 'ponivez' | null
+let currentContextType = null; // 'clinic' | 'vizhnitz' | 'education' | 'ponivez' | 'all' | null
 let currentContextInstitutionId = null;
 let currentContextClassId = null;
+let allPatientsFilter = 'all'; // filter within 'all' view
 
 function renderInstitutionFilter(){
   const srch=document.getElementById('patient-search');
@@ -1459,13 +1709,40 @@ function renderInstitutionFilter(){
 
   if(patientView==='main'){
     el.style.display='grid';
-    el.innerHTML=`
-      <button class="cat-btn" onclick="selectCategory('clinic')"><span class="ci"><i data-lucide="building-2"></i></span><span>קליניקה</span></button>
-      <button class="cat-btn" onclick="selectCategory('vizhnitz')"><span class="ci"><i data-lucide="graduation-cap"></i></span><span>ויזניץ</span></button>
-      <button class="cat-btn" onclick="selectCategory('education')"><span class="ci"><i data-lucide="clipboard-list"></i></span><span>משרד החינוך</span></button>
-      <button class="cat-btn" onclick="selectCategory('ponivez')"><span class="ci"><i data-lucide="building"></i></span><span>פוניבז</span></button>
-    `;
+    const allCats=[
+      {cat:'clinic',icon:'building-2',label:'קליניקה'},
+      {cat:'vizhnitz',icon:'graduation-cap',label:'ויזניץ'},
+      {cat:'education',icon:'clipboard-list',label:'משרד החינוך'},
+      {cat:'ponivez',icon:'building',label:'פוניבז'}
+    ];
+    let visibleCats=allCats;
+    if(!isAdmin){
+      const accessInsts=viewAsPermissions?viewAsPermissions.institutions:userAssignedInstitutions;
+      const accessTypes=new Set(allInstitutions.filter(i=>accessInsts.includes(i.id)).map(i=>i.type||'general'));
+      visibleCats=allCats.filter(c=>accessTypes.has(c.cat));
+    }
+    const customInsts=allInstitutions.filter(i=>!['clinic','vizhnitz','education','ponivez'].includes(i.type||''));
+    el.innerHTML=visibleCats.map(c=>`<button class="cat-btn" onclick="selectCategory('${c.cat}')"><span class="ci"><i data-lucide="${c.icon}"></i></span><span>${c.label}</span></button>`).join('')
+      +customInsts.map(ci=>`<button class="cat-btn" onclick="selectCustomInstitution('${ci.id}','${(ci.name||'').replace(/'/g,"\\'")}')"><span class="ci"><i data-lucide="building-2"></i></span><span>${ci.name||''}</span></button>`).join('')
+      +(isAdmin?`<button class="cat-btn" onclick="selectCategory('all')"><span class="ci"><i data-lucide="users"></i></span><span>כולם</span></button>`:'')
+      +(isAdmin?`<button class="cat-btn" onclick="openModal('modal-new-institution')" style="border-style:dashed"><span class="ci"><i data-lucide="plus-circle"></i></span><span>סוג חדש</span></button>`:'');
     ps.style.display='none';
+    return;
+  }
+
+  if(patientView==='education-institutions'){
+    el.style.display='none';
+    ps.style.display='block';
+    cf.style.display='block';
+    let eduInsts=allInstitutions.filter(i=>i.type==='education');
+    if(!isAdmin){
+      const accessInsts=viewAsPermissions?viewAsPermissions.institutions:userAssignedInstitutions;
+      eduInsts=eduInsts.filter(i=>accessInsts.includes(i.id));
+    }
+    document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> משרד החינוך – בחר מוסד`;
+    document.getElementById('patients-tbody').innerHTML=`<tr><td colspan="6"><div style="padding:20px"><div style="display:flex;flex-wrap:wrap;gap:10px">
+      ${eduInsts.map(inst=>`<button class="cat-btn" style="min-width:140px" onclick="selectEduInstitution('${inst.id}','${inst.name}')"><span class="ci"><i data-lucide="clipboard-list"></i></span><span>${inst.name}</span></button>`).join('')}
+    </div></div></td></tr>`;
     return;
   }
 
@@ -1474,24 +1751,33 @@ function renderInstitutionFilter(){
     ps.style.display='block';
     cf.style.display='block';
     // Show classes for vizhnitz institution
-    const vizInst = allInstitutions.find(i=>i.name&&(i.name.includes('ויזניץ')||i.name.toLowerCase().includes('vizhnitz')));
-    const vizClasses = vizInst ? allClasses.filter(c=>c.institution_id===vizInst.id) : allClasses.filter(c=>{
-      // fallback: show all classes
-      return true;
-    });
-    document.getElementById('patients-list-title').textContent = 'ויזניץ – בחר כיתה';
+    const vizInst = allInstitutions.find(i=>i.type==='vizhnitz')||allInstitutions.find(i=>i.name&&(i.name.includes('ויזניץ')||i.name.toLowerCase().includes('vizhnitz')));
+    const vizClasses = vizInst ? allClasses.filter(c=>c.institution_id===vizInst.id) : [];
+    document.getElementById('patients-list-title').innerHTML = `<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> ויזניץ – בחר כיתה`;
     document.getElementById('patients-tbody').innerHTML = `<tr><td colspan="6"><div style="padding:20px"><div style="display:flex;flex-wrap:wrap;gap:10px">
       ${vizClasses.map(c=>`<button class="cat-btn" style="min-width:120px" onclick="selectVizhnitzClass('${c.id}','${c.name}')"><span class="ci"><i data-lucide="building"></i></span><span>${c.name}</span></button>`).join('')}
-      <button class="cat-btn" style="min-width:120px" onclick="openModal('modal-new-class')"><span class="ci"><i data-lucide="plus-circle"></i></span><span>כיתה חדשה</span></button>
     </div></div></td></tr>`;
-    // Show back button
-    document.getElementById('patients-list-title').innerHTML = `<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> ויזניץ – בחר כיתה`;
     return;
   }
 
 if(patientView==='patients-list'){
     el.style.display='none';
     ps.style.display='block';
+    if(currentContextType==='all'){
+      let pills=[{v:'all',l:'הכל'},{v:'clinic',l:'קליניקה'},{v:'vizhnitz',l:'ויזניץ'},{v:'education',l:'משרד החינוך'},{v:'ponivez',l:'פוניבז'}];
+      if(!isAdmin){
+        const accessInsts=viewAsPermissions?viewAsPermissions.institutions:userAssignedInstitutions;
+        const accessTypes=new Set(allInstitutions.filter(i=>accessInsts.includes(i.id)).map(i=>i.type||'general'));
+        pills=pills.filter(p=>p.v==='all'||accessTypes.has(p.v));
+      }
+      const cf=document.getElementById('class-filter');
+      cf.style.display='block';
+      cf.innerHTML=`<div id="all-patients-pills" style="display:flex;gap:8px;flex-wrap:wrap;padding:0 0 8px">
+        ${pills.map(p=>`<button class="pill${allPatientsFilter===p.v?' active':''}" onclick="setAllPatientsFilter('${p.v}',this)" style="padding:5px 14px;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allPatientsFilter===p.v?'var(--blue2)':'white'};color:${allPatientsFilter===p.v?'white':'var(--g700)'};font-family:'Rubik',sans-serif">${p.l}</button>`).join('')}
+      </div>`;
+    } else {
+      document.getElementById('class-filter').style.display='none';
+    }
     renderPatientsTable(patientListData);
     return;
   }
@@ -1501,22 +1787,16 @@ function selectCategory(cat){
   if(cat==='clinic'){
     patientView='patients-list';
     patientListTitle='קליניקה'; patientListBackFn='backToMain';
-    const clinicInst=allInstitutions.find(i=>i.type==='clinic'||i.name?.includes('קליניקה')||i.name?.toLowerCase().includes('clinic'));
-    patientListData=clinicInst?allPatients.filter(p=>p.institution_id===clinicInst.id):allPatients.filter(p=>{
-      const inst=allInstitutions.find(i=>i.id===p.institution_id);
-      return inst&&inst.type==='clinic';
-    });
-    currentContextType='clinic'; currentContextInstitutionId=clinicInst?clinicInst.id:null; currentContextClassId=null;
+    const clinicIds=new Set(allInstitutions.filter(i=>i.type==='clinic').map(i=>i.id));
+    patientListData=allPatients.filter(p=>clinicIds.has(p.institution_id));
+    currentContextType='clinic'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
   } else if(cat==='vizhnitz'){
     patientView='vizhnitz-classes';
     currentContextType='vizhnitz'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
   } else if(cat==='education'){
-    patientView='patients-list';
-    patientListTitle='משרד החינוך'; patientListBackFn='backToMain';
-    const eduIds=new Set(allInstitutions.filter(i=>i.type==='education').map(i=>i.id));
-    patientListData=allPatients.filter(p=>eduIds.has(p.institution_id));
+    patientView='education-institutions';
     currentContextType='education'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
   } else if(cat==='ponivez'){
@@ -1525,6 +1805,13 @@ function selectCategory(cat){
     const ponIds=new Set(allInstitutions.filter(i=>i.type==='ponivez').map(i=>i.id));
     patientListData=allPatients.filter(p=>ponIds.has(p.institution_id));
     currentContextType='ponivez'; currentContextInstitutionId=null; currentContextClassId=null;
+    renderInstitutionFilter();
+  } else if(cat==='all'){
+    patientView='patients-list';
+    patientListTitle='כל המטופלים'; patientListBackFn='backToMain';
+    patientListData=[...allPatients];
+    currentContextType='all'; currentContextInstitutionId=null; currentContextClassId=null;
+    allPatientsFilter='all';
     renderInstitutionFilter();
   }
 }
@@ -1537,6 +1824,7 @@ function selectVizhnitzClass(classId, className){
   renderInstitutionFilter();
 }
 
+
 function selectEduInstitution(instId, instName){
   patientView='patients-list';
   patientListData=allPatients.filter(p=>p.institution_id===instId);
@@ -1548,6 +1836,13 @@ function selectEduInstitution(instId, instName){
 function backToMain(){ patientView='main'; selectedInstitution=null; selectedClass=null; currentContextType=null; currentContextInstitutionId=null; currentContextClassId=null; renderInstitutionFilter(); }
 function backToVizhnitz(){ patientView='vizhnitz-classes'; currentContextClassId=null; renderInstitutionFilter(); }
 function backToEducation(){ patientView='education-institutions'; currentContextInstitutionId=null; renderInstitutionFilter(); }
+function selectCustomInstitution(instId, instName){
+  patientView='patients-list';
+  patientListData=allPatients.filter(p=>p.institution_id===instId);
+  patientListTitle=instName; patientListBackFn='backToMain';
+  currentContextInstitutionId=instId; currentContextType=null; currentContextClassId=null;
+  renderInstitutionFilter();
+}
 
 function renderClassFilter(){ /* handled in renderInstitutionFilter now */ }
 function selectInstitution(id){ selectedInstitution=id; }
@@ -1556,15 +1851,18 @@ function selectClass(id){ selectedClass=id; }
 function renderPatientsTable(patients){
   document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="${patientListBackFn}()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> ${patientListTitle} <span style="font-size:13px;color:var(--g500)">(${patients.length})</span>`;
   const tb=document.getElementById('patients-tbody');
-  if(patients.length===0){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><i data-lucide="users"></i><p>אין מטופלים</p></div></td></tr>`;return;}
-  tb.innerHTML=patients.map(p=>`<tr onclick="openPatient('${p.id}')">
-    <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div><strong>${p.name||''}</strong></div></td>
-    <td>${p.phone||'-'}</td>
-    <td>₪${(p.debt||0).toLocaleString()}</td>
-    <td style="color:var(--green)">₪${(p.paid||0).toLocaleString()}</td>
-    <td><span class="badge ${(p.remaining||0)>0?'badge-red':'badge-green'}">₪${(p.remaining||0).toLocaleString()}</span></td>
-    <td onclick="event.stopPropagation()"><button class="btn btn-danger btn-sm" onclick="deletePatient('${p.id}')"><i data-lucide="trash-2"></i></button></td>
-  </tr>`).join('');
+  if(patients.length===0){tb.innerHTML=`<tr><td colspan="1"><div class="empty"><i data-lucide="users"></i><p>אין מטופלים</p></div></td></tr>`;return;}
+  tb.innerHTML=`<tr><td style="padding:16px;border:none"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
+    ${patients.map(p=>`<div style="position:relative">
+      <button class="cat-btn" onclick="openPatient('${p.id}')" style="width:100%;padding:16px 10px">
+        <div class="avatar" style="background:${avatarColor(p.name)};width:44px;height:44px;font-size:16px;border-radius:50%">${initials(p.name)}</div>
+        <span style="font-size:13px;font-weight:600;text-align:center;line-height:1.3">${p.name||''}</span>
+        ${p.phone?`<span style="font-size:11px;color:var(--g400)">${p.phone}</span>`:''}
+      </button>
+      ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="deletePatient('${p.id}')" style="position:absolute;top:6px;left:6px;padding:3px 6px;font-size:11px"><i data-lucide="trash-2"></i></button>`:''}
+    </div>`).join('')}
+  </div></td></tr>`;
+  if(window.lucide) lucide.createIcons();
 }
 
 function filterPatients(q){
@@ -1600,32 +1898,37 @@ async function openPatient(id){
   document.getElementById('patient-header').innerHTML=`
     <div class="avatar" style="background:${avatarColor(p.name)};width:52px;height:52px;font-size:18px">${initials(p.name)}</div>
     <div style="flex:1"><h2 style="font-size:20px;font-weight:700">${p.name}</h2><p style="font-size:13px;color:var(--g500)">${p.phone||''} ${p.address?'· '+p.address:''}</p></div>
-    <div style="display:flex;gap:20px">
+    ${isAdmin?`<div style="display:flex;gap:20px">
       <div style="text-align:center"><div style="font-size:11px;color:var(--g500)">חוב</div><div style="font-size:16px;font-weight:700">₪${(p.debt||0).toLocaleString()}</div></div>
       <div style="text-align:center"><div style="font-size:11px;color:var(--g500)">שולם</div><div style="font-size:16px;font-weight:700;color:var(--green)">₪${(p.paid||0).toLocaleString()}</div></div>
       <div style="text-align:center"><div style="font-size:11px;color:var(--g500)">יתרה</div><div style="font-size:16px;font-weight:700;color:var(--red)">₪${(p.remaining||0).toLocaleString()}</div></div>
-    </div>`;
+    </div>`:''}  `;
   showMainTab('clinical');
   renderPersonalTab(p);
   renderPatientAppointments(id);
   renderPatientPayments(id);
   renderPatientDocuments(id);
   renderPatientTasks(id);
-  renderPatientNotes(id);
+  renderPatientNotes(id); // async, runs in background
   renderPatientEmails(id);
   renderBackground(p);
   renderObservations(id);
   renderQuestionnaires(id);
   renderGoals(id);
+  renderTankForm(id);
+  renderIntDocs(id);
 }
 
 function showMainTab(tab){
   currentMainTab=tab;
-  ['clinical','data','intervention'].forEach(t=>{
-    document.getElementById('main-tab-'+t).style.display=t===tab?'block':'none';
-    const btn=document.querySelector(`.main-tab-btn.${t==='clinical'?'blue':t==='data'?'green':'purple'}`);
-    if(btn){btn.classList.toggle('active',t===tab);}
+  const colorMap={clinical:'blue',data:'green',intervention:'purple',reports:'orange'};
+  ['clinical','data','intervention','reports'].forEach(t=>{
+    const el=document.getElementById('main-tab-'+t);
+    if(el)el.style.display=t===tab?'block':'none';
+    const btn=document.querySelector(`.main-tab-btn.${colorMap[t]}`);
+    if(btn)btn.classList.toggle('active',t===tab);
   });
+  if(tab==='reports'&&currentPatientId)renderReportsTab(currentPatientId);
 }
 
 function showTab(id){
@@ -1669,11 +1972,11 @@ function renderPersonalTab(p){
           <div class="detail-row" style="grid-column:1/-1"><div class="detail-label">הורים / איש קשר</div><div class="detail-value"><input type="text" id="pf-parents" value="${p.parents||''}"></div></div>
           <div class="detail-row"><div class="detail-label">שיוך ל:</div><div class="detail-value"><select id="pf-affiliation"><option value="">-- ללא --</option><option value="clinic" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='clinic'?'selected':''}>קליניקה</option><option value="vizhnitz" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='vizhnitz'?'selected':''}>ויזניץ</option><option value="education" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='education'?'selected':''}>משרד החינוך</option><option value="ponivez" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='ponivez'?'selected':''}>פוניבז</option></select></div></div>
           <div class="detail-row"><div class="detail-label">מוסד</div><div class="detail-value"><input type="text" id="pf-inst" value="${allInstitutions.find(i=>i.id===p.institution_id)?.name||''}"></div></div>
-          <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${[...allClasses].sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);}).map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
+          <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${[...allClasses].filter(c=>p.institution_id?c.institution_id===p.institution_id:true).sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);}).map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
         </div>
       </div>
     </div>
-    <div class="card">
+    ${isAdmin?`<div class="card">
       <div class="card-header"><h3>💰 סיכום כספי</h3><span style="font-size:12px;color:var(--g400)">מחושב אוטומטית מפגישות ותשלומים</span></div>
       <div class="card-body">
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
@@ -1684,7 +1987,7 @@ function renderPersonalTab(p){
         <div style="font-size:12px;color:var(--g500);margin-bottom:4px">התקדמות תשלום: ${pct}%</div>
         <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
       </div>
-    </div>`;
+    </div>`:''}  `;
 }
 
 async function savePersonal(id){
@@ -1704,7 +2007,7 @@ let patientAptView='list';
 let patientCalDate=new Date();
 
 function renderPatientAppointments(pid){
-  const apts=allAppointments.filter(a=>a.patient_id===pid);
+  const apts=[...allAppointments.filter(a=>a.patient_id===pid)].sort((a,b)=>new Date(a.start_time||0)-new Date(b.start_time||0));
   const toggleBtns=`<div style="display:flex;gap:4px"><button class="btn btn-sm ${patientAptView==='list'?'btn-primary':'btn-secondary'}" onclick="patientAptView='list';renderPatientAppointments('${pid}')"><i data-lucide="clipboard-list"></i> רשימה</button><button class="btn btn-sm ${patientAptView==='calendar'?'btn-primary':'btn-secondary'}" onclick="patientAptView='calendar';renderPatientAppointments('${pid}')"><i data-lucide="calendar"></i> יומן</button></div>`;
   if(patientAptView==='calendar'){
     document.getElementById('tab-appointments').innerHTML=`
@@ -1837,16 +2140,17 @@ function openFileViewer(url, name){
 function renderPatientEmails(pid){
   const p=allPatients.find(x=>x.id===pid);
   const emails=allEmails.filter(e=>e.patient_id===pid).sort((a,b)=>new Date(b.sent_at)-new Date(a.sent_at));
-  const hasEjs=!!ejsPublicKey&&!!ejsServiceId&&!!ejsTemplateId;
+  const hasEmail=isGmailReady()||(!!ejsPublicKey&&!!ejsServiceId&&!!ejsTemplateId);
   document.getElementById('tab-emails').innerHTML=`
-    <div style="display:flex;gap:12px;margin-bottom:16px">
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
       <button class="tab-btn active" id="etab-compose" onclick="switchEmailTab('compose','${pid}')"><i data-lucide="pencil"></i> כתיבת מייל</button>
-      <button class="tab-btn" id="etab-history" onclick="switchEmailTab('history','${pid}')"><i data-lucide="scroll-text"></i> היסטוריה (${emails.length})</button>
+      <button class="tab-btn" id="etab-history" onclick="switchEmailTab('history','${pid}')"><i data-lucide="scroll-text"></i> נשלחו (${emails.length})</button>
+      <button class="tab-btn" id="etab-inbox" onclick="switchEmailTab('inbox','${pid}')"><i data-lucide="inbox"></i> נכנסים</button>
     </div>
     <div id="email-compose-panel">
-      ${!hasEjs?`<div class="drive-connect-banner">
-        <p style="font-size:14px;font-weight:600;margin-bottom:8px"><i data-lucide="mail"></i> נדרשת הגדרת EmailJS</p>
-        <p style="font-size:13px;color:var(--g600);margin-bottom:12px">גש להגדרות והכנס את פרטי EmailJS כדי לשלוח מיילים</p>
+      ${!hasEmail?`<div class="drive-connect-banner">
+        <p style="font-size:14px;font-weight:600;margin-bottom:8px"><i data-lucide="mail"></i> נדרשת הגדרת מייל</p>
+        <p style="font-size:13px;color:var(--g600);margin-bottom:12px">גש להגדרות וחבר Gmail (מומלץ) או הגדר EmailJS</p>
         <button class="btn btn-primary" onclick="showView('settings')"><i data-lucide="settings"></i> הגדרות</button>
       </div>`:`
       <div class="card">
@@ -1887,14 +2191,23 @@ function renderPatientEmails(pid){
         </div>
         <div style="padding:12px 16px;font-size:13px;color:var(--g600)">${e.body_html||''}</div>
       </div>`).join('')}
+    </div>
+    <div id="email-inbox-panel" style="display:none">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button class="btn btn-secondary btn-sm" onclick="loadPatientInbox('${pid}')"><i data-lucide="refresh-cw"></i> רענן</button>
+      </div>
+      <div id="email-inbox-list"><div class="empty"><i data-lucide="inbox"></i><p>לחץ רענן לטעינת מיילים נכנסים${p&&p.email?' מ-'+p.email:''}</p></div></div>
     </div>`;
 }
 
 function switchEmailTab(tab, pid){
   document.getElementById('email-compose-panel').style.display = tab==='compose'?'':'none';
   document.getElementById('email-history-panel').style.display = tab==='history'?'':'none';
+  document.getElementById('email-inbox-panel').style.display = tab==='inbox'?'':'none';
   document.getElementById('etab-compose').classList.toggle('active', tab==='compose');
   document.getElementById('etab-history').classList.toggle('active', tab==='history');
+  document.getElementById('etab-inbox').classList.toggle('active', tab==='inbox');
+  if(tab==='inbox') loadPatientInbox(pid);
 }
 
 function renderPatientTasks(pid){
@@ -1924,32 +2237,33 @@ function openNewTaskForPatient(pid){
   openModal('modal-new-task');
 }
 
-function renderPatientNotes(pid){
+async function renderPatientNotes(pid){
   const notes=allNotes.filter(n=>n.patient_id===pid);
+  if(!allUserProfiles.length){
+    const r=await sbAdmin('user_profiles','?select=*');
+    if(r.data?.length) allUserProfiles=r.data;
+  }
+  const NOTE_TYPE_HE={clinical:'קליני',observation:'תצפית',general:'כללי'};
   document.getElementById('tab-notes').innerHTML=`
-    <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openNoteForPatient('${pid}')">+ הערה</button></div>
-    ${notes.length===0?'<div class="empty"><i data-lucide="file-text"></i><p>אין הערות</p></div>':`<div class="card" style="padding:0;overflow:hidden">${notes.map(n=>{
-      const profile=allUserProfiles.find(u=>u.user_id===n.user_id);
-      const userName=profile?(profile.display_name||profile.email||''):'';
-      return`<div class="note-row" onclick="toggleNote('note-body-${n.id}')">
+    <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openNoteForPatient('${pid}')">+ עדכון</button></div>
+    ${notes.length===0?'<div class="empty"><i data-lucide="file-text"></i><p>אין עדכונים</p></div>':`<div class="card" style="padding:0;overflow:hidden">${notes.map(n=>{
+      const profile=allUserProfiles.find(u=>u.id===n.user_id||u.user_id===n.user_id);
+      const userName=profile?.display_name||profile?.name||'';
+      const typeBadge=NOTE_TYPE_HE[n.note_type]||'כללי';
+      return`<div class="note-row" onclick="openNoteEdit('${n.id}','${pid}')">
         <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
-          <span style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.title||'הערה'}</span>
-          <span class="badge badge-teal" style="font-size:11px;flex-shrink:0">${n.note_type||'כללי'}</span>
-          ${userName?`<span style="font-size:12px;color:var(--g500);white-space:nowrap;flex-shrink:0"><i data-lucide="pen-tool"></i> ${userName}</span>`:''}
+          <span style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.title||'עדכון'}</span>
+          <span class="badge badge-teal" style="font-size:11px;flex-shrink:0">${typeBadge}</span>
+          ${userName?`<span style="font-size:11px;color:var(--g400);flex-shrink:0">${userName}</span>`:''}
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
           <span style="font-size:12px;color:var(--g400)">${n.created_at?fmtDate(n.created_at):''}</span>
           ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteNote('${n.id}','${pid}')"><i data-lucide="trash-2"></i></button>`:''}
-          <span style="color:var(--g400);font-size:12px"><i data-lucide="chevron-down"></i></span>
+          <span style="color:var(--g400);font-size:12px"><i data-lucide="pencil"></i></span>
         </div>
-      </div>
-      <div id="note-body-${n.id}" class="note-body" style="display:none">${(n.content||'').replace(/</g,'&lt;')}</div>`;
+      </div>`;
     }).join('')}</div>`}`;
-}
-
-function toggleNote(id){
-  const el=document.getElementById(id);
-  if(el) el.style.display=el.style.display==='none'?'':'none';
+  if(window.lucide) lucide.createIcons();
 }
 
 async function deleteNote(id,pid){
@@ -1963,12 +2277,26 @@ function renderBackground(p){
   document.getElementById('dt-background').innerHTML=`
     <div class="card">
       <div class="card-header"><h3>רקע</h3><button class="btn btn-primary btn-sm" onclick="saveBackground('${p.id}')"><i data-lucide="save"></i> שמור</button></div>
-      <div class="card-body"><textarea class="form-control" id="bg-text" rows="12" style="width:100%">${p.background||''}</textarea></div>
+      <div class="card-body">
+        <div class="rich-editor-wrap">
+          <div class="rich-toolbar">
+            <button onclick="richFmt('bg-text','bold')" title="מודגש"><b>B</b></button>
+            <button onclick="richFmt('bg-text','italic')" title="נטוי"><i>I</i></button>
+            <button onclick="richFmt('bg-text','underline')" title="קו תחתון"><u>U</u></button>
+            <button onclick="richFmtBlock('bg-text','h3')" title="כותרת">H</button>
+            <button onclick="richFmt('bg-text','justifyRight')" title="ימין">⇒</button>
+            <button onclick="richFmt('bg-text','justifyCenter')" title="מרכז">≡</button>
+            <button onclick="richFmt('bg-text','justifyLeft')" title="שמאל">⇐</button>
+          </div>
+          <div class="rich-editor" id="bg-text" contenteditable="true" dir="rtl" style="min-height:220px">${p.background||''}</div>
+        </div>
+      </div>
     </div>`;
+  if(window.lucide) lucide.createIcons();
 }
 
 async function saveBackground(id){
-  const bg=document.getElementById('bg-text').value;
+  const bg=document.getElementById('bg-text').innerHTML;
   const r=await sbUpdate('patients',id,{background:bg});
   if(r.error) return toast('שגיאה','error');
   toast('רקע נשמר <i data-lucide="check-circle"></i>','success');
@@ -1978,103 +2306,183 @@ function renderObservations(pid){
   const obs=allObservations.filter(o=>o.patient_id===pid);
   document.getElementById('dt-observations').innerHTML=`
     <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openObsForPatient('${pid}')">+ תצפית חדשה</button></div>
-    ${obs.length===0?'<div class="empty"><i data-lucide="eye"></i><p>אין תצפיות עדיין</p></div>':obs.map((o,i)=>`
-    <div class="obs-card">
-      <div class="obs-header"><span style="font-weight:600">תצפית #${i+1}</span><span style="font-size:12px;color:var(--g400)">${o.obs_date?fmtDate(o.obs_date):''}</span><button class="btn btn-danger btn-sm" onclick="deleteObs('${o.id}','${pid}')"><i data-lucide="trash-2"></i></button></div>
-      <div class="obs-body">
-        <div class="obs-field"><label>A – נסיבות</label><p>${o.circumstance||'-'}</p></div>
-        <div class="obs-field"><label>B – התנהגות</label><p>${o.behavior||'-'}</p></div>
-        <div class="obs-field"><label>C – תוצאה</label><p>${o.outcome||'-'}</p></div>
-        <div class="obs-field"><label>הערות</label><p>${o.notes||'-'}</p></div>
-      </div>
-    </div>`).join('')}`;
+    ${obs.length===0?'<div class="empty"><i data-lucide="eye"></i><p>אין תצפיות עדיין</p></div>':obs.map((o,i)=>{
+      let d=null;
+      try{if(o.circumstance&&o.circumstance.trim().startsWith('{'))d=JSON.parse(o.circumstance);}catch(e){}
+      if(d&&d.v===2){
+        const hasRows=d.rows&&d.rows.some(r=>r.c||r.b||r.o||r.n);
+        return `<div class="obs-card">
+          <div class="obs-header">
+            <span style="font-weight:600">תצפית #${i+1}</span>
+            <span style="font-size:12px;color:var(--g400);flex:1;margin-right:10px">${o.obs_date?fmtDate(o.obs_date):''}${d.lesson?' | '+d.lesson:''}${d.teacher?' | '+d.teacher:''}</span>
+            <button class="btn btn-secondary btn-sm" onclick="editObs('${o.id}','${pid}')"><i data-lucide="pencil"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deleteObs('${o.id}','${pid}')"><i data-lucide="trash-2"></i></button>
+          </div>
+          ${hasRows?`<div style="padding:0 0 4px;overflow-x:auto"><table class="obs-table obs-table-ro">
+            <thead><tr><th style="width:25%">נסיבות</th><th style="width:25%">התנהגות</th><th style="width:25%">תוצאה</th><th style="width:25%">הערות</th></tr></thead>
+            <tbody>${d.rows.map(r=>`<tr><td>${r.c||''}</td><td>${r.b||''}</td><td>${r.o||''}</td><td>${r.n||''}</td></tr>`).join('')}</tbody>
+          </table></div>`:''}
+          ${d.summary?`<div class="obs-summary"><strong>סיכום: </strong>${d.summary}</div>`:''}
+        </div>`;
+      }
+      return `<div class="obs-card">
+        <div class="obs-header"><span style="font-weight:600">תצפית #${i+1}</span><span style="font-size:12px;color:var(--g400)">${o.obs_date?fmtDate(o.obs_date):''}</span><button class="btn btn-danger btn-sm" onclick="deleteObs('${o.id}','${pid}')"><i data-lucide="trash-2"></i></button></div>
+        <div class="obs-body">
+          <div class="obs-field"><label>A – נסיבות</label><p>${o.circumstance||'-'}</p></div>
+          <div class="obs-field"><label>B – התנהגות</label><p>${o.behavior||'-'}</p></div>
+          <div class="obs-field"><label>C – תוצאה</label><p>${o.outcome||'-'}</p></div>
+          <div class="obs-field"><label>הערות</label><p>${o.notes||'-'}</p></div>
+        </div>
+      </div>`;
+    }).join('')}`;
 }
 
-const Q_LABELS={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון פונקציונלי','fobs':'שאלון פובס'};
+const Q_LABELS={'parent':'שאלון הורים','staff':'שאלון צוות','functional':'שאלון הערכה פונקציונלית קונסטרוקטיבית – FBA','fobs':'שאלון פוב"ס – פותר.ת הבעיות'};
 const Q_FIELDS={
   parent:[
-    {type:'section',label:'פרטים ומיקוד ראשוני'},
-    {id:'main_challenge',label:'מהו הקושי המרכזי (במשפט אחד)?',type:'textarea'},
-    {id:'desired_behavior',label:'ההתנהגות החיובית הרצויה (כאילו מצלמים אותה)',type:'textarea'},
-    {id:'importance_rating',label:'דירוג חשיבות השינוי (1–10)',type:'select',options:['1','2','3','4','5','6','7','8','9','10']},
-    {type:'section',label:'רקע ואבחנות'},
-    {id:'current_support',label:'האם הילד מקבל כיום סיוע/תמיכה? אם כן, באיזה היקף?',type:'textarea'},
-    {id:'strengths',label:'מה כבר הולך לו טוב? (לימודי/חברתי/מוטורי)',type:'textarea'},
-    {id:'past_interventions',label:'אילו טיפולים / תוכניות ניסיתם בעבר?',type:'textarea'},
-    {id:'what_worked',label:'מה עבד אפילו קצת?',type:'textarea'},
+    {type:'section',label:"חלק א' – פרטים ומיקוד ראשוני"},
+    {id:'teacher',label:'מלמד',type:'text'},
+    {id:'main_challenge',label:'מהו, במשפט אחד "הקושי המרכזי" או המצב הלא רצוי שהוביל אתכם לפנות לטיפול?<span class="qf-hint">הגדרה ברורה, קצרה ואובייקטיבית של המצב שהוביל לפנייה.</span>',type:'textarea'},
+    {id:'desired_behavior',label:'במקום המצב הלא רצוי, מהי ההתנהגות החיובית הספציפית שתרצו לראות?<span class="qf-hint">תארו אותה כאילו אתם מצלמים אותה.</span>',type:'textarea'},
+    {id:'importance_rating',label:'בדירוג מ‑1 (בקושי) עד 10 (משנה חיים) — עד כמה השינוי הזה ישפר באופן מוחשי את איכות חיי המשפחה?',type:'select',options:['1','2','3','4','5','6','7','8','9','10']},
+    {type:'section',label:"חלק ב' – רקע היסטורי, אבחנות וניתוח הצלחות עבר"},
+    {id:'diagnosis',label:'האם יש לילד אבחנה רשמית?<span class="qf-hint">כגון לקות תקשורת, קשב וריכוז, עיכוב התפתחותי, וכד\'.</span>',type:'textarea'},
+    {id:'strengths',label:'מה כבר הולך לו טוב עכשיו? איפה הוא חזק? מתי הוא הכי רגוע או שמח? מי או מה מחזק אותו?',type:'textarea'},
+    {id:'past_interventions',label:'אילו טיפולים או תוכניות ניסיתם בעבר?<span class="qf-hint">כגון ריפוי בעיסוק, קלינאית תקשורת, ייעוץ הורים, וכד\'.</span>',type:'textarea'},
+    {id:'what_worked',label:'מכל מה שניסיתם, האם יש דברים שעבדו אפילו קצת?',type:'textarea'},
     {id:'why_stopped',label:'מה גרם להם להפסיק לעבוד?',type:'textarea'},
-    {id:'problem_onset',label:'מתי הבעיות החלו? האם השתנו עם הזמן?',type:'textarea'},
-    {id:'red_flags',label:'דגלים אדומים / טריגרים ידועים',type:'textarea'},
-    {type:'section',label:'ABC – ניתוח ההתנהגות'},
-    {id:'antecedent',label:'A – מה קדם להתנהגות?',type:'textarea'},
-    {id:'behavior',label:'B – תיאור ההתנהגות',type:'textarea'},
-    {id:'consequence',label:'C – מה קורה אחרי?',type:'textarea'},
-    {id:'frequency',label:'תדירות (פעמים ביום/שבוע)',type:'text'},
-    {id:'intensity',label:'עוצמה (1-5)',type:'select',options:['1','2','3','4','5']},
-    {type:'section',label:'חיזוקים וחוזקות'},
-    {id:'reinforcers',label:'מה הוא הכי אוהב לעשות / לקבל?',type:'textarea'},
-    {id:'talents',label:'הישגים / כישרונות שאינם קשורים לקושי',type:'textarea'},
-    {id:'what_helps',label:'מה עוזר / מה עובד',type:'textarea'},
-    {id:'green_flags',label:'דגלים ירוקים / חוזקות',type:'textarea'},
-    {type:'section',label:'הערות'},
-    {id:'notes',label:'הערות נוספות',type:'textarea'}
+    {id:'problem_onset',label:'מתי הבעיות האלו החלו? האם הן השתנו עם השנים?<span class="qf-hint">תארו את התקופה שבה היה הכי קל לכם מבחינת ההתמודדות.</span>',type:'textarea'},
+    {id:'dev_delays',label:'האם היו דגלים אדומים או עיכובים משמעותיים בהתפתחות מיומנויות בסיסיות?<span class="qf-hint">כגון שפה, מוטוריקה גסה/עדינה בשלבים מוקדמים.</span>',type:'textarea'},
+    {type:'section',label:"חלק ג' – ניתוח ההקשר והרפרטואר החיובי (חיזוקים)"},
+    {id:'reinforcers',label:'מהם הדברים שהוא הכי אוהב לעשות / לקבל?<span class="qf-hint">אלו שגורמים לו לרצות להתאמץ או להשקיע כדי להשיג אותם.</span>',type:'textarea'},
+    {id:'talents',label:'מהם ההישגים או הכישרונות של הילד בתחומים שאינם קשורים לקושי?<span class="qf-hint">דוגמא: טוב בציור/בצבע, עוזר לאחים קטנים, משחק בשקט.</span>',type:'textarea'},
+    {id:'success_situation',label:'תארו מצב שבו הילד כן הצליח לקיים את ההתנהגות הרצויה (או חלק ממנה). מה קרה רגע לפני ההצלחה הזו, ומה הייתה התגובה שלכם?',type:'textarea'},
+    {id:'easy_requests',label:'האם יש דברים שאתם מבקשים ממנו והוא מבצע מיד וללא ויכוח?<span class="qf-hint">אם כן — מה מאפיין את הבקשות או ההקשר הזה?</span>',type:'textarea'},
+    {id:'green_flags',label:'האם אתם מזהים דגלים ירוקים? חוזקות מוגדרות וכלים מעשיים שניתן לקחת כדי לבנות עם הילד תוכנית?',type:'textarea'},
+    {type:'section',label:"חלק ד' – ניתוח השרשרת והפונקציה של הקושי"},
+    {id:'antecedent',label:'תארו דוגמה ספציפית: מה בדיוק קרה (אילו שינויים, בקשות או פעולות) רגע לפני שהקושי מתחיל?',type:'textarea'},
+    {id:'main_outcome',label:'כאשר הקושי מתרחש, מהי התוצאה העיקרית?<span class="qf-hint">דוגמה: הוא משיג את תשומת הלב שלכם, הוא נמנע מהמטלה, או הוא מקבל את מה שרצה.</span>',type:'textarea'},
+    {type:'section',label:"חלק ה' – תכנון קונסטרוקטיבי וצעד ראשון"},
+    {id:'first_step',label:'בהתבסס על ההצלחות הקטנות שתיארתם — מהי הצעד הקטן, הקל והראשון ביותר שאתם מאמינים שהילד יכול לבצע כבר היום כדי להתחיל להתקרב למטרה הגדולה?',type:'textarea'},
+    {id:'reinforcement_plan',label:'אם הילד יבצע בהצלחה את הצעד הקטן והראשון — באיזה מחזק מעודף תשתמשו כדי לחזק את ההתנהגות?',type:'textarea'}
   ],
   staff:[
-    {type:'section',label:'חלק א׳ – פרטים ומיקוד ראשוני'},
-    {id:'teacher',label:'מלמד / מחנך',type:'text'},
-    {id:'main_challenge',label:'מהו הקושי המרכזי (במשפט אחד, אובייקטיבי)?',type:'textarea'},
-    {id:'desired_behavior',label:'ההתנהגות החיובית הרצויה (כאילו מצלמים אותה)',type:'textarea'},
-    {id:'importance_rating',label:'דירוג חשיבות השינוי (1–10)',type:'select',options:['1','2','3','4','5','6','7','8','9','10']},
-    {type:'section',label:'חלק ב׳ – רקע היסטורי ואבחנות'},
-    {id:'current_support',label:'האם הילד מקבל כיום סיוע או תמיכה אישית? אם כן, באיזה היקף?',type:'textarea'},
-    {id:'strengths',label:'מה כבר הולך לו טוב? (לימודי / חברתי / מוטורי)',type:'textarea'},
+    {type:'section',label:"חלק א' – פרטים ומיקוד ראשוני"},
+    {id:'teacher',label:'מלמד',type:'text'},
+    {id:'main_challenge',label:'מהו, במשפט אחד "הקושי המרכזי" (התנהגותי או חברתי) או המצב הלא רצוי (כפי שהוא מתבטא בכיתה או בהפסקה) שהוביל אתכם לפנות לעזרה?<span class="qf-hint">הגדרה ברורה, קצרה ואובייקטיבית של המצב שהוביל לפנייה.</span>',type:'textarea'},
+    {id:'desired_behavior',label:'במקום המצב הלא רצוי, מהי ההתנהגות החיובית הספציפית שתרצו לראות מהילד בכיתה?<span class="qf-hint">תארו אותה כאילו אתם מצלמים אותה.</span>',type:'textarea'},
+    {id:'importance_rating',label:'בדירוג מ‑1 (בקושי) עד 10 (משנה חיים) — עד כמה השינוי הזה ישפר את איכות התפקוד של הילד ואת האווירה בכיתה?',type:'select',options:['1','2','3','4','5','6','7','8','9','10']},
+    {type:'section',label:"חלק ב' – רקע היסטורי, אבחנות וניתוח הצלחות עבר"},
+    {id:'current_support',label:'האם הילד מקבל כיום סיוע או תמיכה אישית בתוך המוסד? אם כן, באיזה היקף?',type:'textarea'},
+    {id:'strengths',label:'מה כבר הולך לו טוב עכשיו (לימודי/חברתי/מוטורי)? תארו מצב ספציפי במהלך יום הלימודים שבו הילד כן מצליח, או היה רגוע ושמח — מה מאפיין את המצב הזה? מי או מה מחזק אותו?<span class="qf-hint">דוגמאות: שיעורים, הפסקה, עבודה עצמית, מנוהלת על ידי המלמד וכו\'.</span>',type:'textarea'},
     {id:'past_interventions',label:'אילו טיפולים או תוכניות ניסיתם בעבר?',type:'textarea'},
-    {id:'what_worked',label:'מה עבד אפילו קצת?',type:'textarea'},
+    {id:'what_worked',label:'מכל מה שניסיתם, האם יש דברים שעבדו אפילו קצת?',type:'textarea'},
     {id:'why_stopped',label:'מה גרם להם להפסיק לעבוד?',type:'textarea'},
-    {id:'problem_onset',label:'מתי הבעיות החלו? האם השתנו עם הזמן?',type:'textarea'},
-    {id:'red_flags',label:'דגלים אדומים / טריגרים',type:'textarea'},
-    {type:'section',label:'חלק ג׳ – ניתוח ההקשר והרפרטואר החיובי'},
-    {id:'reinforcers',label:'מה הוא הכי אוהב לעשות / לקבל?',type:'textarea'},
-    {id:'talents',label:'הישגים / כישרונות שאינם קשורים לקושי',type:'textarea'},
-    {id:'success_situation',label:'מצב שבו הילד הצליח לקיים את ההתנהגות הרצויה',type:'textarea'},
-    {id:'easy_requests',label:'דברים שמבקשים ממנו והוא מבצע מיד ללא ויכוח',type:'textarea'},
-    {id:'green_flags',label:'דגלים ירוקים / חוזקות',type:'textarea'},
-    {type:'section',label:'חלק ד׳ – ניתוח השרשרת והפונקציה'},
-    {id:'antecedent',label:'A – מה קרה רגע לפני שהקושי מתחיל?',type:'textarea'},
-    {id:'main_outcome',label:'C – מהי התוצאה העיקרית של הקושי?',type:'textarea'},
-    {id:'staff_response',label:'מהי התגובה המיידית של הצוות?',type:'textarea'},
-    {type:'section',label:'חלק ה׳ – תכנון קונסטרוקטיבי וצעד ראשון'},
-    {id:'first_step',label:'הצעד הקטן הראשון שהילד יכול לבצע כבר היום',type:'textarea'},
-    {id:'reinforcement_plan',label:'באיזה מחזק תשתמשו לחיזוק הצעד?',type:'textarea'},
-    {id:'env_change',label:'התנהלות / שינוי סביבתי שהצוות יכול לבצע',type:'textarea'}
+    {id:'problem_onset',label:'מתי הבעיות האלו החלו? האם הן השתנו עם הזמן?<span class="qf-hint">תארו את התקופה שבה היה הכי קל לכם מבחינת ההתמודדות.</span>',type:'textarea'},
+    {id:'red_flags',label:'האם אתם מזהים דגלים אדומים או טריגרים שמעידים שהקושי עומד להופיע?<span class="qf-hint">הגדרה אופרטיבית.</span>',type:'textarea'},
+    {type:'section',label:"חלק ג' – ניתוח ההקשר והרפרטואר החיובי (חיזוקים)"},
+    {id:'reinforcers',label:'מהם הדברים שהוא הכי אוהב לעשות / לקבל?<span class="qf-hint">אלו שגורמים לו לרצות להתאמץ או להשקיע כדי להשיג אותם.</span>',type:'textarea'},
+    {id:'talents',label:'מהם ההישגים או הכישרונות של הילד בתחומים שאינם קשורים לקושי?<span class="qf-hint">דוגמא: טוב בציור/בצבע, עוזר לאחים קטנים, משחק בשקט.</span>',type:'textarea'},
+    {id:'success_situation',label:'תארו מצב שבו הילד כן הצליח לקיים את ההתנהגות הרצויה (או חלק ממנה). מה קרה רגע לפני ההצלחה הזו, ומה הייתה התגובה שלכם?',type:'textarea'},
+    {id:'easy_requests',label:'האם יש דברים שאתם מבקשים ממנו והוא מבצע מיד וללא ויכוח?<span class="qf-hint">אם כן — מה מאפיין את הבקשות או ההקשר הזה?</span>',type:'textarea'},
+    {id:'green_flags',label:'האם אתם מזהים דגלים ירוקים? חוזקות מוגדרות וכלים מעשיים שניתן לקחת כדי לבנות עם הילד תוכנית?',type:'textarea'},
+    {type:'section',label:"חלק ד' – ניתוח השרשרת והפונקציה של הקושי"},
+    {id:'antecedent',label:'תארו דוגמה ספציפית: מה בדיוק קרה (אילו שינויים, בקשות או פעולות) רגע לפני שהקושי מתחיל?',type:'textarea'},
+    {id:'main_outcome',label:'כאשר הקושי מתרחש, מהי התוצאה העיקרית?<span class="qf-hint">דוגמה: הוא משיג את תשומת הלב שלכם, הוא נמנע מהמטלה, או הוא מקבל את מה שרצה.</span>',type:'textarea'},
+    {id:'staff_response',label:'כאשר הקושי מתרחש, מהי התגובה המיידית של הצוות?',type:'textarea'},
+    {type:'section',label:"חלק ה' – תכנון קונסטרוקטיבי וצעד ראשון"},
+    {id:'first_step',label:'בהתבסס על ההצלחות הקטנות שתיארתם — מהי הצעד הקטן, הקל והראשון ביותר שאתם מאמינים שהילד יכול לבצע כבר היום כדי להתחיל להתקרב למטרה הגדולה?',type:'textarea'},
+    {id:'reinforcement_plan',label:'אם הילד יבצע בהצלחה את הצעד הקטן והראשון — באיזה מחזק מעודף תשתמשו כדי לחזק את ההתנהגות?',type:'textarea'},
+    {id:'env_change',label:'האם יש התנהלות או שינוי סביבתי שהצוות יכול לבצע באופן קבוע כדי לתמוך בצורה הטובה ביותר בצעד הראשון הזה?',type:'textarea'}
   ],
   functional:[
-    {type:'section',label:'התנהגות מטרה'},
-    {id:'target_behavior',label:'תיאור ההתנהגות המטרה',type:'textarea'},
-    {id:'frequency',label:'תדירות',type:'text'},
-    {id:'intensity',label:'עוצמה (1-5)',type:'select',options:['1','2','3','4','5']},
-    {type:'section',label:'ABC'},
-    {id:'antecedent',label:'A – נסיבות קודמות',type:'textarea'},
-    {id:'behavior',label:'B – תיאור ההתנהגות',type:'textarea'},
-    {id:'consequence',label:'C – תוצאה',type:'textarea'},
-    {type:'section',label:'ניתוח פונקציונלי'},
-    {id:'function',label:'פונקציה משוערת',type:'select',options:['תשומת לב','בריחה / הימנעות','חושי','קבלת פריט/פעילות','אחר']},
-    {id:'hypothesis',label:'השערה',type:'textarea'},
-    {id:'recommendations',label:'המלצות',type:'textarea'}
+    {type:'section',label:'חזון, יעד ומוטיבציה (מה רוצים להשיג?)'},
+    {id:'vision_q1',label:'למה אתה חושב שאנחנו צריכים לעבוד יחד?',type:'textarea'},
+    {id:'vision_q2',label:'בוא/י נדמיין הצלחה. איך ייראה יום הלימודים שלך בסוף התוכנית, כשאתה מרגיש שאתה מצליח?',type:'textarea'},
+    {id:'vision_q3',label:'אם נצייר את המצב, מה אנשים אחרים בסביבתך (חברים, מורים) יראו ויבחינו בך לטובה?',type:'textarea'},
+    {id:'vision_q4',label:'מה אתה מקווה שהשינוי הזה ייתן לך?',type:'textarea'},
+    {type:'section',label:'איסוף משאבים (מה כבר עובד?)'},
+    {id:'resources_q1',label:'מה הדברים שהולכים לך טוב עכשיו בבית הספר או בחיים בכלל?',type:'textarea'},
+    {id:'resources_q2',label:'ומהם הדברים שלא הולך לך טוב עכשיו?',type:'textarea'},
+    {id:'resources_q3',label:'עצום את עיניך לרגע. האם אתה יכול לחשוב על פעם אחת שבה הצלחת להתמודד עם המצב הזה או לעשות את הדבר הרצוי?',type:'textarea'},
+    {id:'resources_q4',label:'מה קרה באותה פעם שאיפשר את ההצלחה?<span class="qf-hint">מה עשית? מי היה שם? איפה היית?</span>',type:'textarea'},
+    {id:'resources_q5',label:'מי או מה גורם לך להרגיש טוב/חזק/שמח? האם אפשר להביא את הגורם הזה לתחום שאנחנו רוצים לשפר?',type:'textarea'},
+    {type:'section',label:'שינוי היסטוריה – בחינת הדרך (מה ניסינו ומה עומד בדרך?)'},
+    {id:'history_q1',label:'מה עשית עד היום כדי לפתור או לשנות את המצב?',type:'textarea'},
+    {id:'history_q2',label:'למה לדעתך הניסיונות האלה עדיין לא עבדו כל כך טוב? מה עומד בדרך ומונע הצלחה מלאה?',type:'textarea'},
+    {id:'history_q3',label:'מה לדעתך אנחנו צריכים לשנות עכשיו, ששונה ממה שניסית בעבר?',type:'textarea'},
+    {type:'section',label:'ניתוח פונקציה ובניית בחירה (למה זה קורה ואיך נחליף?)'},
+    {id:'function_q1',label:'מה אתה מרוויח מלעשות את ההתנהגות המאתגרת? מה זה נותן לך באותו רגע שאתה צריך?',type:'textarea'},
+    {id:'function_q2',label:'אם היית יכול לבחור דרך חכמה יותר להשיג את אותו ה"רווח" — איזו דרך זו הייתה?',type:'textarea'},
+    {id:'function_q3',label:'איזו בחירה מקדימה אתה יכול לעשות לעצמך כדי להשתמש בדרך החדשה שבחרת?<span class="qf-hint">לדוגמה: תזכורת, תכנון, שינוי סביבה.</span>',type:'textarea'},
+    {type:'section',label:'השלכות וסיכום (מה הלאה?)'},
+    {id:'summary_q1',label:'איך השינוי שלך ישפיע על הסביבה שלך (בכיתה, בבית)?',type:'textarea'},
+    {id:'summary_q2',label:'איך היית רוצה להרגיש ולהיראות כשהשינוי הזה יצליח?',type:'textarea'},
+    {id:'summary_q3',label:'האם יש משהו חשוב שהשארנו בחוץ? יש משהו שאתה עדיין רוצה להגיד לי בנוגע למה שדיברנו?',type:'textarea'},
+    {id:'summary_q4',label:'שאלתי אותך המון שאלות! עכשיו תורך — אתה רוצה לשאול אותי משהו? מה תרצה לדעת?',type:'textarea'}
   ],
   fobs:[
-    {type:'section',label:'פרטי התצפית'},
-    {id:'obs_date',label:'תאריך תצפית',type:'date'},
-    {id:'location',label:'מיקום',type:'text'},
-    {id:'activity',label:'פעילות',type:'text'},
-    {id:'people_present',label:'אנשים נוכחים',type:'text'},
-    {type:'section',label:'ABC'},
-    {id:'antecedent',label:'A – נסיבות',type:'textarea'},
-    {id:'behavior',label:'B – התנהגות',type:'textarea'},
-    {id:'consequence',label:'C – תוצאה',type:'textarea'},
-    {type:'section',label:'ניתוח'},
-    {id:'function',label:'פונקציה משוערת',type:'select',options:['תשומת לב','בריחה / הימנעות','חושי','קבלת פריט/פעילות','אחר']},
-    {id:'recommendations',label:'המלצות',type:'textarea'}
+    {id:'filled_by',label:'שם המורה / אשת הטיפול',type:'text'},
+    {id:'student_initials',label:'שם התלמיד (ניתן בראשי תיבות)',type:'text'},
+    {id:'age',label:'גיל',type:'text'},
+    {id:'diagnosis',label:'אבחנה',type:'text'},
+    {id:'framework',label:'מסגרת חינוכית',type:'select',options:['חינוך רגיל','כיתה קטנה','גן חינוך מיוחד','בי"ס כוללני']},
+    {id:'fobs_date',label:'תאריך',type:'date'},
+    {type:'info',label:'סולם ניקוד: 0 = פותר.ת באופן שאינו מקובל חברתית (כוח) | 1 = נמנע.ת / בוכה / קופא.ת | 2 = זקוק.ה לתיווך | 3 = זקוק.ה לתזכורת בלבד ואז פותר.ת עצמאית | 4 = פותר.ת עצמאית | ל.ר = לא רלוונטי (אין בעיה)'},
+    {type:'section',label:'חברתי'},
+    {id:'s1',label:'החבר לא רוצה לחלוק איתי',type:'rating'},
+    {id:'s2',label:'החבר לא סולח לי למרות שביקשתי סליחה',type:'rating'},
+    {id:'s3',label:'החברים משחקים משחק ואני לא יודע.ת את הכללים',type:'rating'},
+    {id:'s4',label:'חבר קורא לי בשמות',type:'rating'},
+    {id:'s5',label:'חבר לוקח ממני פריט אישי ללא רשות',type:'rating'},
+    {id:'s6',label:'אני רוצה לשחק עם חברים בהפסקה ולא יודע.ת איך',type:'rating'},
+    {id:'s7',label:'המשחק שאני רוצה תפוס אצל חבר אחר',type:'rating'},
+    {id:'s8',label:'החבר עושה משהו שמעצבן אותי',type:'rating'},
+    {id:'s9',label:'הפסדתי במשחק מול חברים ואני רוצה לנצח',type:'rating'},
+    {id:'s10',label:'אני רוצה להיות ראשון ומישהו אחר ראשון',type:'rating'},
+    {id:'s11',label:'אני רוצה לשחק במשחק שבחרתי והחברים לא מסכימים',type:'rating'},
+    {id:'s12',label:'חבר לא רוצה לשחק איתי',type:'rating'},
+    {type:'section',label:'התנהגותי אקדמי'},
+    {id:'a1',label:'המורה אומרת לי לעשות משימה ואני לא רוצה',type:'rating'},
+    {id:'a2',label:'יש משימה בשיעור ואני לא יודע.ת מה עושים',type:'rating'},
+    {id:'a3',label:'המורה אומרת לי שיש טעות במשימה בשיעור',type:'rating'},
+    {id:'a4',label:'המשימה קשה לי מדי',type:'rating'},
+    {type:'section',label:'סנסורי'},
+    {id:'sen1',label:'מציק לי בגוף (פצע, יובש)',type:'rating'},
+    {id:'sen2',label:'יש יותר מדי דברים מסביבי גם קולות וגם מראות',type:'rating'},
+    {id:'sen3',label:'יש רעש חזק ולא נעים לי',type:'rating'},
+    {id:'sen4',label:'ילד אחר בוכה ואני לא מסוגל.ת לשמוע',type:'rating'},
+    {type:'section',label:'אחר / התנהגותי רגשי'},
+    {id:'e1',label:"אני רוצה לשחק ב_____ (לדוג' מחשב) עכשיו וקשה לי לחכות לסוף השיעור",type:'rating'},
+    {id:'e2',label:'אני לא מצליח.ה להרכיב משהו (פאזל, משחק)',type:'rating'},
+    {id:'e3',label:'המורה מתייחסת לילד אחר ואני רוצה שתתייחס אלי',type:'rating'},
+    {id:'e4',label:'קשה לי לשבת לאורך זמן בשיעור ובמשימות',type:'rating'},
+    {id:'e5',label:'אני רוצה להגיד משהו בשיעור והמורה לא נותנת לי לענות ונותנת למישהו אחר',type:'rating'},
+    {id:'e6',label:'המחשב / המשחק לא עובד לי',type:'rating'},
+    {id:'e7',label:'המורה אומרת לי להפסיק לשחק במחשב ואני לא רוצה',type:'rating'},
+    {id:'e8',label:'אין לי עיפרון / מחק לבצע את המשימה',type:'rating'},
+    {id:'e9',label:'אני כועס.ת ונסער.ת ולא מצליח.ה להירגע',type:'rating'},
+    {id:'e10',label:'אמא הביאה לי אוכל שאני לא אוהב.ת',type:'rating'},
+    {id:'e11',label:'קשה לי לחכות בתור',type:'rating'},
+    {type:'section',label:'בעיות אחרות (לנסח בגוף ראשון)'},
+    {id:'oth1_domain',label:'תחום בעיה 1',type:'select',options:['חברתי','התנהגותי אקדמי','סנסורי','התנהגותי רגשי']},
+    {id:'oth1_text',label:'תיאור הבעיה 1',type:'text'},
+    {id:'oth1_rating',label:'ניקוד 1',type:'rating'},
+    {id:'oth2_domain',label:'תחום בעיה 2',type:'select',options:['חברתי','התנהגותי אקדמי','סנסורי','התנהגותי רגשי']},
+    {id:'oth2_text',label:'תיאור הבעיה 2',type:'text'},
+    {id:'oth2_rating',label:'ניקוד 2',type:'rating'},
+    {id:'oth3_domain',label:'תחום בעיה 3',type:'select',options:['חברתי','התנהגותי אקדמי','סנסורי','התנהגותי רגשי']},
+    {id:'oth3_text',label:'תיאור הבעיה 3',type:'text'},
+    {id:'oth3_rating',label:'ניקוד 3',type:'rating'},
+    {id:'oth4_domain',label:'תחום בעיה 4',type:'select',options:['חברתי','התנהגותי אקדמי','סנסורי','התנהגותי רגשי']},
+    {id:'oth4_text',label:'תיאור הבעיה 4',type:'text'},
+    {id:'oth4_rating',label:'ניקוד 4',type:'rating'},
+    {id:'oth5_domain',label:'תחום בעיה 5',type:'select',options:['חברתי','התנהגותי אקדמי','סנסורי','התנהגותי רגשי']},
+    {id:'oth5_text',label:'תיאור הבעיה 5',type:'text'},
+    {id:'oth5_rating',label:'ניקוד 5',type:'rating'},
+    {id:'oth6_domain',label:'תחום בעיה 6',type:'select',options:['חברתי','התנהגותי אקדמי','סנסורי','התנהגותי רגשי']},
+    {id:'oth6_text',label:'תיאור הבעיה 6',type:'text'},
+    {id:'oth6_rating',label:'ניקוד 6',type:'rating'}
   ]
 };
 
@@ -2107,9 +2515,12 @@ function renderQTabContent(pid){
   const fields=Q_FIELDS[currentQTab]||[];
   currentQPatientId=pid; currentQType=currentQTab; currentQId=q?.id||null;
 
+  const RATING_OPTS=['0','1','2','3','4','ל.ר'];
   const formRows=fields.map(f=>{
     if(f.type==='section') return `<div class="qf-section">${f.label}</div>`;
+    if(f.type==='info') return `<div style="background:var(--g50);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--g600);margin-bottom:10px;line-height:1.7">${f.label}</div>`;
     const val=(content[f.id]||'').replace(/"/g,'&quot;');
+    if(f.type==='rating') return `<div class="qf-field" style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div class="qf-label" style="flex:1;margin-bottom:0">${f.label}</div><select class="qf-input qf-select" id="qf-${f.id}" style="min-width:90px;flex-shrink:0"><option value="">--</option>${RATING_OPTS.map(o=>`<option value="${o}" ${content[f.id]===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
     if(f.type==='textarea') return `<div class="qf-field"><div class="qf-label">${f.label}</div><textarea class="qf-input" id="qf-${f.id}" rows="2">${content[f.id]||''}</textarea></div>`;
     if(f.type==='select') return `<div class="qf-field"><div class="qf-label">${f.label}</div><select class="qf-input qf-select" id="qf-${f.id}"><option value="">-- בחר --</option>${f.options.map(o=>`<option value="${o}" ${content[f.id]===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
     if(f.type==='date') return `<div class="qf-field"><div class="qf-label">${f.label}</div><input type="date" class="qf-input" id="qf-${f.id}" value="${val}"></div>`;
@@ -2123,7 +2534,7 @@ function renderQTabContent(pid){
       <div class="q-form-head">
         <div class="q-bh">ב"ה</div>
         <h2>${Q_LABELS[currentQTab]}</h2>
-        <p>הערכה קונסטרוקטיבית ממוקדת</p>
+        <p>${currentQTab==='parent'?'הערכה קונסטרוקטיבית וממוקדת – משאבים':currentQTab==='staff'?'הערכה קונסטרוקטיבית ממוקדת – כיתה':currentQTab==='functional'?'הערכה ישירה – שיחה עם הילד':currentQTab==='fobs'?'הערכת פתרון בעיות בבית הספר':'הערכה קונסטרוקטיבית ממוקדת'}</p>
         <div class="q-pat-info">
           <span>שם: <strong>${patient?.name||'—'}</strong></span>
           ${inst?`<span>מוסד: <strong>${inst.name}</strong></span>`:''}
@@ -2133,6 +2544,7 @@ function renderQTabContent(pid){
       <div>${formRows}</div>
       <div class="q-actions">
         ${q?`<button class="btn btn-secondary" onclick="downloadQPDF('${pid}','${currentQTab}')"><i data-lucide="download"></i> הורדת PDF</button>`:''}
+
         ${q?`<button class="btn btn-danger btn-sm" onclick="deleteQuestionnaire('${q.id}','${pid}')"><i data-lucide="trash-2"></i> מחק</button>`:''}
         <button class="btn btn-primary" onclick="saveQuestionnaire()"><i data-lucide="save"></i> שמור</button>
       </div>
@@ -2217,10 +2629,486 @@ async function downloadQPDF(pid, qtype){
   }
 }
 
+// === REPORTS TAB ===
+let repCurrentPid=null;
+let repLogoSrc='';
+
+function renderReportsTab(pid){
+  repCurrentPid=pid;
+  const p=allPatients.find(x=>x.id===pid);
+  if(!p)return;
+  const el=document.getElementById('main-tab-reports');
+  if(!el)return;
+
+  const qTypes=Object.keys(Q_LABELS);
+  const existingQs=qTypes.filter(t=>allQuestionnaires.find(q=>q.patient_id===pid&&q.q_type===t));
+
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3><i data-lucide="file-text"></i> הורדת שאלונים</h3></div>
+      <div class="card-body">
+        ${existingQs.length===0
+          ?'<div class="empty"><i data-lucide="file-text"></i><p>אין שאלונים שמורים עדיין</p></div>'
+          :`<div style="display:flex;flex-direction:column;gap:8px;">
+              ${existingQs.map(t=>`
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border:1px solid var(--g200);border-radius:8px;background:white;">
+                  <span style="font-size:14px;font-weight:500;color:var(--g700);">${Q_LABELS[t]}</span>
+                  <button class="btn btn-secondary btn-sm" onclick="downloadQPDF('${pid}','${t}')"><i data-lucide="download"></i> הורד PDF</button>
+                </div>`).join('')}
+              ${existingQs.length>1?`
+                <button class="btn btn-primary" onclick="repDownloadAllQuestionnaires('${pid}')" style="margin-top:4px;">
+                  <i data-lucide="layers"></i> הורד את כל השאלונים בקובץ אחד
+                </button>`:''}
+            </div>`
+        }
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i data-lucide="folder-open"></i> דוח מלא</h3></div>
+      <div class="card-body">
+        <p style="font-size:13px;color:var(--g500);margin-bottom:16px;">בחר אילו חלקים לכלול בדוח ולחץ הורדה</p>
+        <button class="btn btn-primary" onclick="openFullReportModal('${pid}')">
+          <i data-lucide="file-plus"></i> הגדר והורד דוח מלא
+        </button>
+      </div>
+    </div>`;
+  lucide.createIcons();
+}
+
+async function repDownloadAllQuestionnaires(pid){
+  const qTypes=Object.keys(Q_LABELS);
+  const existingQs=qTypes.filter(t=>allQuestionnaires.find(q=>q.patient_id===pid&&q.q_type===t));
+  if(existingQs.length===0)return toast('אין שאלונים','error');
+  toast('מכין את כל השאלונים...','');
+  for(const t of existingQs){ await downloadQPDF(pid,t); await new Promise(r=>setTimeout(r,800)); }
+  toast('כל השאלונים הורדו ✓','success');
+}
+
+function openFullReportModal(pid){
+  repCurrentPid=pid;
+  const pl=document.getElementById('rep-payments-lbl');
+  if(pl)pl.style.display=isAdmin?'flex':'none';
+  document.getElementById('modal-full-report').style.display='flex';
+  lucide.createIcons();
+}
+
+// ---- report helpers ----
+function repPageHeader(){
+  const logoHtml=repLogoSrc
+    ?`<img src="${repLogoSrc}" style="height:30px;width:auto;object-fit:contain;">`
+    :`<span style="font-size:13px;font-weight:700;color:#1e3a5f;">מכון התנהגות</span>`;
+  // RTL: first element=RIGHT, last element=LEFT → בס"ד RIGHT, logo LEFT
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:9px;border-bottom:1px solid #e2e8f0;margin-bottom:18px;">
+    <span style="font-size:11px;color:#aaa;font-weight:500;">בס"ד</span>
+    ${logoHtml}
+  </div>`;
+}
+
+function repBuildSection(title,html){
+  return `<div style="break-before:page;page-break-before:always;padding-top:4px;">
+    ${repPageHeader()}
+    <div style="font-size:19px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:7px;margin-bottom:18px;">${title}</div>
+    <div>${html}</div>
+  </div>`;
+}
+
+function repRow(label,val){
+  if(!val&&val!==0)return'';
+  return`<div style="display:flex;gap:14px;margin-bottom:9px;font-size:15px;"><span style="color:#64748b;min-width:145px;flex-shrink:0;">${label}</span><span style="color:#1e293b;flex:1;">${val}</span></div>`;
+}
+function repStripHtml(s){return s?s.replace(/<[^>]+>/g,''):''}
+
+function _repReadIncludes(){
+  return{
+    personal:document.getElementById('rep-personal')?.checked,
+    background:document.getElementById('rep-background')?.checked,
+    appointments:document.getElementById('rep-appointments')?.checked,
+    payments:document.getElementById('rep-payments')?.checked&&isAdmin,
+    notes:document.getElementById('rep-notes')?.checked,
+    observations:document.getElementById('rep-observations')?.checked,
+    questionnaires:document.getElementById('rep-questionnaires')?.checked,
+    goals:document.getElementById('rep-goals')?.checked,
+  };
+}
+
+function _repBuildSections(include,pid){
+  const p=allPatients.find(x=>x.id===pid); if(!p)return[];
+  const inst=allInstitutions.find(i=>i.id===p.institution_id);
+  const cls=allClasses.find(c=>c.id===p.class_id);
+  const today=new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric'});
+
+  const logoHtml=repLogoSrc
+    ?`<img src="${repLogoSrc}" style="height:34px;width:auto;object-fit:contain;">`
+    :`<span style="font-size:14px;font-weight:700;color:#1e3a5f;">מכון התנהגות</span>`;
+  const sections=[];
+  // COVER — בס"ד RIGHT (first), logo LEFT (last)
+  sections.push(`<div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1px solid #e2e8f0;margin-bottom:70px;">
+      <span style="font-size:11px;color:#aaa;font-weight:500;">בס"ד</span>
+      ${logoHtml}
+    </div>
+    <div style="text-align:center;margin-top:40px;padding-bottom:24px;border-bottom:3px solid #1e3a5f;">
+      <div style="font-size:32px;font-weight:700;color:#1e3a5f;margin-bottom:10px;">תיק מטופל</div>
+      <div style="font-size:26px;font-weight:600;color:#334155;margin-bottom:14px;">${p.name}</div>
+      <div style="font-size:15px;color:#64748b;">הופק: ${today}</div>
+    </div>
+  </div>`);
+
+  if(include.personal){
+    const calcDebt=allAppointments.filter(a=>a.patient_id===pid).reduce((s,a)=>s+(a.price||0),0);
+    const calcPaid=allPayments.filter(pay=>pay.patient_id===pid).reduce((s,pay)=>s+(pay.amount||0),0);
+    sections.push(repBuildSection('פרטים אישיים',
+      repRow('שם מלא',p.name)+repRow('ת.ז.',p.identity_number)+repRow('טלפון',p.phone)+
+      repRow('כתובת',p.address)+repRow('אימייל',p.email)+repRow('הורים / איש קשר',p.parents)+
+      repRow('מוסד',inst?.name)+repRow('כיתה',cls?.name)+
+      (isAdmin&&include.payments?repRow('חוב',`₪${calcDebt.toLocaleString()}`)+repRow('שולם',`₪${calcPaid.toLocaleString()}`)+repRow('יתרה',`₪${Math.max(0,calcDebt-calcPaid).toLocaleString()}`):'')
+    ));
+  }
+
+  if(include.background&&p.background){
+    sections.push(repBuildSection('רקע',`<div style="font-size:15px;line-height:1.9;white-space:pre-wrap;color:#1e293b;">${p.background}</div>`));
+  }
+
+  if(include.appointments){
+    const apts=allAppointments.filter(a=>a.patient_id===pid).sort((a,b)=>new Date(a.start_time)-new Date(b.start_time));
+    const rows=apts.map(a=>{
+      const d=new Date(a.start_time);
+      return`<tr>
+        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</td>
+        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</td>
+        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${a.name||''}</td>
+        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;text-align:center;">${a.arrived?'✓':''}</td>
+        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${a.description||''}</td>
+        ${isAdmin&&include.payments?`<td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">₪${(a.price||0).toLocaleString()}</td>`:''}
+      </tr>`;
+    }).join('');
+    sections.push(repBuildSection('פגישות',apts.length===0?'<p style="color:#94a3b8;font-size:15px;">אין פגישות</p>':`
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:#f0f4f8;">
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">תאריך</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">שעה</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">שם פגישה</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-size:14px;">הגיע</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">סיכום פגישה</th>
+          ${isAdmin&&include.payments?'<th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">מחיר</th>':''}
+        </tr></thead><tbody>${rows}</tbody>
+      </table>`));
+  }
+
+  if(include.payments){
+    const pays=allPayments.filter(pp=>pp.patient_id===pid).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+    const rows=pays.map(pay=>`<tr>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${pay.created_at?new Date(pay.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}):'-'}</td>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">₪${(pay.amount||0).toLocaleString()}</td>
+      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${pay.description||''}</td>
+    </tr>`).join('');
+    sections.push(repBuildSection('תשלומים',pays.length===0?'<p style="color:#94a3b8;font-size:15px;">אין תשלומים</p>':`
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:#f0f4f8;">
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">תאריך</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">סכום</th>
+          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">תיאור</th>
+        </tr></thead><tbody>${rows}</tbody>
+      </table>`));
+  }
+
+  if(include.notes){
+    const notes=allNotes.filter(n=>n.patient_id===pid).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+    sections.push(repBuildSection('עדכונים',notes.length===0?'<p style="color:#94a3b8;font-size:15px;">אין עדכונים</p>':notes.map(n=>`
+      <div style="margin-bottom:14px;padding:14px;border:1px solid #e2e8f0;border-radius:7px;background:#f8fafc;">
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">${new Date(n.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</div>
+        <div style="font-size:15px;line-height:1.9;white-space:pre-wrap;color:#1e293b;">${n.content||''}</div>
+      </div>`).join('')));
+  }
+
+  if(include.observations){
+    const obs=allObservations.filter(o=>o.patient_id===pid).sort((a,b)=>new Date(a.obs_date)-new Date(b.obs_date));
+    sections.push(repBuildSection('תצפיות ABC',obs.length===0?'<p style="color:#94a3b8;font-size:15px;">אין תצפיות</p>':obs.map((o,i)=>{
+      let d=null;try{if(o.circumstance&&o.circumstance.trim().startsWith('{'))d=JSON.parse(o.circumstance);}catch(e){}
+      const dateStr=o.obs_date?new Date(o.obs_date).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}):'';
+      if(d&&d.v===2&&d.rows){
+        const rowsHtml=d.rows.map(r=>`<tr>
+          <td style="padding:8px 9px;border:1px solid #e2e8f0;font-size:14px;">${r.c||''}</td>
+          <td style="padding:8px 9px;border:1px solid #e2e8f0;font-size:14px;">${r.b||''}</td>
+          <td style="padding:8px 9px;border:1px solid #e2e8f0;font-size:14px;">${r.o||''}</td>
+          <td style="padding:8px 9px;border:1px solid #e2e8f0;font-size:14px;">${r.n||''}</td>
+        </tr>`).join('');
+        return`<div style="margin-bottom:18px;"><div style="font-size:14px;font-weight:600;color:#1e3a5f;margin-bottom:8px;">תצפית ${i+1}${dateStr?' — '+dateStr:''}</div>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr style="background:#f0f4f8;">
+              <th style="padding:8px 9px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">A – נסיבות</th>
+              <th style="padding:8px 9px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">B – התנהגות</th>
+              <th style="padding:8px 9px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">C – תוצאה</th>
+              <th style="padding:8px 9px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">הערות</th>
+            </tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
+      }
+      return`<div style="margin-bottom:14px;padding:12px;border:1px solid #e2e8f0;border-radius:6px;">
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:7px;">תצפית ${i+1}${dateStr?' — '+dateStr:''}</div>
+        ${repRow('A – נסיבות',o.circumstance)}${repRow('B – התנהגות',o.behavior)}${repRow('C – תוצאה',o.outcome)}${repRow('הערות',o.notes)}
+      </div>`;
+    }).join('')));
+  }
+
+  if(include.questionnaires){
+    const qMap=new Map();
+    allQuestionnaires.filter(q=>q.patient_id===pid).forEach(q=>{
+      const ex=qMap.get(q.q_type);
+      if(!ex||new Date(q.created_at)>new Date(ex.created_at))qMap.set(q.q_type,q);
+    });
+    const orderedQs=Object.keys(Q_LABELS).map(t=>qMap.get(t)).filter(Boolean);
+    if(orderedQs.length===0){
+      sections.push(repBuildSection('שאלונים','<p style="color:#94a3b8;font-size:15px;">אין שאלונים</p>'));
+    } else {
+      orderedQs.forEach(q=>{
+        const fields=Q_FIELDS[q.q_type]||[];
+        const c=q.content||{};
+        let qHtml='';
+        fields.forEach(f=>{
+          if(f.type==='section'){qHtml+=`<div style="font-size:15px;font-weight:700;color:#1e3a5f;margin:18px 0 10px;border-bottom:1px solid #e2e8f0;padding-bottom:4px;">${f.label}</div>`;return;}
+          if(f.type==='info')return;
+          const val=c[f.id];
+          if(val)qHtml+=`<div style="margin-bottom:13px;"><div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:3px;">${repStripHtml(f.label)}</div><div style="font-size:15px;line-height:1.8;color:#1e293b;white-space:pre-wrap;">${val}</div></div>`;
+        });
+        sections.push(repBuildSection(Q_LABELS[q.q_type]||q.title,qHtml||'<p style="color:#94a3b8;font-size:15px;">לא מולא</p>'));
+      });
+    }
+  }
+
+  if(include.goals){
+    const goals=allGoals.filter(g=>g.patient_id===pid);
+    sections.push(repBuildSection('מטרות טיפוליות',goals.length===0?'<p style="color:#94a3b8;font-size:15px;">אין מטרות</p>':goals.map((g,i)=>`
+      <div style="margin-bottom:16px;padding:14px;border:1px solid #e2e8f0;border-radius:7px;background:#f8fafc;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:10px;color:#1e3a5f;">מטרה #${i+1}</div>
+        ${repRow('תיאור',g.description)}${repRow('ניתוח פונקציונלי',g.functional_analysis)}${repRow('השערה',g.hypothesis)}${repRow('מטרה',g.target)}${repRow('מטרה התנהגותית',g.behavioral_goal)}${repRow('מסלול',g.path)}
+      </div>`).join('')));
+  }
+
+  return sections;
+}
+
+function _repBuildBody(include,pid){
+  return _repBuildSections(include,pid).join('');
+}
+
+async function generateFullReport(mode){
+  const pid=repCurrentPid;
+  const p=allPatients.find(x=>x.id===pid); if(!p)return;
+  repLogoSrc=document.querySelector('img.welcome-logo')?.src||'';
+  const include=_repReadIncludes();
+  closeModal('modal-full-report');
+  const body=_repBuildBody(include,pid);
+
+  if(mode==='print'){
+    repPrintHtml(body,`תיק מטופל — ${p.name}`);
+    return;
+  }
+
+  // Direct PDF download — render each section separately → guaranteed page break per section
+  toast('מכין PDF...','');
+  window.scrollTo(0,0);
+  const sections=_repBuildSections(include,pid);
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF('p','mm','a4');
+  const pw=pdf.internal.pageSize.getWidth();
+  const ph=pdf.internal.pageSize.getHeight();
+  let isFirstPage=true;
+  const wrapStyle='position:absolute;top:-9999px;left:0;width:794px;padding:14mm 18mm;font-family:Arial,Helvetica,sans-serif;direction:rtl;color:#1e293b;background:white;box-sizing:border-box;font-size:15px;line-height:1.7;';
+  try{
+    for(const secHtml of sections){
+      const wrapper=document.createElement('div');
+      wrapper.style.cssText=wrapStyle;
+      wrapper.innerHTML=secHtml;
+      document.body.appendChild(wrapper);
+      await new Promise(r=>setTimeout(r,120));
+      try{
+        const canvas=await html2canvas(wrapper,{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff'});
+        const imgH=(canvas.height*pw)/canvas.width;
+        const imgData=canvas.toDataURL('image/jpeg',0.93);
+        let sliceY=0;
+        while(sliceY<imgH){
+          if(!isFirstPage)pdf.addPage();
+          isFirstPage=false;
+          pdf.addImage(imgData,'JPEG',0,-sliceY,pw,imgH);
+          sliceY+=ph;
+        }
+      }finally{
+        document.body.removeChild(wrapper);
+      }
+    }
+    pdf.save(`תיק-${p.name}.pdf`);
+    toast('PDF הורד ✓','success');
+  }catch(e){
+    console.error('PDF error:',e);
+    toast('שגיאה ביצירת PDF','error');
+  }
+}
+
+function repPrintHtml(bodyHtml,title){
+  const win=window.open('','_blank');
+  if(!win){toast('אפשר חלונות קופצים בדפדפן','error');return;}
+  win.document.write(`<!DOCTYPE html><html lang="he" dir="rtl"><head>
+    <meta charset="UTF-8"><title>${title}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{font-family:'Rubik',Arial,sans-serif;font-size:15px;color:#1e293b;direction:rtl;background:white;}
+      @page{margin:15mm 18mm;}
+      @media print{.no-print{display:none!important;}}
+    </style>
+  </head><body>
+    <div class="no-print" style="position:fixed;bottom:16px;left:16px;z-index:999;">
+      <button onclick="window.print()" style="padding:9px 22px;background:#1e3a5f;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit;font-weight:600;">🖨️ הדפס</button>
+    </div>
+    ${bodyHtml}
+  </body></html>`);
+  win.document.close();
+}
+
+
+// === TANK FORM ===
+const TANK_FIELDS=[
+  {type:'section',label:'רקע על הילד'},
+  {id:'focus',label:'על מה אתה מתמקד עם הקליינט הנוכחי?',type:'textarea'},
+  {id:'behavioral_goals',label:'מהן המטרות ההתנהגותיות של הקליינט?',type:'textarea'},
+  {id:'functional_value',label:'מהו הערך הפונקציונלי של ההתנהגויות האלו?',type:'textarea'},
+  {id:'social_value',label:'מהו הערך החברתי של ההתנהגויות האלו?',type:'textarea'},
+  {id:'antecedent_interventions',label:'אילו התערבויות בנסיבות שקלת לגבי התנהגויות מטרה של התוכנית?',type:'textarea'},
+  {id:'consequence_interventions',label:'אילו התערבויות בתוצאות שקלת לגבי התנהגויות מטרה של התוכנית?',type:'textarea'},
+  {type:'section',label:'תכנון ההתערבות – מסגרת פעולה'},
+  {id:'vision1',label:'חזון',type:'textarea'},
+  {id:'abilities1',label:'יכולות',type:'textarea'},
+  {id:'motivation1',label:'מוטיבציה',type:'textarea'},
+  {id:'tools1',label:'כלים',type:'textarea'},
+  {id:'action_plan1',label:'תוכנית פעולה',type:'textarea'},
+  {type:'section',label:'כיצד תביא את הצוות ליישם את ההתערבויות?'},
+  {id:'vision2',label:'חזון',type:'textarea'},
+  {id:'abilities2',label:'יכולות',type:'textarea'},
+  {id:'motivation2',label:'מוטיבציה',type:'textarea'},
+  {id:'tools2',label:'כלים',type:'textarea'},
+  {id:'action_plan2',label:'תוכנית פעולה',type:'textarea'},
+  {type:'section',label:'התמודדות עם חסמים והתנגדויות'},
+  {id:'institution_understanding',label:'האם למוסדות שאתה עובד מולם יש את ההבנה מה לעשות?',type:'textarea'},
+  {id:'implementation_barriers',label:'האם אין בכוחי להביא את הצוות ליישם חלק מהתוכנית / לגייס אותם?',type:'textarea'},
+  {id:'staff_priorities',label:'מה חשוב לצוות כרגע?',type:'textarea'},
+  {id:'resistance_reasons',label:'מה מביא את הצוות להתנגד לעשייה שלי?',type:'textarea'},
+  {id:'importance_understood',label:'האם הם מבינים את החשיבות של ההנחיה שלי?',type:'textarea'},
+  {id:'resistance_handling',label:'כיצד אתה מתמודד עם התנגדויות אם יש?',type:'textarea'},
+  {type:'section',label:'חומרים וכלים'},
+  {id:'general_materials',label:'אילו חומרים כלליים יש לך שאתה משתמש בהם?',type:'textarea'},
+  {id:'assessments_forms',label:'אילו הערכות וטפסים אתה ממלא כשאתה עובד מול קליינטים?',type:'textarea'},
+  {id:'transferable_materials',label:'אילו חומרי עבודה, כרטיסים, תוכנית כבר קיימים אצלך שאתה יכול להעביר לאחרים?',type:'textarea'}
+];
+
+let currentTankId=null, currentTankPid=null;
+
+function renderTankForm(pid){
+  currentTankPid=pid;
+  const q=allQuestionnaires.find(q=>q.patient_id===pid&&q.q_type==='tank');
+  const patient=allPatients.find(p=>p.id===pid);
+  const content=q?.content||{};
+  currentTankId=q?.id||null;
+  const rows=TANK_FIELDS.map(f=>{
+    if(f.type==='section') return `<div class="qf-section">${f.label}</div>`;
+    const val=(content[f.id]||'').replace(/"/g,'&quot;');
+    if(f.type==='textarea') return `<div class="qf-field"><div class="qf-label">${f.label}</div><textarea class="qf-input" id="tk-${f.id}" rows="2">${content[f.id]||''}</textarea></div>`;
+    return `<div class="qf-field"><div class="qf-label">${f.label}</div><input type="text" class="qf-input" id="tk-${f.id}" value="${val}"></div>`;
+  }).join('');
+  document.getElementById('it-tank').innerHTML=`
+    <div class="q-form-wrap">
+      <div class="q-form-head">
+        <div class="q-bh">ב"ה</div>
+        <h2>טופס ניהול קליינטים (טנ"ק)</h2>
+        <p>ניהול ותכנון ההתערבות הטיפולית</p>
+        <div class="q-pat-info"><span>שם: <strong>${patient?.name||'—'}</strong></span></div>
+      </div>
+      <div>${rows}</div>
+      <div class="q-actions">
+        ${currentTankId?`<button class="btn btn-secondary" onclick="downloadTankPDF('${pid}')"><i data-lucide="download"></i> הורדת PDF</button>`:''}
+        <button class="btn btn-primary" onclick="saveTankForm()"><i data-lucide="save"></i> שמור</button>
+      </div>
+    </div>`;
+  if(window.lucide) lucide.createIcons();
+}
+
+async function saveTankForm(){
+  const content={};
+  TANK_FIELDS.forEach(f=>{
+    if(f.type==='section') return;
+    const el=document.getElementById('tk-'+f.id);
+    if(el&&el.value.trim()) content[f.id]=el.value.trim();
+  });
+  let r;
+  if(currentTankId){ r=await sbUpdate('questionnaires',currentTankId,{content}); }
+  else { r=await sbAdminInsert('questionnaires',{patient_id:currentTankPid,q_type:'tank',title:"טנ\"ק",content}); }
+  if(r.error) return toast('שגיאה','error');
+  toast('טנ"ק נשמר <i data-lucide="check-circle"></i>','success');
+  await loadAll(); renderTankForm(currentTankPid);
+}
+
+async function downloadTankPDF(pid){
+  const patient=allPatients.find(p=>p.id===pid);
+  const q=allQuestionnaires.find(q=>q.patient_id===pid&&q.q_type==='tank');
+  if(!q) return toast('שמור תחילה','error');
+  const c=q.content||{};
+  let rows='';
+  TANK_FIELDS.forEach(f=>{
+    if(f.type==='section'){rows+=`<div style="font-size:13px;font-weight:bold;color:#185FA5;border-bottom:2px solid #dbeafe;padding-bottom:3px;margin:18px 0 8px">${f.label}</div>`;return;}
+    const val=c[f.id]||'';
+    rows+=`<div style="margin-bottom:11px"><div style="font-size:10px;font-weight:600;color:#64748B;margin-bottom:3px">${f.label}</div><div style="font-size:13px;line-height:1.6;color:#1E293B;border-bottom:1px solid #CBD5E1;min-height:22px;padding-bottom:2px">${val}</div></div>`;
+  });
+  window.scrollTo(0,0);
+  const wrapper=document.createElement('div');
+  wrapper.style.cssText='position:absolute;top:0;left:0;width:794px;padding:36px 48px;font-family:Arial,Helvetica,sans-serif;direction:rtl;color:#1E293B;background:white;box-sizing:border-box;z-index:99999';
+  wrapper.innerHTML=`<div style="text-align:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #E2E8F0"><div style="font-size:11px;color:#94A3B8;margin-bottom:2px">ב"ה</div><div style="font-size:22px;font-weight:bold;margin-bottom:3px;color:#0F172A">טופס ניהול קליינטים (טנ"ק)</div><div style="font-size:12px;color:#64748B;margin-bottom:12px">ניהול ותכנון ההתערבות הטיפולית</div><div style="background:#F1F5F9;border-radius:7px;padding:9px 16px;font-size:12px">שם: <strong style="color:#0C3A5F">${patient?.name||''}</strong></div></div>${rows}`;
+  document.body.appendChild(wrapper);
+  toast('מכין PDF...','');
+  await new Promise(r=>setTimeout(r,600));
+  try{
+    const canvas=await html2canvas(wrapper,{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff'});
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    const imgH=(canvas.height*pw)/canvas.width;
+    let ps=0;
+    while(ps<imgH){if(ps>0)pdf.addPage();pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',0,-ps,pw,imgH);ps+=ph;}
+    pdf.save(`טנק-${patient?.name||'מטופל'}.pdf`);
+    toast('PDF הורד','success');
+  }catch(e){toast('שגיאה ביצירת PDF','error');}
+  finally{document.body.removeChild(wrapper);}
+}
+
+function renderIntDocs(pid){
+  const cloudName=localStorage.getItem('cloudinary_cloud_name')||'';
+  const cloudPreset=localStorage.getItem('cloudinary_upload_preset')||'';
+  const hasCloud=!!cloudName&&!!cloudPreset;
+  const files=(allFiles||[]).filter(f=>f.patient_id===pid);
+  document.getElementById('it-docs').innerHTML=`
+    <div class="card">
+      <div class="card-header">
+        <h3><i data-lucide="folder"></i> מסמכי התערבות</h3>
+        ${hasCloud?`<label class="btn btn-primary btn-sm" style="cursor:pointer"><i data-lucide="upload"></i> העלה קובץ<input type="file" style="display:none" onchange="uploadToCloudinary('${pid}',this)"></label>`:''}
+      </div>
+      ${!hasCloud?`<div class="card-body"><p style="font-size:13px;color:var(--g500)">להעלאת קבצים יש להגדיר Cloudinary בהגדרות.</p><button class="btn btn-primary btn-sm" onclick="showView('settings')"><i data-lucide="settings"></i> הגדרות</button></div>`:''}
+      <div id="int-files-list-${pid}">
+        ${files.length===0&&hasCloud?'<div class="empty"><i data-lucide="file"></i><p>אין קבצים</p></div>':''}
+        ${files.map(f=>`<div class="file-item">
+          <div class="file-icon" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')">  ${fileIcon(f.name)}</div>
+          <div style="flex:1;cursor:pointer" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')"><div style="font-size:14px;font-weight:500">${f.name}</div><div style="font-size:11px;color:var(--g400)">${fmtDate(f.created_at)}</div></div>
+          <span class="btn btn-secondary btn-sm" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')"><i data-lucide="eye"></i></span>
+          <button class="btn btn-danger btn-sm" onclick="deleteFile('${f.id}','${f.drive_file_id||''}','${pid}')"><i data-lucide="trash-2"></i></button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  if(window.lucide) lucide.createIcons();
+}
+
 function renderGoals(pid){
   const goals=allGoals.filter(g=>g.patient_id===pid);
   document.getElementById('it-treatment').innerHTML=`
-    <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openGoalForPatient('${pid}')">+ מטרה חדשה</button></div>
+    <div style="margin-bottom:12px;display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary btn-sm" onclick="openSmartAssistant('${pid}')"><i data-lucide="sparkles"></i> עוזר SMART</button>
+      <button class="btn btn-primary btn-sm" onclick="openGoalForPatient('${pid}')">+ מטרה חדשה</button>
+    </div>
     ${goals.length===0?'<div class="empty"><i data-lucide="target"></i><p>אין מטרות טיפוליות עדיין</p></div>':goals.map((g,i)=>`
     <div class="goal-card">
       <div class="goal-header"><span style="font-weight:600">מטרה #${i+1}</span><button class="btn btn-danger btn-sm" onclick="deleteGoal('${g.id}','${pid}')"><i data-lucide="trash-2"></i></button></div>
@@ -2243,7 +3131,8 @@ async function renderAppointments(){
   await loadAll(); populateSelects();
   const tb=document.getElementById('apts-tbody');
   if(allAppointments.length===0){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><i data-lucide="calendar"></i><p>אין פגישות</p></div></td></tr>`;return;}
-  tb.innerHTML=allAppointments.map(a=>{const p=allPatients.find(x=>x.id===a.patient_id);return`<tr>
+  const sorted=[...allAppointments].sort((a,b)=>new Date(a.start_time||0)-new Date(b.start_time||0));
+  tb.innerHTML=sorted.map(a=>{const p=allPatients.find(x=>x.id===a.patient_id);return`<tr>
     <td style="font-weight:600">${a.name||'פגישה'}</td>
     <td>${p?p.name:'-'}</td>
     <td>${a.start_time?fmtDate(a.start_time):'-'}</td>
@@ -2253,15 +3142,216 @@ async function renderAppointments(){
   </tr>`;}).join('');
 }
 
+let naAppType='once';
+let naSeriesSlots=[]; // [{date:Date, timeOverride:string|null}]
+
+const JEWISH_HOLIDAYS={
+  '2025-09-23':'ראש השנה','2025-09-24':'ראש השנה',
+  '2025-10-02':'יום כיפור',
+  '2025-10-07':'סוכות','2025-10-08':'סוכות','2025-10-09':'חול המועד סוכות',
+  '2025-10-10':'חול המועד סוכות','2025-10-11':'חול המועד סוכות','2025-10-12':'חול המועד סוכות',
+  '2025-10-13':'הושענא רבה','2025-10-14':'שמחת תורה',
+  '2025-12-15':'חנוכה','2025-12-16':'חנוכה','2025-12-17':'חנוכה','2025-12-18':'חנוכה',
+  '2025-12-19':'חנוכה','2025-12-20':'חנוכה','2025-12-21':'חנוכה','2025-12-22':'חנוכה',
+  '2026-03-03':'פורים',
+  '2026-04-02':'פסח','2026-04-03':'פסח','2026-04-04':'חול המועד פסח',
+  '2026-04-05':'חול המועד פסח','2026-04-06':'חול המועד פסח','2026-04-07':'חול המועד פסח',
+  '2026-04-08':'שביעי של פסח','2026-04-09':'אחרון של פסח',
+  '2026-04-20':'יום הזיכרון לשואה',
+  '2026-04-28':'יום הזיכרון','2026-04-29':'יום העצמאות',
+  '2026-05-14':'ל"ג בעומר',
+  '2026-05-22':'שבועות','2026-05-23':'שבועות',
+  '2026-09-12':'ראש השנה','2026-09-13':'ראש השנה',
+  '2026-09-21':'יום כיפור',
+  '2026-09-26':'סוכות','2026-09-27':'סוכות',
+  '2026-10-03':'שמחת תורה',
+  '2026-12-05':'חנוכה','2026-12-06':'חנוכה','2026-12-07':'חנוכה','2026-12-08':'חנוכה',
+  '2026-12-09':'חנוכה','2026-12-10':'חנוכה','2026-12-11':'חנוכה','2026-12-12':'חנוכה',
+  '2027-02-19':'פורים',
+  '2027-03-21':'פסח','2027-03-22':'פסח','2027-03-28':'שביעי של פסח',
+  '2027-05-12':'שבועות',
+};
+
+function getJewishHoliday(date){
+  const d=new Date(date);
+  const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return JEWISH_HOLIDAYS[key]||null;
+}
+
+function setAppType(type){
+  naAppType=type;
+  const once=document.getElementById('na-type-once');
+  const series=document.getElementById('na-type-series');
+  if(type==='once'){
+    once.style.background='var(--blue2)';once.style.color='white';once.style.fontWeight='600';
+    series.style.background='white';series.style.color='var(--g500)';series.style.fontWeight='500';
+    document.getElementById('na-series-preview').style.display='none';
+    document.getElementById('na-arrived-wrap').style.display='flex';
+    document.getElementById('na-submit-btn').textContent='צור פגישה';
+    naSeriesSlots=[];
+  } else {
+    series.style.background='var(--blue2)';series.style.color='white';series.style.fontWeight='600';
+    once.style.background='white';once.style.color='var(--g500)';once.style.fontWeight='500';
+    document.getElementById('na-series-preview').style.display='block';
+    document.getElementById('na-arrived-wrap').style.display='none';
+    naInitSlots();
+  }
+  lucide.createIcons();
+}
+
+function naOnStartChange(){
+  const startVal=document.getElementById('na-start').value;
+  const endEl=document.getElementById('na-end');
+  if(startVal&&!endEl.value){
+    const endDt=new Date(startVal);
+    endDt.setHours(endDt.getHours()+1);
+    // format as datetime-local value (YYYY-MM-DDTHH:MM)
+    const pad=n=>String(n).padStart(2,'0');
+    endEl.value=`${endDt.getFullYear()}-${pad(endDt.getMonth()+1)}-${pad(endDt.getDate())}T${pad(endDt.getHours())}:${pad(endDt.getMinutes())}`;
+  }
+  if(naAppType==='series')naInitSlots();
+}
+
+function naInitSlots(){
+  const startVal=document.getElementById('na-start').value;
+  if(!startVal){naSeriesSlots=[];updateSeriesPreview();return;}
+  const base=new Date(startVal);
+  naSeriesSlots=[0,7,14,21].map(d=>{const dt=new Date(base);dt.setDate(dt.getDate()+d);return{date:dt,timeOverride:null};});
+  updateSeriesPreview();
+}
+
+function naSlotGetStart(slot){
+  const d=new Date(slot.date);
+  if(slot.timeOverride){const[h,m]=slot.timeOverride.split(':').map(Number);d.setHours(h,m,0,0);}
+  return d;
+}
+
+function naDurMs(){
+  const s=document.getElementById('na-start').value;
+  const e=document.getElementById('na-end').value;
+  if(s&&e){const dur=new Date(e)-new Date(s);if(dur>0)return dur;}
+  return 60*60*1000;
+}
+
+function naSlotHasConflict(slot){
+  const slotStart=naSlotGetStart(slot);
+  const slotEnd=new Date(slotStart.getTime()+naDurMs());
+  return (allAppointments||[]).some(a=>{
+    if(!a.start_time)return false;
+    const aStart=new Date(a.start_time);
+    const aEnd=a.end_time?new Date(a.end_time):new Date(aStart.getTime()+60*60*1000);
+    return aStart<slotEnd&&aEnd>slotStart;
+  });
+}
+
+function naRemoveSlot(idx){
+  naSeriesSlots.splice(idx,1);
+  updateSeriesPreview();
+}
+
+function naAddSlot(){
+  if(naSeriesSlots.length===0)return;
+  const last=naSeriesSlots[naSeriesSlots.length-1];
+  const newDate=new Date(last.date);
+  newDate.setDate(newDate.getDate()+7);
+  naSeriesSlots.push({date:newDate,timeOverride:null});
+  updateSeriesPreview();
+}
+
+function naSlotTimeChange(idx,val){
+  naSeriesSlots[idx].timeOverride=val||null;
+  updateSeriesPreview();
+}
+
+function updateSeriesPreview(){
+  const datesEl=document.getElementById('na-series-dates');
+  const countEl=document.getElementById('na-series-count');
+  const submitBtn=document.getElementById('na-submit-btn');
+  if(naSeriesSlots.length===0){
+    datesEl.innerHTML='<div style="font-size:12px;color:var(--g400)">הכנס תחילת פגישה לצפייה בתאריכים</div>';
+    if(countEl)countEl.textContent='0';
+    if(submitBtn&&naAppType==='series')submitBtn.textContent='צור פגישות';
+    return;
+  }
+  const dayNames=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  datesEl.innerHTML=naSeriesSlots.map((slot,i)=>{
+    const slotStart=naSlotGetStart(slot);
+    const conflict=naSlotHasConflict(slot);
+    const dateStr=slotStart.toLocaleDateString('he-IL',{day:'numeric',month:'long'});
+    const dayStr=dayNames[slotStart.getDay()];
+    const holiday=getJewishHoliday(slotStart);
+    const h=String(slotStart.getHours()).padStart(2,'0');
+    const m=String(slotStart.getMinutes()).padStart(2,'0');
+    const timeInputVal=slot.timeOverride||`${h}:${m}`;
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:7px;background:${conflict?'#fef3c7':'white'};border:1px solid ${conflict?'#d97706':'var(--g200)'};">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;color:var(--g700);display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+          <span style="font-weight:700;color:var(--blue2);">שבוע ${i+1}</span>
+          <span style="color:var(--g500);">יום ${dayStr} ${dateStr}</span>
+          ${holiday?`<span style="font-size:11px;font-weight:700;background:#fef9c3;color:#92400e;padding:1px 7px;border-radius:4px;">🗓 ${holiday}</span>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:5px;">
+          <input type="time" value="${timeInputVal}" onchange="naSlotTimeChange(${i},this.value)" style="font-size:13px;border:1px solid ${conflict?'#d97706':'var(--g200)'};border-radius:5px;padding:3px 7px;background:white;font-family:inherit;color:var(--g800);" dir="ltr">
+          ${conflict
+            ?`<span style="font-size:11px;font-weight:700;color:#b45309;">⚠️ התנגשות — שנה את השעה</span>`
+            :`<span style="font-size:11px;color:var(--green);font-weight:600;">✓ פנוי</span>`}
+        </div>
+      </div>
+      <button type="button" onclick="naRemoveSlot(${i})" title="הסר פגישה" style="flex-shrink:0;margin-top:2px;width:22px;height:22px;border:1px solid var(--g200);border-radius:5px;background:white;cursor:pointer;font-size:15px;color:var(--g400);line-height:1;padding:0;" onmouseover="this.style.background='#fee2e2';this.style.color='#ef4444'" onmouseout="this.style.background='white';this.style.color='var(--g400)'">×</button>
+    </div>`;
+  }).join('');
+  if(countEl)countEl.textContent=naSeriesSlots.length;
+  if(submitBtn&&naAppType==='series')submitBtn.textContent=`צור ${naSeriesSlots.length} פגישות`;
+}
+
 async function createAppointment(){
   const patId=document.getElementById('na-patient').value;
-  const body={name:document.getElementById('na-name').value,patient_id:patId||null,start_time:localInputToISO(document.getElementById('na-start').value),end_time:localInputToISO(document.getElementById('na-end').value),price:parseFloat(document.getElementById('na-price').value)||0,arrived:document.getElementById('na-arrived').checked,description:document.getElementById('na-desc').value};
-  const r=await sbInsert('appointments',body);
-  if(r.error) return toast('שגיאה: '+r.error,'error');
-  toast('פגישה נוצרה <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-appointment');
-  ['na-name','na-start','na-end','na-price','na-desc'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('na-arrived').checked=false;
-  await loadAll(); if(currentPatientId&&patId===currentPatientId) renderPatientAppointments(currentPatientId);
+  const startVal=document.getElementById('na-start').value;
+  const endVal=document.getElementById('na-end').value;
+  const name=document.getElementById('na-name').value;
+  const price=parseFloat(document.getElementById('na-price').value)||0;
+  const desc=document.getElementById('na-desc').value;
+
+  function resetForm(){
+    ['na-name','na-start','na-end','na-price','na-desc'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('na-arrived').checked=false;
+    naSeriesSlots=[];
+    naAppType='once'; setAppType('once');
+  }
+
+  if(naAppType==='series'){
+    if(naSeriesSlots.length===0) return toast('יש לבחור תאריך ושעה','error');
+    const conflictCount=naSeriesSlots.filter(s=>naSlotHasConflict(s)).length;
+    if(conflictCount>0){
+      if(!confirm(`${conflictCount} פגישות עם התנגשות עם פגישה קיימת.\nהאם להמשיך וליצור בכל זאת?`)) return;
+    }
+    const durMs=naDurMs();
+    const btn=document.getElementById('na-submit-btn');
+    btn.disabled=true; btn.textContent='יוצר...';
+    const total=naSeriesSlots.length;
+    const rows=naSeriesSlots.map((slot,i)=>{
+      const slotStart=naSlotGetStart(slot);
+      const slotEnd=new Date(slotStart.getTime()+durMs);
+      return {name:name||`פגישה ${i+1} מ-${total}`,patient_id:patId||null,start_time:slotStart.toISOString(),end_time:slotEnd.toISOString(),price,arrived:false,description:desc||null};
+    });
+    const r=await sbAdminInsert('appointments',rows);
+    btn.disabled=false; btn.textContent=`צור ${total} פגישות`;
+    if(r.error){
+      const msg=typeof r.error==='string'?r.error:JSON.stringify(r.error);
+      alert('שגיאה ביצירת סדרה:\n\n'+msg);
+    } else {
+      const created=Array.isArray(r.data)?r.data.length:0;
+      toast(`סדרה נוצרה! ${created} פגישות נרשמו ✓`,'success');
+      closeModal('modal-new-appointment'); resetForm();
+    }
+  } else {
+    const body={name,patient_id:patId||null,start_time:localInputToISO(startVal),end_time:localInputToISO(endVal),price,arrived:document.getElementById('na-arrived').checked,description:desc};
+    const r=await sbInsert('appointments',body);
+    if(r.error) return toast('שגיאה: '+r.error,'error');
+    toast('פגישה נוצרה ✓','success'); closeModal('modal-new-appointment'); resetForm();
+  }
+  await loadAll();
+  if(currentPatientId&&patId===currentPatientId) renderPatientAppointments(currentPatientId);
   renderCalendar('calendar-grid','cal-month-title'); renderDiaryCalendar();
 }
 
@@ -2287,12 +3377,12 @@ function renderTasksTable(){
   if(taskFilter==='done') tasks=allTasks.filter(t=>t.done);
   const tb=document.getElementById('tasks-tbody');
   if(tasks.length===0){tb.innerHTML=`<tr><td colspan="5"><div class="empty"><p>אין משימות</p></div></td></tr>`;return;}
-  tb.innerHTML=tasks.map(t=>{const d=t.due_date?new Date(t.due_date):null;const isOverdue=d&&d<today&&!t.done;return`<tr>
+  tb.innerHTML=tasks.map(t=>{const d=t.due_date?new Date(t.due_date):null;const isOverdue=d&&d<today&&!t.done;return`<tr onclick="openEditTask('${t.id}')" style="cursor:pointer">
     <td style="font-weight:600;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</td>
     <td style="color:var(--g500)">${t.detail||'-'}</td>
     <td>${d?fmtDateStr(t.due_date):'-'}</td>
     <td><span class="badge ${t.done?'badge-green':isOverdue?'badge-red':'badge-amber'}">${t.done?'בוצע':isOverdue?'באיחור':'ממתין'}</span></td>
-    <td style="display:flex;gap:6px"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px"><button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')"><i data-lucide="trash-2"></i></button></td>
+    <td style="display:flex;gap:6px" onclick="event.stopPropagation()"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px"><button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')"><i data-lucide="trash-2"></i></button></td>
   </tr>`;}).join('');
 }
 
@@ -2371,8 +3461,8 @@ function openEditApt(id){
   document.getElementById('ea-arrived').checked=a.arrived||false;
   let notes='',sup='';
   try{const parsed=JSON.parse(a.description||'{}');notes=parsed.notes||'';sup=parsed.sup||'';}catch{notes=a.description||'';}
-  document.getElementById('ea-desc').value=notes;
-  document.getElementById('ea-supervisor').value=sup;
+  document.getElementById('ea-desc').innerHTML=notes;
+  document.getElementById('ea-supervisor').innerHTML=sup;
   const hasCloud=!!cloudName&&!!cloudPreset;
   document.getElementById('ea-upload-label').style.display=hasCloud?'':'none';
   openModal('modal-edit-appointment');
@@ -2382,8 +3472,8 @@ function openEditApt(id){
 }
 async function saveEditApt(){
   if(!editAptId) return;
-  const notes=document.getElementById('ea-desc').value;
-  const sup=document.getElementById('ea-supervisor').value;
+  const notes=document.getElementById('ea-desc').innerHTML;
+  const sup=document.getElementById('ea-supervisor').innerHTML;
   const description=sup?JSON.stringify({notes,sup}):notes;
   const body={name:document.getElementById('ea-name').value,patient_id:document.getElementById('ea-patient').value||null,start_time:localInputToISO(document.getElementById('ea-start').value),end_time:localInputToISO(document.getElementById('ea-end').value),price:parseFloat(document.getElementById('ea-price').value)||0,arrived:document.getElementById('ea-arrived').checked,description};
   const r=await sbUpdate('appointments',editAptId,body);
@@ -2496,30 +3586,118 @@ async function deletePayment(payId,pid){
 }
 
 // === NOTES ===
-function openNoteForPatient(pid){ currentPayPatientId=pid; openModal('modal-new-note'); }
-async function createNote(){
-  const base={patient_id:currentPayPatientId,title:document.getElementById('nn-title').value,content:document.getElementById('nn-content').value,note_type:document.getElementById('nn-type').value};
-  let r=await sbAdminInsert('notes',{...base,user_id:currentUser?.id||null});
-  if(r.error) r=await sbAdminInsert('notes',base); // fallback: column may not exist yet
-  if(r.error) return toast('שגיאה: '+r.error,'error');
-  toast('הערה נוצרה <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-note');
+function openNoteForPatient(pid){
+  currentPayPatientId=pid;
+  document.getElementById('nn-note-id').value='';
+  document.getElementById('nn-modal-title').innerHTML='<i data-lucide="plus-circle"></i> עדכון חדש';
+  document.getElementById('nn-submit-btn').textContent='הוסף עדכון';
   ['nn-title','nn-content'].forEach(id=>document.getElementById(id).value='');
-  await loadAll(); renderPatientNotes(currentPayPatientId);
+  document.getElementById('nn-type').value='general';
+  openModal('modal-new-note');
+  if(window.lucide) lucide.createIcons();
+}
+function openNoteEdit(noteId, pid){
+  currentPayPatientId=pid;
+  const n=allNotes.find(x=>x.id===noteId); if(!n) return;
+  document.getElementById('nn-note-id').value=noteId;
+  document.getElementById('nn-modal-title').innerHTML='<i data-lucide="pencil"></i> עריכת עדכון';
+  document.getElementById('nn-submit-btn').textContent='שמור שינויים';
+  document.getElementById('nn-title').value=n.title||'';
+  document.getElementById('nn-content').value=n.content||'';
+  document.getElementById('nn-type').value=n.note_type||'general';
+  openModal('modal-new-note');
+  if(window.lucide) lucide.createIcons();
+}
+async function saveNoteModal(){
+  const noteId=document.getElementById('nn-note-id').value;
+  const title=document.getElementById('nn-title').value;
+  const content=document.getElementById('nn-content').value;
+  const note_type=document.getElementById('nn-type').value;
+  if(noteId){
+    const r=await sbUpdate('notes',noteId,{title,content,note_type});
+    if(r.error) return toast('שגיאה: '+r.error,'error');
+    toast('עדכון נשמר <i data-lucide="check-circle"></i>','success');
+    allNotes=allNotes.map(n=>n.id===noteId?{...n,title,content,note_type}:n);
+  } else {
+    const base={patient_id:currentPayPatientId,title,content,note_type};
+    let r=await sbAdminInsert('notes',{...base,user_id:currentUser?.id||null});
+    if(r.error) r=await sbAdminInsert('notes',base);
+    if(r.error) return toast('שגיאה: '+r.error,'error');
+    toast('עדכון נוצר <i data-lucide="check-circle"></i>','success');
+    await loadAll();
+  }
+  closeModal('modal-new-note');
+  renderPatientNotes(currentPayPatientId);
 }
 
 // === OBSERVATIONS ===
-function openObsForPatient(pid){ currentPayPatientId=pid; openModal('modal-new-obs'); }
+let currentObsId=null;
+function _fillObsModal(pid, d=null){
+  const patient=allPatients.find(p=>p.id===pid);
+  const inst=allInstitutions.find(i=>i.id===patient?.institution_id);
+  const cls=allClasses.find(c=>c.id===patient?.class_id);
+  const info=document.getElementById('no-patient-info');
+  if(info) info.textContent=`שם: ${patient?.name||'—'}${cls?' | כיתה: '+cls.name:''}${inst?' | מוסד: '+inst.name:''}`;
+  document.getElementById('no-teacher').value=d?.teacher||'';
+  document.getElementById('no-lesson').value=d?.lesson||'';
+  document.getElementById('no-summary').value=d?.summary||'';
+  document.getElementById('no-date').value=d?.obs_date?d.obs_date.split('T')[0]:'';
+  document.getElementById('no-time').value=d?.obs_time||'';
+  for(let i=1;i<=5;i++){
+    const row=d?.rows?.[i-1]||{};
+    ['c','b','o','n'].forEach(f=>{const el=document.getElementById('no-'+f+i);if(el)el.value=row[f]||'';});
+  }
+}
+function openObsForPatient(pid){
+  currentPayPatientId=pid; currentObsId=null;
+  const title=document.getElementById('obs-modal-title');
+  if(title) title.innerHTML='<i data-lucide="plus-circle"></i> טופס תצפית חדשה – ABC';
+  _fillObsModal(pid);
+  openModal('modal-new-obs');
+  if(window.lucide) lucide.createIcons();
+}
+function editObs(id, pid){
+  const o=allObservations.find(x=>x.id===id);
+  if(!o) return;
+  let d=null;
+  try{if(o.circumstance&&o.circumstance.trim().startsWith('{'))d=JSON.parse(o.circumstance);}catch(e){}
+  currentPayPatientId=pid; currentObsId=id;
+  const title=document.getElementById('obs-modal-title');
+  if(title) title.innerHTML='<i data-lucide="pencil"></i> עריכת תצפית – ABC';
+  _fillObsModal(pid, {...(d||{}), obs_date:o.obs_date});
+  openModal('modal-new-obs');
+  if(window.lucide) lucide.createIcons();
+}
 async function createObservation(){
-  const r=await sbAdminInsert('observations',{patient_id:currentPayPatientId,obs_date:document.getElementById('no-date').value||null,circumstance:document.getElementById('no-circumstance').value,behavior:document.getElementById('no-behavior').value,outcome:document.getElementById('no-outcome').value,notes:document.getElementById('no-notes').value});
+  const rows=[];
+  for(let i=1;i<=5;i++) rows.push({c:document.getElementById('no-c'+i)?.value||'',b:document.getElementById('no-b'+i)?.value||'',o:document.getElementById('no-o'+i)?.value||'',n:document.getElementById('no-n'+i)?.value||''});
+  const data={v:2,teacher:document.getElementById('no-teacher').value||'',lesson:document.getElementById('no-lesson').value||'',obs_time:document.getElementById('no-time').value||'',rows,summary:document.getElementById('no-summary').value||''};
+  const dateVal=document.getElementById('no-date').value;
+  const timeVal=document.getElementById('no-time').value;
+  const obs_date=dateVal?(dateVal+(timeVal?'T'+timeVal:'')):null;
+  let r;
+  if(currentObsId){
+    r=await sbUpdate('observations',currentObsId,{obs_date,circumstance:JSON.stringify(data),behavior:'',outcome:'',notes:''});
+  } else {
+    r=await sbAdminInsert('observations',{patient_id:currentPayPatientId,obs_date,circumstance:JSON.stringify(data),behavior:'',outcome:'',notes:''});
+  }
   if(r.error) return toast('שגיאה','error');
-  toast('תצפית נוצרה <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-obs');
-  ['no-date','no-circumstance','no-behavior','no-outcome','no-notes'].forEach(id=>document.getElementById(id).value='');
+  toast(currentObsId?'תצפית עודכנה <i data-lucide="check-circle"></i>':'תצפית נוצרה <i data-lucide="check-circle"></i>','success');
+  closeModal('modal-new-obs');
+  currentObsId=null;
   await loadAll(); renderObservations(currentPayPatientId);
 }
 async function deleteObs(id,pid){ if(!confirm('למחוק?')) return; await sbDelete('observations',id); await loadAll(); renderObservations(pid); }
 
 // === GOALS ===
-function openGoalForPatient(pid){ currentPayPatientId=pid; openModal('modal-new-goal'); }
+function openGoalForPatient(pid,prefillText){
+  currentPayPatientId=pid;
+  openModal('modal-new-goal');
+  if(prefillText){
+    const el=document.getElementById('ng-bhv');
+    if(el) el.value=prefillText;
+  }
+}
 async function createGoal(){
   const r=await sbAdminInsert('treatment_goals',{patient_id:currentPayPatientId,description:document.getElementById('ng-desc').value,functional_analysis:document.getElementById('ng-func').value,hypothesis:document.getElementById('ng-hypo').value,target:document.getElementById('ng-target').value,behavioral_goal:document.getElementById('ng-bhv').value,path:document.getElementById('ng-path').value,short_reinforcement:document.getElementById('ng-short').value,long_reinforcement:document.getElementById('ng-long').value,responses:document.getElementById('ng-resp').value});
   if(r.error) return toast('שגיאה','error');
@@ -2550,6 +3728,44 @@ async function createClass(){
   await loadAll(); populateSelects(); renderClassFilter();
 }
 
+// === VIEW AS USER ===
+async function populateViewAsSelect(){
+  const container=document.getElementById('view-as-container');
+  if(!container) return;
+  container.style.display='flex';
+  const r=await sbAdmin('user_profiles','?select=id,display_name,role&order=display_name');
+  const users=(r.data||[]).filter(u=>u.role!=='admin'&&u.id!==currentUser?.id);
+  const sel=document.getElementById('view-as-select');
+  sel.innerHTML='<option value="">עצמי (מנהל)</option>'+users.map(u=>`<option value="${u.id}">${u.display_name||u.id}</option>`).join('');
+}
+
+async function setViewAs(uid){
+  const banner=document.getElementById('impersonate-banner');
+  if(!uid){
+    viewAsUserId=null; viewAsPermissions=null;
+    isAdmin=true;
+    banner.style.display='none';
+    document.getElementById('view-as-select').value='';
+    setupUIForRole();
+    showView('dashboard');
+  } else {
+    viewAsUserId=uid;
+    const [ap,ai,profiles]=await Promise.all([
+      sbAdmin('user_patients',`?user_id=eq.${uid}&select=patient_id`),
+      sbAdmin('user_institutions',`?user_id=eq.${uid}&select=institution_id`),
+      sbAdmin('user_profiles',`?id=eq.${uid}&select=display_name`)
+    ]);
+    viewAsPermissions={patients:(ap.data||[]).map(x=>x.patient_id),institutions:(ai.data||[]).map(x=>x.institution_id)};
+    const name=(profiles.data||[])[0]?.display_name||uid;
+    document.getElementById('impersonate-name').textContent=name;
+    banner.style.display='flex';
+    isAdmin=false;
+    setupUIForRole();
+    await loadAll();
+    showView('user-dashboard');
+  }
+}
+
 // === SETTINGS ===
 function loadSettings(){
   const k=document.getElementById('settings-ejs-key'); if(k) k.value=ejsPublicKey;
@@ -2557,10 +3773,15 @@ function loadSettings(){
   const t=document.getElementById('settings-ejs-template'); if(t) t.value=ejsTemplateId;
   const cn=document.getElementById('settings-cloud-name'); if(cn) cn.value=cloudName;
   const cp=document.getElementById('settings-cloud-preset'); if(cp) cp.value=cloudPreset;
+  const gk=document.getElementById('settings-gemini-key'); if(gk) gk.value=geminiKey;
+  const am=document.getElementById('settings-ai-model'); if(am) am.value=aiModel;
   const es=document.getElementById('email-settings-status');
   if(es) es.innerHTML=ejsPublicKey?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> EmailJS מוגדר</span>':'';
   const cs=document.getElementById('cloud-settings-status');
   if(cs) cs.innerHTML=cloudName?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> Cloudinary מוגדר</span>':'';
+  const gs=document.getElementById('gemini-settings-status');
+  if(gs) gs.innerHTML=geminiKey?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> Gemini מוגדר</span>':'';
+  updateGmailStatus();
 }
 
 function saveEmailSettings(){
@@ -2585,9 +3806,336 @@ function saveCloudinarySettings(){
   toast('הגדרות קבצים נשמרו <i data-lucide="check-circle"></i>','success');
 }
 
+function saveGeminiSettings(){
+  const k=document.getElementById('settings-gemini-key').value.trim();
+  if(!k) return toast('נא להזין Gemini API Key','error');
+  geminiKey=k;
+  localStorage.setItem('gemini_key',k);
+  const m=(document.getElementById('settings-ai-model').value.trim())||'gemini-2.0-flash';
+  aiModel=m; localStorage.setItem('ai_model',m);
+  document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> Gemini נשמר ('+m+')</span>';
+  toast('הגדרות Gemini נשמרו <i data-lucide="check-circle"></i>','success');
+}
+
+// === GMAIL API ===
+function isGmailReady(){ return !!(gmailToken && Date.now()<gmailTokenExpiry); }
+
+function initGoogleAuth(){
+  if(!googleClientId){ updateGmailStatus(); return; }
+  if(!window.google?.accounts?.oauth2){ setTimeout(initGoogleAuth,400); return; }
+  gmailTokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:googleClientId,
+    scope:'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly',
+    callback:async(resp)=>{
+      if(resp.error){ toast('שגיאת חיבור Google: '+resp.error,'error'); return; }
+      gmailToken=resp.access_token;
+      gmailTokenExpiry=Date.now()+(resp.expires_in*1000);
+      try{
+        const u=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{'Authorization':'Bearer '+gmailToken}});
+        const d=await u.json(); gmailUser=d.email||'';
+        localStorage.setItem('gmail_user',gmailUser);
+      }catch(e){}
+      updateGmailStatus();
+      toast('Gmail מחובר: '+gmailUser,'success');
+    }
+  });
+  updateGmailStatus();
+}
+
+function saveGoogleClientId(){
+  const id=document.getElementById('settings-google-client-id').value.trim();
+  if(!id) return toast('נא להזין Google Client ID','error');
+  googleClientId=id; localStorage.setItem('google_client_id',id);
+  toast('Client ID נשמר','success');
+  gmailTokenClient=null; initGoogleAuth();
+}
+
+function connectGmail(){
+  if(!gmailTokenClient) return toast('נא לשמור Client ID תחילה','error');
+  gmailTokenClient.requestAccessToken();
+}
+
+function disconnectGmail(){
+  if(gmailToken) try{ google.accounts.oauth2.revoke(gmailToken,()=>{}); }catch(e){}
+  gmailToken=null; gmailTokenExpiry=0; gmailUser='';
+  localStorage.removeItem('gmail_user');
+  updateGmailStatus();
+  toast('Gmail התנתק','success');
+}
+
+function updateGmailStatus(){
+  const cBtn=document.getElementById('gmail-connect-btn');
+  const dBtn=document.getElementById('gmail-disconnect-btn');
+  const status=document.getElementById('gmail-settings-status');
+  const inp=document.getElementById('settings-google-client-id');
+  if(inp&&googleClientId) inp.value=googleClientId;
+  if(!cBtn||!status) return;
+  const ok=isGmailReady();
+  cBtn.style.display=(googleClientId&&!ok)?'':'none';
+  dBtn.style.display=ok?'':'none';
+  if(ok) status.innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> מחובר: '+gmailUser+'</span>';
+  else if(googleClientId) status.innerHTML='<span style="color:var(--g400)">Client ID נשמר — לחץ "התחבר לGmail"</span>';
+  else status.innerHTML='';
+  lucide.createIcons();
+}
+
+function makeRFC2822(to,subject,bodyHtml,opts={}){
+  const enc=s=>btoa(unescape(encodeURIComponent(s)));
+  const lines=[
+    'To: '+to,
+    'From: '+gmailUser,
+    'Subject: =?utf-8?B?'+enc(subject)+'?=',
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=utf-8',
+  ];
+  if(opts.inReplyTo) lines.push('In-Reply-To: '+opts.inReplyTo);
+  if(opts.references) lines.push('References: '+opts.references);
+  lines.push('',''+bodyHtml);
+  return btoa(unescape(encodeURIComponent(lines.join('\r\n')))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+async function sendViaGmailAPI(to,subject,bodyHtml,opts={}){
+  const body={raw:makeRFC2822(to,subject,bodyHtml,opts)};
+  if(opts.threadId) body.threadId=opts.threadId;
+  const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+gmailToken,'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok){ const e=await r.json(); throw new Error(e.error?.message||'Gmail send failed'); }
+}
+
+async function loadPatientInbox(pid){
+  if(!isGmailReady()){
+    if(googleClientId){ connectGmail(); return; }
+    return toast('נא לחבר Gmail בהגדרות','error');
+  }
+  const p=allPatients.find(x=>x.id===pid);
+  const listEl=document.getElementById('email-inbox-list');
+  if(!listEl) return;
+  listEl.innerHTML='<div style="text-align:center;padding:20px;color:var(--g400)"><i data-lucide="loader"></i> טוען...</div>';
+  lucide.createIcons();
+  try{
+    const q=p&&p.email?'{from:'+p.email+' to:'+p.email+'}':'';
+    const url='https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=20&orderBy=last_message_date'+(q?'&q='+encodeURIComponent(q):'');
+    const r=await fetch(url,{headers:{'Authorization':'Bearer '+gmailToken}});
+    if(!r.ok) throw new Error('שגיאה בטעינת תיבת הדואר');
+    const data=await r.json();
+    const threads=data.threads||[];
+    if(!threads.length){
+      listEl.innerHTML='<div class="empty"><i data-lucide="inbox"></i><p>אין שיחות'+(p&&p.email?' עם '+p.email:'')+'</p></div>';
+      lucide.createIcons(); return;
+    }
+    const details=await Promise.all(threads.slice(0,12).map(t=>
+      fetch('https://gmail.googleapis.com/gmail/v1/users/me/threads/'+t.id+'?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Subject&metadataHeaders=Date',
+        {headers:{'Authorization':'Bearer '+gmailToken}}).then(r=>r.json())
+    ));
+    listEl.innerHTML=details.map(thread=>{
+      const msgs=thread.messages||[];
+      const last=msgs[msgs.length-1];
+      const hh=last?.payload?.headers||[];
+      const gh=n=>hh.find(h=>h.name===n)?.value||'';
+      const d=gh('Date'); const ds=d?new Date(d).toLocaleDateString('he-IL'):'';
+      const count=msgs.length;
+      return `<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openGmailThread('${thread.id}','${pid}')">
+        <div class="card-header" style="padding:10px 16px">
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600">${gh('Subject')||'(ללא נושא)'}${count>1?` <span style="font-size:12px;color:var(--g400);font-weight:400">(${count})</span>`:''}</div>
+            <div style="font-size:12px;color:var(--g400)">${gh('From')||gh('To')} · ${ds}</div>
+          </div>
+          <i data-lucide="chevron-left" style="color:var(--g300)"></i>
+        </div>
+        <div style="padding:8px 16px;font-size:13px;color:var(--g500)">${last?.snippet||''}</div>
+      </div>`;
+    }).join('');
+    lucide.createIcons();
+  }catch(e){
+    listEl.innerHTML='<div class="empty"><i data-lucide="alert-circle"></i><p>'+e.message+'</p></div>';
+    lucide.createIcons();
+  }
+}
+
+let gmailThreadState={threadId:null,to:'',subject:'',lastMsgId:''};
+
+function extractBody(payload){
+  let body='';
+  function ex(part){
+    if(part.mimeType==='text/html'&&part.body?.data){
+      try{ body=decodeURIComponent(escape(atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'))));}catch(e){}
+    } else if(part.mimeType==='text/plain'&&!body&&part.body?.data){
+      try{ body='<pre style="white-space:pre-wrap;font-family:inherit">'+decodeURIComponent(escape(atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'))))+'</pre>';}catch(e){}
+    }
+    if(part.parts) part.parts.forEach(ex);
+  }
+  ex(payload);
+  if(!body&&payload?.body?.data){
+    try{ body=decodeURIComponent(escape(atob(payload.body.data.replace(/-/g,'+').replace(/_/g,'/'))));}catch(e){}
+  }
+  return body||'<em style="color:var(--g400)">תוכן לא זמין</em>';
+}
+
+async function openGmailThread(threadId, pid){
+  if(!isGmailReady()) return;
+  const messagesEl=document.getElementById('gmail-thread-messages');
+  messagesEl.innerHTML='<div style="text-align:center;padding:30px;color:var(--g400)"><i data-lucide="loader"></i> טוען שרשור...</div>';
+  openModal('modal-gmail-view'); lucide.createIcons();
+  try{
+    const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/threads/'+threadId+'?format=full',
+      {headers:{'Authorization':'Bearer '+gmailToken}});
+    const thread=await r.json();
+    const msgs=thread.messages||[];
+    if(!msgs.length){ messagesEl.innerHTML='<em>אין הודעות</em>'; return; }
+
+    const firstHh=msgs[0].payload?.headers||[];
+    const firstGh=n=>firstHh.find(h=>h.name===n)?.value||'';
+    document.getElementById('gmail-view-subject').textContent=firstGh('Subject')||'(ללא נושא)';
+
+    const lastMsg=msgs[msgs.length-1];
+    const lastHh=lastMsg.payload?.headers||[];
+    const lastGh=n=>lastHh.find(h=>h.name===n)?.value||'';
+    const replyTo=lastGh('Reply-To')||lastGh('From');
+    const lastMsgId=lastGh('Message-ID');
+    const refs=lastGh('References');
+    gmailThreadState={threadId,to:replyTo,subject:'Re: '+firstGh('Subject'),lastMsgId,references:(refs?refs+' ':'')+lastMsgId};
+
+    messagesEl.innerHTML=msgs.map((msg,i)=>{
+      const hh=msg.payload?.headers||[];
+      const gh=n=>hh.find(h=>h.name===n)?.value||'';
+      const d=gh('Date'); const ds=d?new Date(d).toLocaleString('he-IL'):'';
+      const fromMe=gmailUser&&gh('From').toLowerCase().includes(gmailUser.toLowerCase());
+      const body=extractBody(msg.payload);
+      const isLast=i===msgs.length-1;
+      const headerBg=fromMe?'#E6F1FB':'#F8FAFC';
+      const borderCol=isLast?(fromMe?'#185FA5':'#1D9E75'):'#E2E8F0';
+      const label=fromMe
+        ?`<span style="color:#185FA5;font-weight:700">↑ שלחתי</span>`
+        :`<span style="color:#1D9E75;font-weight:700">↓ קיבלתי</span>`;
+      return `<div style="border:2px solid ${borderCol};border-radius:10px;overflow:hidden;${isLast?'box-shadow:0 2px 8px rgba(0,0,0,.1)':''}">
+        <div style="padding:10px 14px;background:${headerBg};display:flex;justify-content:space-between;align-items:center;font-size:13px;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px;min-width:0">
+            ${label}
+            <span style="color:#64748B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fromMe?'→ '+gh('To'):gh('From')}</span>
+          </div>
+          <span style="color:#94A3B8;font-size:12px;white-space:nowrap;flex-shrink:0">${ds}</span>
+        </div>
+        <div style="padding:14px;font-size:14px;line-height:1.7;overflow-x:auto;background:white">${body}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('gmail-reply-body').innerHTML='';
+    lucide.createIcons();
+  }catch(e){ toast('שגיאה בטעינת שרשור: '+e.message,'error'); closeModal('modal-gmail-view'); }
+}
+
+async function sendThreadReply(){
+  if(!isGmailReady()) return toast('Gmail לא מחובר','error');
+  const bodyEl=document.getElementById('gmail-reply-body');
+  const bodyHtml=bodyEl.innerHTML.trim();
+  if(!bodyHtml||bodyHtml==='<br>') return toast('נא לכתוב תשובה','error');
+  const {threadId,to,subject,lastMsgId,references}=gmailThreadState;
+  if(!threadId||!to) return toast('שגיאה: מצב שרשור חסר','error');
+  try{
+    await sendViaGmailAPI(to,subject,bodyHtml,{threadId,inReplyTo:lastMsgId,references});
+    toast('תשובה נשלחה','success');
+    bodyEl.innerHTML='';
+    await openGmailThread(threadId);
+  }catch(e){ toast('שגיאה בשליחה: '+e.message,'error'); }
+}
+
+async function openGmailMessage(msgId){
+  if(!isGmailReady()) return;
+  try{
+    const r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+msgId+'?format=full',
+      {headers:{'Authorization':'Bearer '+gmailToken}});
+    const msg=await r.json();
+    if(msg.threadId) return openGmailThread(msg.threadId);
+  }catch(e){ toast('שגיאה בטעינת מייל: '+e.message,'error'); }
+}
+
+// === GEMINI SMART ===
+let smartCurrentPid=null;
+
+function openSmartAssistant(pid){
+  smartCurrentPid=pid;
+  ['smart-behavior','smart-context','smart-desired','smart-strength'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('smart-result').style.display='none';
+  document.getElementById('smart-loading').style.display='none';
+  openModal('modal-smart');
+}
+
+async function callGeminiSMART(){
+  if(!geminiKey) return toast('נא להגדיר Gemini API Key בהגדרות','error');
+  const behavior=document.getElementById('smart-behavior').value.trim();
+  const context=document.getElementById('smart-context').value.trim();
+  const desired=document.getElementById('smart-desired').value.trim();
+  const strength=document.getElementById('smart-strength').value.trim();
+  if(!behavior||!desired) return toast('נא למלא לפחות תיאור ההתנהגות והרצוי','error');
+
+  document.getElementById('smart-btn').disabled=true;
+  document.getElementById('smart-loading').style.display='block';
+  document.getElementById('smart-result').style.display='none';
+
+  const prompt=`אתה מומחה לניתוח התנהגותי יישומי (ABA) ועוזר לנסח מטרות התנהגותיות לפי מתכונת SMART.
+נסח מטרה התנהגותית אחת ברורה ומלאה בעברית לפי המידע הבא:
+
+התנהגות בעייתית: ${behavior}
+הקשר/מצב: ${context||'לא צוין'}
+התנהגות חלופית רצויה: ${desired}
+${strength?'חוזקות/משאבים: '+strength:''}
+
+אנא נסח מטרה SMART אחת שכוללת:
+• S – Specific (ספציפי): מה בדיוק הילד יעשה
+• M – Measurable (מדיד): כיצד נמדוד הצלחה
+• A – Achievable (ישים): שיהיה ריאלי
+• R – Relevant (רלוונטי): קשור לצורך הילד
+• T – Time-bound (מוגבל בזמן): מסגרת זמן ברורה
+
+לאחר המטרה, הוסף:
+- עצה אחת קצרה לחיזוק ההצלחה
+- נוסח קצר לרישום ב"מטרה התנהגותית" בכרטיס הטיפול
+
+כתוב בעברית בלבד, קצר וברור.`;
+
+  try{
+    const model=aiModel||'gemini-2.0-flash';
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,maxOutputTokens:800}})
+    });
+    if(!r.ok){
+      const e=await r.json();
+      throw new Error(e.error?.message||'שגיאה מה-API');
+    }
+    const data=await r.json();
+    const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'לא התקבלה תשובה';
+    document.getElementById('smart-result-text').textContent=text;
+    document.getElementById('smart-result').style.display='block';
+    lucide.createIcons();
+  }catch(e){
+    toast('שגיאה: '+e.message,'error');
+  }finally{
+    document.getElementById('smart-btn').disabled=false;
+    document.getElementById('smart-loading').style.display='none';
+    lucide.createIcons();
+  }
+}
+
+function copySmartResult(){
+  const text=document.getElementById('smart-result-text').textContent;
+  navigator.clipboard.writeText(text).then(()=>toast('הועתק ללוח','success')).catch(()=>toast('העתקה נכשלה','error'));
+}
+
+function applySmartToGoal(){
+  const text=document.getElementById('smart-result-text').textContent;
+  closeModal('modal-smart');
+  if(smartCurrentPid) openGoalForPatient(smartCurrentPid,text);
+}
+
 // === EMAIL ===
 function emailFmt(cmd){ document.execCommand(cmd,false,null); document.getElementById('email-body').focus(); }
 function emailFontSize(size){ if(size) document.execCommand('fontSize',false,size); }
+function richFmt(editorId,cmd){ document.getElementById(editorId).focus(); document.execCommand(cmd,false,null); }
+function richFmtBlock(editorId,tag){ document.getElementById(editorId).focus(); document.execCommand('formatBlock',false,tag); }
 
 async function sendEmail(pid){
   const to=document.getElementById('email-to').value.trim();
@@ -2595,14 +4143,14 @@ async function sendEmail(pid){
   const bodyEl=document.getElementById('email-body');
   const bodyHtml=bodyEl.innerHTML.trim();
   if(!to||!subject||!bodyHtml) return toast('נא למלא נמען, נושא ותוכן','error');
-  if(!ejsPublicKey||!ejsServiceId||!ejsTemplateId) return toast('נא להגדיר EmailJS בהגדרות','error');
+  const hasEjs=ejsPublicKey&&ejsServiceId&&ejsTemplateId;
+  if(!isGmailReady()&&!hasEjs) return toast('נא לחבר Gmail או להגדיר EmailJS בהגדרות','error');
   try{
-    await emailjs.send(ejsServiceId, ejsTemplateId, {
-      to_email: to,
-      subject: subject,
-      message_html: bodyHtml,
-      from_name: 'מכון התנהגות'
-    });
+    if(isGmailReady()){
+      await sendViaGmailAPI(to,subject,bodyHtml);
+    } else {
+      await emailjs.send(ejsServiceId,ejsTemplateId,{to_email:to,subject,message_html:bodyHtml,from_name:'מכון התנהגות'});
+    }
     toast('מייל נשלח <i data-lucide="check-circle"></i>','success');
     await sbAdminInsert('patient_emails',{patient_id:pid,to_email:to,subject,body_html:bodyHtml,sent_at:new Date().toISOString()});
     bodyEl.innerHTML=''; document.getElementById('email-subject').value='';
@@ -2610,7 +4158,7 @@ async function sendEmail(pid){
     allEmails=(allEmails.filter(e=>e.patient_id!==pid)).concat(r.data||[]);
     renderPatientEmails(pid);
     switchEmailTab('history',pid);
-  }catch(e){ toast('שגיאה בשליחה: '+(e.text||e.message||'בדוק הגדרות EmailJS'),'error'); }
+  }catch(e){ toast('שגיאה בשליחה: '+(e.text||e.message||'בדוק הגדרות'),'error'); }
 }
 
 // === CLOUDINARY ===
@@ -2655,12 +4203,36 @@ function populateSelects(){
   const patSels=['na-patient','ea-patient'];
   instSels.forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='<option value="">-- בחר --</option>'+allInstitutions.map(i=>`<option value="${i.id}">${i.name}</option>`).join('');}});
   patSels.forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='<option value="">-- בחר מטופל --</option>'+allPatients.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');}});
-  const sortedCls=[...allClasses].sort((a,b)=>{const ai=CLASS_ORDER.indexOf(a.name),bi=CLASS_ORDER.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
-  ['np-class'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<option value="">-- ללא --</option>'+sortedCls.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');});
+  updateNpClassOptions();
+}
+
+function updateNpClassOptions(){
+  const affEl=document.getElementById('np-affiliation');
+  const clsEl=document.getElementById('np-class');
+  if(!clsEl) return;
+  const affType=affEl?affEl.value:'';
+  let cls=allClasses;
+  if(affType){
+    const instIds=new Set(allInstitutions.filter(i=>i.type===affType).map(i=>i.id));
+    cls=allClasses.filter(c=>instIds.has(c.institution_id));
+  }
+  const sorted=[...cls].sort((a,b)=>{const ai=CLASS_ORDER.indexOf(a.name),bi=CLASS_ORDER.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
+  const seen=new Set();
+  const unique=sorted.filter(c=>{if(seen.has(c.name))return false;seen.add(c.name);return true;});
+  clsEl.innerHTML='<option value="">-- ללא --</option>'+unique.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
 }
 
 function openModal(id){ document.getElementById(id).style.display='flex'; populateSelects(); }
-function closeModal(id){ document.getElementById(id).style.display='none'; }
+function closeModal(id){
+  document.getElementById(id).style.display='none';
+  if(id==='modal-new-appointment'){
+    ['na-name','na-start','na-end','na-price','na-desc'].forEach(el=>{const e=document.getElementById(el);if(e)e.value='';});
+    const arr=document.getElementById('na-arrived');if(arr)arr.checked=false;
+    const pat=document.getElementById('na-patient');if(pat)pat.value='';
+    naSeriesSlots=[];
+    if(naAppType!=='once'){naAppType='once';setAppType('once');}
+  }
+}
 
 function openNewPatientModal(){
   openModal('modal-new-patient');
