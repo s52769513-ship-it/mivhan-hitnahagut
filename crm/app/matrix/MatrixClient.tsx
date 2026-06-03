@@ -17,7 +17,8 @@ type Score = {
 
 type StudentRow = {
   studentId: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   examMap: Record<string, boolean | undefined>;
 };
 
@@ -38,14 +39,15 @@ export default function MatrixClient({
   const grouped: CoordinatorGroup[] = useMemo(() => {
     const studentMap = new Map<
       string,
-      { name: string; coordName: string; examMap: Record<string, boolean> }
+      { firstName: string; lastName: string; coordName: string; examMap: Record<string, boolean> }
     >();
 
     for (const s of scores) {
       if (!s.student_id || !s.student) continue;
       if (!studentMap.has(s.student_id)) {
         studentMap.set(s.student_id, {
-          name: `${s.student.first_name} ${s.student.last_name}`.trim(),
+          firstName: s.student.first_name,
+          lastName: s.student.last_name,
           coordName: s.student.coordinator?.name ?? "ללא משפיע",
           examMap: {},
         });
@@ -58,7 +60,8 @@ export default function MatrixClient({
       if (!coordMap.has(data.coordName)) coordMap.set(data.coordName, []);
       coordMap.get(data.coordName)!.push({
         studentId,
-        name: data.name,
+        firstName: data.firstName,
+        lastName: data.lastName,
         examMap: data.examMap,
       });
     }
@@ -67,7 +70,11 @@ export default function MatrixClient({
       .sort((a, b) => a[0].localeCompare(b[0], "he"))
       .map(([coordName, students]) => ({
         coordName,
-        students: students.sort((a, b) => a.name.localeCompare(b.name, "he")),
+        students: students.sort((a, b) => {
+          const lastComp = a.lastName.localeCompare(b.lastName, "he");
+          if (lastComp !== 0) return lastComp;
+          return a.firstName.localeCompare(b.firstName, "he");
+        }),
       }));
   }, [scores]);
 
@@ -145,7 +152,7 @@ export default function MatrixClient({
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map(({ studentId, name, examMap }, idx) => {
+                  {students.map(({ studentId, firstName, lastName, examMap }, idx) => {
                     const attended = exams.filter(
                       (e) => examMap[e.id] === true
                     ).length;
@@ -166,7 +173,7 @@ export default function MatrixClient({
                         <td
                           className={`px-4 py-2.5 text-right font-medium text-gray-800 whitespace-nowrap sticky right-0 z-10 border-l border-gray-200 ${rowBg}`}
                         >
-                          {name || "—"}
+                          {firstName} {lastName || "—"}
                         </td>
                         {exams.map((exam) => {
                           const val = examMap[exam.id];

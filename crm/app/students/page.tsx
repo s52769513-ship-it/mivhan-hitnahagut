@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { GraduationCap, ChevronLeft } from "lucide-react";
+import { isKibbutzHidden, KIBBUTZ_GROUP_ID } from "@/lib/kibbutz";
 
 export default async function StudentsPage({
   searchParams,
@@ -9,11 +10,15 @@ export default async function StudentsPage({
 }) {
   const filters = await searchParams;
   const supabase = await createClient();
+  const hideKibbutz = await isKibbutzHidden();
 
   let query = supabase
     .from("students")
     .select("*, coordinator:coordinators(id, name)")
+    .order("last_name")
     .order("first_name");
+
+  if (hideKibbutz) query = query.neq("group_id", KIBBUTZ_GROUP_ID);
 
   if (filters.coordinator) query = query.eq("coordinator_id", filters.coordinator);
   if (filters.city) query = query.eq("city", filters.city);

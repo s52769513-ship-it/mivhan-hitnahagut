@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import AttendanceClient from "./AttendanceClient";
 import { ClipboardList } from "lucide-react";
+import { isKibbutzHidden, KIBBUTZ_GROUP_ID } from "@/lib/kibbutz";
 
 export default async function AttendancePage({
   searchParams,
@@ -9,6 +10,7 @@ export default async function AttendancePage({
 }) {
   const { exam: examId } = await searchParams;
   const supabase = await createClient();
+  const hideKibbutz = await isKibbutzHidden();
 
   // Fetch exams sorted newest first
   const { data: exams } = await supabase
@@ -19,19 +21,26 @@ export default async function AttendancePage({
   const selectedExamId = examId ?? exams?.[0]?.id ?? null;
 
   // Fetch scores for the selected exam with full student + coordinator info
-  const { data: scores } = selectedExamId
+  const { data: rawScores } = selectedExamId
     ? await supabase
         .from("scores")
         .select(
-          "id, student_id, exam_id, arrived_on_time, attended_seder, attended_class, weekly_summary, paid, chassidut_score, halacha_score, tefila_score, student:students(id, first_name, last_name, city, coordinator:coordinators(id, name))"
+          "id, student_id, exam_id, arrived_on_time, attended_seder, attended_class, weekly_summary, paid, chassidut_score, halacha_score, tefila_score, student:students(id, first_name, last_name, city, group_id, coordinator:coordinators(id, name))"
         )
         .eq("exam_id", selectedExamId)
     : { data: [] };
 
+  const scores = hideKibbutz
+    ? (rawScores ?? []).filter((s) => (s.student as any)?.group_id !== KIBBUTZ_GROUP_ID)
+    : (rawScores ?? []);
+
   // Fetch all-time attendance for color coding (only student_id + attended_seder)
-  const { data: allAttendance } = await supabase
+  const { data: allAttendanceRaw } = await supabase
     .from("scores")
-    .select("student_id, attended_seder");
+    .select("student_id, attended_seder, student:students(group_id)");
+  const allAttendance = hideKibbutz
+    ? (allAttendanceRaw ?? []).filter((r) => (r.student as any)?.group_id !== KIBBUTZ_GROUP_ID)
+    : (allAttendanceRaw ?? []);
 
   // Aggregate per student
   const attendanceMap: Record<string, { attended: number; total: number }> = {};
@@ -59,7 +68,7 @@ export default async function AttendancePage({
 
       <AttendanceClient
         exams={exams ?? []}
-        scores={(scores ?? []) as any[]}
+        scores={scores as any[]}
         selectedExamId={selectedExamId}
         attendanceRates={attendanceRates}
       />

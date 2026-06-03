@@ -138,7 +138,7 @@ export default function AttendanceClient({
     });
   }, [optimisticScores, coordinatorFilter, cityFilter, nameSearch, showZeroOnly]);
 
-  // Grouped by coordinator
+  // Grouped by coordinator, students sorted by last name then first name
   const grouped = useMemo(() => {
     const map = new Map<string, Score[]>();
     filteredScores.forEach((s) => {
@@ -146,7 +146,16 @@ export default function AttendanceClient({
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(s);
     });
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0], "he"));
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], "he"))
+      .map(([coordName, records]) => [
+        coordName,
+        records.sort((a, b) => {
+          const lastComp = (a.student?.last_name ?? "").localeCompare(b.student?.last_name ?? "", "he");
+          if (lastComp !== 0) return lastComp;
+          return (a.student?.first_name ?? "").localeCompare(b.student?.first_name ?? "", "he");
+        }),
+      ] as [string, Score[]]);
   }, [filteredScores]);
 
   // Progress stats

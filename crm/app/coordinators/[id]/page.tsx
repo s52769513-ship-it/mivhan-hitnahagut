@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { isKibbutzHidden, KIBBUTZ_GROUP_ID } from "@/lib/kibbutz";
 import {
   ArrowRight,
   Phone,
@@ -20,6 +21,15 @@ export default async function CoordinatorDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const hideKibbutz = await isKibbutzHidden();
+
+  let studentsQuery = supabase
+    .from("students")
+    .select("*")
+    .eq("coordinator_id", id)
+    .order("last_name")
+    .order("first_name");
+  if (hideKibbutz) studentsQuery = studentsQuery.neq("group_id", KIBBUTZ_GROUP_ID);
 
   const [
     { data: coordinator },
@@ -28,11 +38,7 @@ export default async function CoordinatorDetailPage({
     { data: inquiries },
   ] = await Promise.all([
     supabase.from("coordinators").select("*").eq("id", id).single(),
-    supabase
-      .from("students")
-      .select("*")
-      .eq("coordinator_id", id)
-      .order("first_name"),
+    studentsQuery,
     supabase
       .from("finances")
       .select("*")

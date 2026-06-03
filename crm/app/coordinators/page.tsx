@@ -1,9 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Users, Phone, MapPin, ChevronLeft } from "lucide-react";
+import { isKibbutzHidden, KIBBUTZ_GROUP_ID } from "@/lib/kibbutz";
 
 export default async function CoordinatorsPage() {
   const supabase = await createClient();
+  const hideKibbutz = await isKibbutzHidden();
 
   const { data: coordinators } = await supabase
     .from("coordinators")
@@ -12,11 +14,14 @@ export default async function CoordinatorsPage() {
 
   const coordinatorIds = (coordinators ?? []).map((c) => c.id);
 
+  let studentCountQuery = supabase
+    .from("students")
+    .select("coordinator_id")
+    .in("coordinator_id", coordinatorIds.length ? coordinatorIds : [""]);
+  if (hideKibbutz) studentCountQuery = studentCountQuery.neq("group_id", KIBBUTZ_GROUP_ID);
+
   const [{ data: studentCounts }, { data: openInquiries }] = await Promise.all([
-    supabase
-      .from("students")
-      .select("coordinator_id")
-      .in("coordinator_id", coordinatorIds.length ? coordinatorIds : [""]),
+    studentCountQuery,
     supabase
       .from("inquiries")
       .select("coordinator_id")

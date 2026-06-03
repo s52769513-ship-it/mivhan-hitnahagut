@@ -12,6 +12,7 @@ import {
   Wallet,
   ClipboardList,
   LayoutGrid,
+  Settings,
 } from "lucide-react";
 
 const navItems = [
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/matrix", label: "מטריצה", icon: LayoutGrid },
   { href: "/inquiries", label: "פניות", icon: MessageSquare },
   { href: "/finances", label: "כספים", icon: Wallet },
+  { href: "/settings", label: "הגדרות", icon: Settings },
 ];
 
 export default function Sidebar() {
