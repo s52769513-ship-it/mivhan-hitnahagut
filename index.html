@@ -745,6 +745,7 @@ tr:last-child td{border-bottom:none}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header"><h2><i data-lucide="plus-circle"></i> מוסד חדש</h2><button class="btn btn-icon" onclick="closeModal('modal-new-institution')"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
+      <input type="hidden" id="ni-inst-type" value="education">
       <div class="form-group"><label class="form-label">שם מוסד *</label><input type="text" class="form-control" id="ni-name"></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-institution')">ביטול</button><button class="btn btn-primary" onclick="createInstitution()">צור מוסד</button></div>
@@ -1740,9 +1741,18 @@ function renderInstitutionFilter(){
       eduInsts=eduInsts.filter(i=>accessInsts.includes(i.id));
     }
     document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> משרד החינוך – בחר מוסד`;
-    document.getElementById('patients-tbody').innerHTML=`<tr><td colspan="6"><div style="padding:20px"><div style="display:flex;flex-wrap:wrap;gap:10px">
-      ${eduInsts.map(inst=>`<button class="cat-btn" style="min-width:140px" onclick="selectEduInstitution('${inst.id}','${inst.name}')"><span class="ci"><i data-lucide="clipboard-list"></i></span><span>${inst.name}</span></button>`).join('')}
-    </div></div></td></tr>`;
+    document.getElementById('patients-tbody').innerHTML=`<tr><td colspan="6" style="border:none;padding:16px"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
+      ${eduInsts.map(inst=>`<div class="cat-btn" style="position:relative;padding:16px 10px;cursor:pointer" onclick="selectEduInstitution('${inst.id}','${(inst.name||'').replace(/'/g,"\\'")}')">
+        <span class="ci"><i data-lucide="clipboard-list"></i></span>
+        <span style="text-align:center;line-height:1.3">${inst.name||''}</span>
+        ${isAdmin?`<button class="btn btn-danger" onclick="event.stopPropagation();deleteInstitution('${inst.id}')" style="position:absolute;top:6px;left:6px;padding:2px 6px;font-size:11px;border-radius:6px"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>`:''}
+      </div>`).join('')}
+      ${isAdmin?`<div class="cat-btn" style="border-style:dashed;padding:16px 10px;cursor:pointer" onclick="openNewEduInstitution()">
+        <span class="ci"><i data-lucide="plus-circle"></i></span>
+        <span>מוסד חדש</span>
+      </div>`:''}
+    </div></td></tr>`;
+    if(window.lucide) lucide.createIcons();
     return;
   }
 
@@ -3720,13 +3730,31 @@ async function createGoal(){
 async function deleteGoal(id,pid){ if(!confirm('למחוק?')) return; await sbDelete('treatment_goals',id); await loadAll(); renderGoals(pid); }
 
 // === INSTITUTIONS & CLASSES ===
+function openNewEduInstitution(){
+  document.getElementById('ni-name').value='';
+  document.getElementById('ni-inst-type').value='education';
+  openModal('modal-new-institution');
+}
 async function createInstitution(){
   const name=document.getElementById('ni-name').value.trim();
   if(!name) return toast('נא להכניס שם','error');
-  const r=await sbInsert('institutions',{name,type:'education'});
+  const type=document.getElementById('ni-inst-type')?.value||'education';
+  const r=await sbInsert('institutions',{name,type});
   if(r.error) return toast('שגיאה','error');
   toast('מוסד נוצר <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-institution');
   document.getElementById('ni-name').value='';
+  await loadAll(); populateSelects(); renderInstitutionFilter();
+}
+async function deleteInstitution(id){
+  const inst=allInstitutions.find(i=>i.id===id);
+  const pats=allPatients.filter(p=>p.institution_id===id);
+  if(pats.length>0){
+    if(!confirm(`למוסד "${inst?.name||''}" יש ${pats.length} מטופלים. האם למחוק בכל זאת?`)) return;
+  } else {
+    if(!confirm(`למחוק את המוסד "${inst?.name||''}"?`)) return;
+  }
+  await sbDelete('institutions',id);
+  toast('מוסד נמחק','success');
   await loadAll(); populateSelects(); renderInstitutionFilter();
 }
 
