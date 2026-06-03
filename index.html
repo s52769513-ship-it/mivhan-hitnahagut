@@ -811,7 +811,6 @@ tr:last-child td{border-bottom:none}
       <h2 id="fv-title" style="font-size:15px;max-width:600px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><i data-lucide="file"></i></h2>
       <div style="display:flex;gap:8px;align-items:center">
         <a id="fv-download" class="btn btn-primary btn-sm" style="text-decoration:none"><i data-lucide="download"></i> הורדה</a>
-        <button id="fv-download-zip" class="btn btn-secondary btn-sm"><i data-lucide="file-archive"></i> הורד כ-ZIP</button>
         <button class="btn btn-icon" onclick="closeModal('modal-file-viewer')"><i data-lucide="x"></i></button>
       </div>
     </div>
@@ -2131,13 +2130,12 @@ function openFileViewer(url, name){
   const ext=(name.split('.').pop()||'').toLowerCase();
   document.getElementById('fv-title').textContent=name;
   const dl=document.getElementById('fv-download');
-  // Build proper download URL (Cloudinary: insert fl_attachment in path)
+  // fl_attachment tells Cloudinary to serve Content-Disposition: attachment
   const dlUrl=url.includes('/upload/')?url.replace('/upload/','/upload/fl_attachment/'):url;
-  dl.href='javascript:void(0)';
-  dl.onclick=()=>downloadFile(dlUrl,name);
+  dl.href=dlUrl;
   dl.download=name;
-  const dlZip=document.getElementById('fv-download-zip');
-  dlZip.onclick=()=>downloadAsZip(dlUrl,name);
+  dl.target='_blank';
+  dl.onclick=null;
   const body=document.getElementById('fv-body');
   const imgs=['jpg','jpeg','png','gif','webp','svg'];
   const vids=['mp4','mov','avi','webm','mkv'];
@@ -4201,34 +4199,6 @@ async function downloadFile(url,name){
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
   }catch(e){
     window.open(url,'_blank');
-  }
-}
-
-async function downloadAsZip(url,name){
-  if(!window.JSZip){ toast('ספריית ZIP לא נטענה','error'); return; }
-  const btn=document.getElementById('fv-download-zip');
-  btn.textContent='טוען...'; btn.disabled=true;
-  // Try original URL (without fl_attachment) since we handle download ourselves
-  const fetchUrl=url.includes('/fl_attachment/')?url.replace('/upload/fl_attachment/','/upload/'):url;
-  try{
-    const resp=await fetch(fetchUrl,{mode:'cors'});
-    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const blob=await resp.blob();
-    const zip=new JSZip();
-    zip.file(name,blob);
-    const zipBlob=await zip.generateAsync({type:'blob'});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(zipBlob);
-    a.download=(name.replace(/\.[^.]+$/,'')||'file')+'.zip';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
-  }catch(e){
-    console.error('ZIP download error:',e);
-    toast('לא ניתן להוריד כ-ZIP – נסה הורדה רגילה','error');
-  }finally{
-    btn.innerHTML='<i data-lucide="file-archive"></i> הורד כ-ZIP'; btn.disabled=false;
-    if(window.lucide) lucide.createIcons();
   }
 }
 
