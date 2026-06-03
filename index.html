@@ -911,25 +911,24 @@ let currentIntTab = 'it-treatment';
 let currentQTab = 'parent';
 
 // === SUPABASE ===
-const SB_SRK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwemFvcHF6YnVsZHVxdmxocHFsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTE4OTY3NSwiZXhwIjoyMDk0NzY1Njc1fQ.SDVqnHM5f2a4HiBmSzgz0mrApEzRzeIxiPj9Nb1RKyk';
 function sbToken(){ return localStorage.getItem('sb_jwt')||SB_KEY; }
 async function sbAdmin(table,params=''){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}${params}`,{headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json'}});
+  const r=await fetch(`${SB_URL}/rest/v1/${table}${params}`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':'application/json'}});
   if(!r.ok) return {data:[],error:await r.text()};
   return {data:await r.json()};
 }
 async function sbAdminInsert(table,body){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
+  const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
   if(!r.ok) return {error:await r.text()};
   return {data:await r.json()};
 }
 async function sbAdminUpdate(table,id,body){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
   if(!r.ok) return {error:await r.text()};
   return {data:await r.json()};
 }
 async function sbAdminDelete(table,id){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK}});
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken()}});
   if(!r.ok) return {error:await r.text()};
   return {data:true};
 }
@@ -1062,11 +1061,9 @@ async function doRegister(){
   errEl.style.color='#dc2626';
   if(!ADMIN_EMAILS.includes(email)){errEl.textContent='אין לך הרשאה ליצור חשבון. פנה למנהל.';return;}
   if(!pass||pass.length<6){errEl.textContent='סיסמה חייבת להיות לפחות 6 תווים';return;}
-  const r=await fetch(`${SB_URL}/auth/v1/signup`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+  const r=await fetch(`${SB_URL}/auth/v1/signup`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass,data:{display_name:email.split('@')[0],role:'admin'}})});
   const data=await r.json();
   if(!data.user&&!data.id){errEl.textContent='שגיאה: '+(data.msg||data.error_description||data.error||'');return;}
-  const userId=data.user?.id||data.id;
-  await sbAdminInsert('user_profiles',{id:userId,display_name:email.split('@')[0],role:'admin'});
   document.getElementById('login-register-hint').style.display='none';
   errEl.style.color='green'; errEl.textContent='חשבון נוצר! מתחבר...';
   setTimeout(()=>doLogin(),500);
