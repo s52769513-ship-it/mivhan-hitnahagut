@@ -13,6 +13,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230D2645'/><g transform='translate(50,44) rotate(-28)'><rect x='-38' y='-38' width='22' height='72' rx='11' fill='white' transform='translate(-14,0)'/><rect x='-38' y='-38' width='22' height='76' rx='11' fill='%236BBFD8' transform='translate(8,-4)'/><rect x='-38' y='-38' width='22' height='72' rx='11' fill='%238B1A4A' transform='translate(30,-2)'/></g><circle cx='50' cy='84' r='9' fill='white'/></svg>">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap');
@@ -810,6 +811,7 @@ tr:last-child td{border-bottom:none}
       <h2 id="fv-title" style="font-size:15px;max-width:600px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><i data-lucide="file"></i></h2>
       <div style="display:flex;gap:8px;align-items:center">
         <a id="fv-download" class="btn btn-primary btn-sm" style="text-decoration:none"><i data-lucide="download"></i> הורדה</a>
+        <button id="fv-download-zip" class="btn btn-secondary btn-sm"><i data-lucide="file-archive"></i> הורד כ-ZIP</button>
         <button class="btn btn-icon" onclick="closeModal('modal-file-viewer')"><i data-lucide="x"></i></button>
       </div>
     </div>
@@ -1742,7 +1744,7 @@ function renderInstitutionFilter(){
     }
     document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> משרד החינוך – בחר מוסד`;
     document.getElementById('patients-tbody').innerHTML=`<tr><td colspan="6" style="border:none;padding:16px"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
-      ${eduInsts.map(inst=>`<div class="cat-btn" style="position:relative;padding:16px 10px;cursor:pointer" onclick="selectEduInstitution('${inst.id}','${(inst.name||'').replace(/'/g,"\\'")}')">
+      ${eduInsts.map(inst=>`<div class="cat-btn" style="position:relative;padding:16px 10px;cursor:pointer" data-inst-id="${inst.id}" data-inst-name="${encodeURIComponent(inst.name||'')}" onclick="selectEduInstitution(this.dataset.instId, decodeURIComponent(this.dataset.instName))">
         <span class="ci"><i data-lucide="clipboard-list"></i></span>
         <span style="text-align:center;line-height:1.3">${inst.name||''}</span>
         ${isAdmin?`<button class="btn btn-danger" onclick="event.stopPropagation();deleteInstitution('${inst.id}')" style="position:absolute;top:6px;left:6px;padding:2px 6px;font-size:11px;border-radius:6px"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>`:''}
@@ -2134,6 +2136,8 @@ function openFileViewer(url, name){
   dl.href='javascript:void(0)';
   dl.onclick=()=>downloadFile(dlUrl,name);
   dl.download=name;
+  const dlZip=document.getElementById('fv-download-zip');
+  dlZip.onclick=()=>downloadAsZip(dlUrl,name);
   const body=document.getElementById('fv-body');
   const imgs=['jpg','jpeg','png','gif','webp','svg'];
   const vids=['mp4','mov','avi','webm','mkv'];
@@ -4197,6 +4201,33 @@ async function downloadFile(url,name){
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
   }catch(e){
     window.open(url,'_blank');
+  }
+}
+
+async function downloadAsZip(url,name){
+  if(!window.JSZip){ toast('ספריית ZIP לא נטענה','error'); return; }
+  const btn=document.getElementById('fv-download-zip');
+  const orig=btn.innerHTML;
+  btn.innerHTML='<i data-lucide="loader-2"></i> טוען...'; btn.disabled=true;
+  if(window.lucide) lucide.createIcons();
+  try{
+    const resp=await fetch(url);
+    if(!resp.ok) throw new Error('fetch failed');
+    const blob=await resp.blob();
+    const zip=new JSZip();
+    zip.file(name,blob);
+    const zipBlob=await zip.generateAsync({type:'blob'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(zipBlob);
+    a.download=(name.replace(/\.[^.]+$/,'')||'file')+'.zip';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+  }catch(e){
+    toast('שגיאה בהורדת ZIP','error');
+  }finally{
+    btn.innerHTML=orig; btn.disabled=false;
+    if(window.lucide) lucide.createIcons();
   }
 }
 
