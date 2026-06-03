@@ -1840,6 +1840,7 @@ function selectEduInstitution(instId, instName){
   patientListData=allPatients.filter(p=>p.institution_id===instId);
   patientListTitle=instName; patientListBackFn='backToEducation';
   currentContextInstitutionId=instId;
+  currentContextType='education';
   renderInstitutionFilter();
 }
 
@@ -2128,7 +2129,11 @@ function openFileViewer(url, name){
   const ext=(name.split('.').pop()||'').toLowerCase();
   document.getElementById('fv-title').textContent=name;
   const dl=document.getElementById('fv-download');
-  dl.href=url+'?fl_attachment=true'; dl.download=name; dl.target='_blank';
+  // Build proper download URL (Cloudinary: insert fl_attachment in path)
+  const dlUrl=url.includes('/upload/')?url.replace('/upload/','/upload/fl_attachment/'):url;
+  dl.href='javascript:void(0)';
+  dl.onclick=()=>downloadFile(dlUrl,name);
+  dl.download=name;
   const body=document.getElementById('fv-body');
   const imgs=['jpg','jpeg','png','gif','webp','svg'];
   const vids=['mp4','mov','avi','webm','mkv'];
@@ -2257,12 +2262,15 @@ function openNewTaskForPatient(pid){
 }
 
 async function renderPatientNotes(pid){
-  // Always fetch fresh profiles so we get the real author names
-  const r=await sbAdmin('user_profiles','?select=id,display_name,role');
-  if(r.data?.length) allUserProfiles=r.data;
+  // Fetch fresh notes from DB (newest first) and profiles
+  const [nr, pr] = await Promise.all([
+    sbAdmin('notes',`?patient_id=eq.${pid}&order=created_at.desc`),
+    sbAdmin('user_profiles','?select=id,display_name,role')
+  ]);
+  if(nr.data) allNotes=[...allNotes.filter(n=>n.patient_id!==pid), ...nr.data];
+  if(pr.data?.length) allUserProfiles=pr.data;
 
-  // Sort newest first
-  const notes=allNotes.filter(n=>n.patient_id===pid).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const notes=(nr.data||allNotes.filter(n=>n.patient_id===pid)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   const NOTE_TYPE_HE={clinical:'קליני',observation:'תצפית',general:'כללי'};
   document.getElementById('tab-notes').innerHTML=`
     <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openNoteForPatient('${pid}')">+ עדכון</button></div>
@@ -4176,6 +4184,21 @@ function emailFmt(cmd){ document.execCommand(cmd,false,null); document.getElemen
 function emailFontSize(size){ if(size) document.execCommand('fontSize',false,size); }
 function richFmt(editorId,cmd){ document.getElementById(editorId).focus(); document.execCommand(cmd,false,null); }
 function richFmtBlock(editorId,tag){ document.getElementById(editorId).focus(); document.execCommand('formatBlock',false,tag); }
+async function downloadFile(url,name){
+  try{
+    const resp=await fetch(url);
+    if(!resp.ok) throw new Error('fetch failed');
+    const blob=await resp.blob();
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+  }catch(e){
+    window.open(url,'_blank');
+  }
+}
 
 async function sendEmail(pid){
   const to=document.getElementById('email-to').value.trim();
