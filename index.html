@@ -4207,12 +4207,12 @@ async function downloadFile(url,name){
 async function downloadAsZip(url,name){
   if(!window.JSZip){ toast('ספריית ZIP לא נטענה','error'); return; }
   const btn=document.getElementById('fv-download-zip');
-  const orig=btn.innerHTML;
-  btn.innerHTML='<i data-lucide="loader-2"></i> טוען...'; btn.disabled=true;
-  if(window.lucide) lucide.createIcons();
+  btn.textContent='טוען...'; btn.disabled=true;
+  // Try original URL (without fl_attachment) since we handle download ourselves
+  const fetchUrl=url.includes('/fl_attachment/')?url.replace('/upload/fl_attachment/','/upload/'):url;
   try{
-    const resp=await fetch(url);
-    if(!resp.ok) throw new Error('fetch failed');
+    const resp=await fetch(fetchUrl,{mode:'cors'});
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const blob=await resp.blob();
     const zip=new JSZip();
     zip.file(name,blob);
@@ -4224,9 +4224,10 @@ async function downloadAsZip(url,name){
     a.click();
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
   }catch(e){
-    toast('שגיאה בהורדת ZIP','error');
+    console.error('ZIP download error:',e);
+    toast('לא ניתן להוריד כ-ZIP – נסה הורדה רגילה','error');
   }finally{
-    btn.innerHTML=orig; btn.disabled=false;
+    btn.innerHTML='<i data-lucide="file-archive"></i> הורד כ-ZIP'; btn.disabled=false;
     if(window.lucide) lucide.createIcons();
   }
 }
