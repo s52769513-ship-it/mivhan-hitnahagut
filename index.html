@@ -2247,17 +2247,19 @@ function openNewTaskForPatient(pid){
 }
 
 async function renderPatientNotes(pid){
-  const notes=allNotes.filter(n=>n.patient_id===pid);
-  if(!allUserProfiles.length){
-    const r=await sbAdmin('user_profiles','?select=*');
-    if(r.data?.length) allUserProfiles=r.data;
-  }
+  // Always fetch fresh profiles so we get the real author names
+  const r=await sbAdmin('user_profiles','?select=id,display_name,role');
+  if(r.data?.length) allUserProfiles=r.data;
+
+  // Sort newest first
+  const notes=allNotes.filter(n=>n.patient_id===pid).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   const NOTE_TYPE_HE={clinical:'קליני',observation:'תצפית',general:'כללי'};
   document.getElementById('tab-notes').innerHTML=`
     <div style="margin-bottom:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="openNoteForPatient('${pid}')">+ עדכון</button></div>
     ${notes.length===0?'<div class="empty"><i data-lucide="file-text"></i><p>אין עדכונים</p></div>':`<div class="card" style="padding:0;overflow:hidden">${notes.map(n=>{
-      const profile=allUserProfiles.find(u=>u.id===n.user_id||u.user_id===n.user_id);
-      const userName=profile?.display_name||profile?.name||'';
+      // Match only by id (not user_id field which may not exist on profile)
+      const profile=n.user_id?allUserProfiles.find(u=>u.id===n.user_id):null;
+      const userName=profile?.display_name||'';
       const typeBadge=NOTE_TYPE_HE[n.note_type]||'כללי';
       return`<div class="note-row" onclick="openNoteEdit('${n.id}','${pid}')">
         <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
