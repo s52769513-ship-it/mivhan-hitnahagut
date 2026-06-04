@@ -468,10 +468,10 @@ tr:last-child td{border-bottom:none}
           </div>
         </div>
         <div class="card" style="max-width:560px;margin-bottom:20px">
-          <div class="card-header"><h3><i data-lucide="zap"></i> עוזר AI – OpenRouter (חינמי, ללא כרטיס אשראי)</h3></div>
+          <div class="card-header"><h3><i data-lucide="zap"></i> עוזר AI – Hugging Face (חינמי, ללא כרטיס אשראי)</h3></div>
           <div class="card-body">
-            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">קבל מפתח חינמי ב-<strong>openrouter.ai</strong> → "Sign In" → "Keys" → "Create Key". ללא כרטיס אשראי, מודלים חינמיים זמינים.</p>
-            <div class="form-group"><label class="form-label">OpenRouter API Key</label><input type="text" class="form-control" id="settings-groq-key" placeholder="sk-or-..." dir="ltr"></div>
+            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">קבל טוקן חינמי ב-<strong>huggingface.co</strong> → הירשם → Settings → Access Tokens → New Token (Read).</p>
+            <div class="form-group"><label class="form-label">Hugging Face Token</label><input type="text" class="form-control" id="settings-groq-key" placeholder="hf_..." dir="ltr"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-primary" onclick="saveGroqSettings()"><i data-lucide="save"></i> שמור</button>
               <button class="btn btn-secondary" id="groq-test-btn" onclick="testGroqConnection()"><i data-lucide="zap"></i> בדוק חיבור</button>
@@ -3912,36 +3912,34 @@ async function testGeminiConnection(){
   }
 }
 
-// === OPENROUTER AI ===
+// === HUGGING FACE AI ===
 function saveGroqSettings(){
   const k=document.getElementById('settings-groq-key').value.trim();
-  if(!k) return toast('נא להזין OpenRouter API Key','error');
+  if(!k) return toast('נא להזין Hugging Face Token','error');
   groqKey=k;
   localStorage.setItem('groq_key',k);
-  document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ OpenRouter נשמר</span>';
-  toast('הגדרות OpenRouter נשמרו','success');
+  document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ Hugging Face Token נשמר</span>';
+  toast('Token נשמר בהצלחה','success');
   lucide.createIcons();
 }
 
 async function testGroqConnection(){
-  const k=(document.getElementById('settings-groq-key').value||'').trim() || groqKey;
-  if(!k){document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">נא להזין מפתח API תחילה</span>';return;}
+  const k=(document.getElementById('settings-groq-key').value||'').trim()||groqKey;
+  if(!k){document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">נא להזין Token תחילה</span>';return;}
   const btn=document.getElementById('groq-test-btn');
   btn.disabled=true;
   document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--g500)">בודק חיבור...</span>';
   try{
-    const headers={'Content-Type':'application/json'};
-    headers['Authorization']='Bearer '+k;
-    const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+    const r=await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',{
       method:'POST',
-      headers,
-      body:JSON.stringify({model:'google/gemma-3-27b-it:free',messages:[{role:'user',content:'היי'}],max_tokens:5})
+      headers:{'Authorization':'Bearer '+k,'Content-Type':'application/json'},
+      body:JSON.stringify({inputs:'היי',parameters:{max_new_tokens:5}})
     });
-    if(r.ok){
-      document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ חיבור תקין! OpenRouter מוכן לשימוש</span>';
+    if(r.ok||r.status===503){
+      document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ Token תקין! Hugging Face מוכן</span>';
     } else {
       const e=await r.json();
-      document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאה: '+(e.error?.message||JSON.stringify(e.error)||'מפתח לא תקין')+'</span>';
+      document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאה: '+(e.error||'Token לא תקין')+'</span>';
     }
   }catch(e){
     document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאת רשת: '+e.message+'</span>';
@@ -3952,14 +3950,16 @@ async function testGroqConnection(){
 }
 
 async function callGroqSMART(prompt){
-  const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+  const formatted=`<s>[INST] ${prompt} [/INST]`;
+  const r=await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',{
     method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey,'HTTP-Referer':location.origin},
-    body:JSON.stringify({model:'google/gemma-3-27b-it:free',messages:[{role:'user',content:prompt}],max_tokens:800,temperature:0.7})
+    headers:{'Authorization':'Bearer '+groqKey,'Content-Type':'application/json'},
+    body:JSON.stringify({inputs:formatted,parameters:{max_new_tokens:800,temperature:0.7,return_full_text:false}})
   });
-  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה מה-API');}
+  if(!r.ok){const e=await r.json();throw new Error(e.error||'שגיאה מה-API');}
   const data=await r.json();
-  return data.choices?.[0]?.message?.content||'לא התקבלה תשובה';
+  if(Array.isArray(data)) return data[0]?.generated_text||'לא התקבלה תשובה';
+  throw new Error(data.error||'תשובה לא צפויה');
 }
 
 // === GMAIL API ===
