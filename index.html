@@ -460,8 +460,23 @@ tr:last-child td{border-bottom:none}
             <p style="font-size:14px;color:var(--g500);margin-bottom:14px">קבל מפתח API חינמי ב-<strong>aistudio.google.com</strong> → "Get API key" → "Create API key". המפתח מתחיל ב-<code>AIza...</code></p>
             <div class="form-group"><label class="form-label">Gemini API Key</label><input type="text" class="form-control" id="settings-gemini-key" placeholder="AIza..." dir="ltr"></div>
             <div class="form-group"><label class="form-label">מודל AI (ברירת מחדל: gemini-2.0-flash)</label><input type="text" class="form-control" id="settings-ai-model" placeholder="gemini-2.0-flash" dir="ltr"></div>
-            <button class="btn btn-primary" onclick="saveGeminiSettings()"><i data-lucide="save"></i> שמור</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="saveGeminiSettings()"><i data-lucide="save"></i> שמור</button>
+              <button class="btn btn-secondary" id="gemini-test-btn" onclick="testGeminiConnection()"><i data-lucide="zap"></i> בדוק חיבור</button>
+            </div>
             <div id="gemini-settings-status" style="margin-top:10px;font-size:13px"></div>
+          </div>
+        </div>
+        <div class="card" style="max-width:560px;margin-bottom:20px">
+          <div class="card-header"><h3><i data-lucide="zap"></i> עוזר AI – Groq (חינמי, ללא כרטיס אשראי)</h3></div>
+          <div class="card-body">
+            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">קבל מפתח חינמי ב-<strong>console.groq.com</strong> → "API Keys" → "Create API Key". מהיר מאוד, ללא כרטיס אשראי.</p>
+            <div class="form-group"><label class="form-label">Groq API Key</label><input type="text" class="form-control" id="settings-groq-key" placeholder="gsk_..." dir="ltr"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="saveGroqSettings()"><i data-lucide="save"></i> שמור</button>
+              <button class="btn btn-secondary" id="groq-test-btn" onclick="testGroqConnection()"><i data-lucide="zap"></i> בדוק חיבור</button>
+            </div>
+            <div id="groq-settings-status" style="margin-top:10px;font-size:13px"></div>
           </div>
         </div>
         <div class="card" style="max-width:560px;margin-bottom:20px">
@@ -896,6 +911,7 @@ let cloudPreset=localStorage.getItem('cloud_preset')||'ml_default';
 let geminiKey=localStorage.getItem('gemini_key')||'';
 let aiModel=localStorage.getItem('ai_model')||'gemini-2.0-flash';
 let googleClientId=localStorage.getItem('google_client_id')||'';
+let groqKey=localStorage.getItem('groq_key')||'';
 let gmailToken=null;
 let gmailTokenExpiry=0;
 let gmailTokenClient=null;
@@ -3825,6 +3841,7 @@ function loadSettings(){
   const cp=document.getElementById('settings-cloud-preset'); if(cp) cp.value=cloudPreset;
   const gk=document.getElementById('settings-gemini-key'); if(gk) gk.value=geminiKey;
   const am=document.getElementById('settings-ai-model'); if(am) am.value=aiModel;
+  const grk=document.getElementById('settings-groq-key'); if(grk) grk.value=groqKey;
   const es=document.getElementById('email-settings-status');
   if(es) es.innerHTML=ejsPublicKey?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> EmailJS מוגדר</span>':'';
   const cs=document.getElementById('cloud-settings-status');
@@ -3863,8 +3880,84 @@ function saveGeminiSettings(){
   localStorage.setItem('gemini_key',k);
   const m=(document.getElementById('settings-ai-model').value.trim())||'gemini-2.0-flash';
   aiModel=m; localStorage.setItem('ai_model',m);
-  document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> Gemini נשמר ('+m+')</span>';
-  toast('הגדרות Gemini נשמרו <i data-lucide="check-circle"></i>','success');
+  document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)">✓ Gemini נשמר ('+m+')</span>';
+  toast('הגדרות Gemini נשמרו','success');
+}
+
+async function testGeminiConnection(){
+  const k=document.getElementById('settings-gemini-key').value.trim();
+  if(!k){document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--red)">נא להזין מפתח API תחילה</span>';return;}
+  const m=(document.getElementById('settings-ai-model').value.trim())||'gemini-2.0-flash';
+  const btn=document.getElementById('gemini-test-btn');
+  btn.disabled=true;
+  document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--g500)">בודק חיבור...</span>';
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'היי'}]}],generationConfig:{maxOutputTokens:5}})
+    });
+    if(r.ok){
+      document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)">✓ חיבור תקין! מודל: '+m+'</span>';
+    } else {
+      const e=await r.json();
+      const msg=e.error?.message||'שגיאה לא ידועה';
+      document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאה: '+msg+'</span>';
+    }
+  }catch(e){
+    document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאת רשת: '+e.message+'</span>';
+  }finally{
+    btn.disabled=false;
+    lucide.createIcons();
+  }
+}
+
+// === GROQ AI ===
+function saveGroqSettings(){
+  const k=document.getElementById('settings-groq-key').value.trim();
+  if(!k) return toast('נא להזין Groq API Key','error');
+  groqKey=k;
+  localStorage.setItem('groq_key',k);
+  document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ Groq נשמר</span>';
+  toast('הגדרות Groq נשמרו','success');
+  lucide.createIcons();
+}
+
+async function testGroqConnection(){
+  const k=document.getElementById('settings-groq-key').value.trim();
+  if(!k){document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">נא להזין מפתח API תחילה</span>';return;}
+  const btn=document.getElementById('groq-test-btn');
+  btn.disabled=true;
+  document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--g500)">בודק חיבור...</span>';
+  try{
+    const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+k},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:'היי'}],max_tokens:5})
+    });
+    if(r.ok){
+      document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ חיבור תקין! Groq מוכן לשימוש</span>';
+    } else {
+      const e=await r.json();
+      document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאה: '+(e.error?.message||'מפתח לא תקין')+'</span>';
+    }
+  }catch(e){
+    document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאת רשת: '+e.message+'</span>';
+  }finally{
+    btn.disabled=false;
+    lucide.createIcons();
+  }
+}
+
+async function callGroqSMART(prompt){
+  const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey},
+    body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],max_tokens:800,temperature:0.7})
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה מה-API');}
+  const data=await r.json();
+  return data.choices?.[0]?.message?.content||'לא התקבלה תשובה';
 }
 
 // === GMAIL API ===
@@ -4113,7 +4206,13 @@ function openSmartAssistant(pid){
 }
 
 async function callGeminiSMART(){
-  if(!geminiKey) return toast('נא להגדיר Gemini API Key בהגדרות','error');
+  if(!groqKey && !geminiKey){
+    toast('נא להגדיר Groq API Key בהגדרות','error');
+    closeModal('modal-smart');
+    showView('settings');
+    setTimeout(()=>{const el=document.getElementById('settings-groq-key');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}},300);
+    return;
+  }
   const behavior=document.getElementById('smart-behavior').value.trim();
   const context=document.getElementById('smart-context').value.trim();
   const desired=document.getElementById('smart-desired').value.trim();
@@ -4146,29 +4245,38 @@ ${strength?'חוזקות/משאבים: '+strength:''}
 כתוב בעברית בלבד, קצר וברור.`;
 
   try{
-    const model=aiModel||'gemini-2.0-flash';
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,maxOutputTokens:800}})
-    });
-    if(!r.ok){
-      const e=await r.json();
-      throw new Error(e.error?.message||'שגיאה מה-API');
+    let text;
+    if(groqKey){
+      text=await callGroqSMART(prompt);
+    } else {
+      const model=aiModel||'gemini-2.0-flash';
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,maxOutputTokens:800}})
+      });
+      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה מה-API');}
+      const data=await r.json();
+      text=data.candidates?.[0]?.content?.parts?.[0]?.text||'לא התקבלה תשובה';
     }
-    const data=await r.json();
-    const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'לא התקבלה תשובה';
-    document.getElementById('smart-result-text').textContent=text;
+    const el=document.getElementById('smart-result-text');
+    el.textContent=text;
+    el.style.color='';
     document.getElementById('smart-result').style.display='block';
     lucide.createIcons();
   }catch(e){
-    toast('שגיאה: '+e.message,'error');
+    const errMsg=e.message||'שגיאה לא ידועה';
+    document.getElementById('smart-result-text').textContent='שגיאה: '+errMsg;
+    document.getElementById('smart-result-text').style.color='var(--red)';
+    document.getElementById('smart-result').style.display='block';
+    toast('שגיאה מה-AI: '+errMsg,'error');
   }finally{
     document.getElementById('smart-btn').disabled=false;
     document.getElementById('smart-loading').style.display='none';
     lucide.createIcons();
   }
 }
+
 
 function copySmartResult(){
   const text=document.getElementById('smart-result-text').textContent;
