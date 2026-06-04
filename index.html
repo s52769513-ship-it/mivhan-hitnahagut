@@ -460,7 +460,10 @@ tr:last-child td{border-bottom:none}
             <p style="font-size:14px;color:var(--g500);margin-bottom:14px">קבל מפתח API חינמי ב-<strong>aistudio.google.com</strong> → "Get API key" → "Create API key". המפתח מתחיל ב-<code>AIza...</code></p>
             <div class="form-group"><label class="form-label">Gemini API Key</label><input type="text" class="form-control" id="settings-gemini-key" placeholder="AIza..." dir="ltr"></div>
             <div class="form-group"><label class="form-label">מודל AI (ברירת מחדל: gemini-2.0-flash)</label><input type="text" class="form-control" id="settings-ai-model" placeholder="gemini-2.0-flash" dir="ltr"></div>
-            <button class="btn btn-primary" onclick="saveGeminiSettings()"><i data-lucide="save"></i> שמור</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="saveGeminiSettings()"><i data-lucide="save"></i> שמור</button>
+              <button class="btn btn-secondary" id="gemini-test-btn" onclick="testGeminiConnection()"><i data-lucide="zap"></i> בדוק חיבור</button>
+            </div>
             <div id="gemini-settings-status" style="margin-top:10px;font-size:13px"></div>
           </div>
         </div>
@@ -3863,8 +3866,36 @@ function saveGeminiSettings(){
   localStorage.setItem('gemini_key',k);
   const m=(document.getElementById('settings-ai-model').value.trim())||'gemini-2.0-flash';
   aiModel=m; localStorage.setItem('ai_model',m);
-  document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> Gemini נשמר ('+m+')</span>';
-  toast('הגדרות Gemini נשמרו <i data-lucide="check-circle"></i>','success');
+  document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)">✓ Gemini נשמר ('+m+')</span>';
+  toast('הגדרות Gemini נשמרו','success');
+}
+
+async function testGeminiConnection(){
+  const k=document.getElementById('settings-gemini-key').value.trim();
+  if(!k){document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--red)">נא להזין מפתח API תחילה</span>';return;}
+  const m=(document.getElementById('settings-ai-model').value.trim())||'gemini-2.0-flash';
+  const btn=document.getElementById('gemini-test-btn');
+  btn.disabled=true;
+  document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--g500)">בודק חיבור...</span>';
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'היי'}]}],generationConfig:{maxOutputTokens:5}})
+    });
+    if(r.ok){
+      document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)">✓ חיבור תקין! מודל: '+m+'</span>';
+    } else {
+      const e=await r.json();
+      const msg=e.error?.message||'שגיאה לא ידועה';
+      document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאה: '+msg+'</span>';
+    }
+  }catch(e){
+    document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאת רשת: '+e.message+'</span>';
+  }finally{
+    btn.disabled=false;
+    lucide.createIcons();
+  }
 }
 
 // === GMAIL API ===
@@ -4113,7 +4144,13 @@ function openSmartAssistant(pid){
 }
 
 async function callGeminiSMART(){
-  if(!geminiKey) return toast('נא להגדיר Gemini API Key בהגדרות','error');
+  if(!geminiKey){
+    toast('נא להגדיר Gemini API Key בהגדרות','error');
+    closeModal('modal-smart');
+    showView('settings');
+    setTimeout(()=>{const el=document.getElementById('settings-gemini-key');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}},300);
+    return;
+  }
   const behavior=document.getElementById('smart-behavior').value.trim();
   const context=document.getElementById('smart-context').value.trim();
   const desired=document.getElementById('smart-desired').value.trim();
@@ -4158,17 +4195,24 @@ ${strength?'חוזקות/משאבים: '+strength:''}
     }
     const data=await r.json();
     const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'לא התקבלה תשובה';
-    document.getElementById('smart-result-text').textContent=text;
+    const el=document.getElementById('smart-result-text');
+    el.textContent=text;
+    el.style.color='';
     document.getElementById('smart-result').style.display='block';
     lucide.createIcons();
   }catch(e){
-    toast('שגיאה: '+e.message,'error');
+    const errMsg=e.message||'שגיאה לא ידועה';
+    document.getElementById('smart-result-text').textContent='שגיאה: '+errMsg;
+    document.getElementById('smart-result-text').style.color='var(--red)';
+    document.getElementById('smart-result').style.display='block';
+    toast('שגיאה מה-AI: '+errMsg,'error');
   }finally{
     document.getElementById('smart-btn').disabled=false;
     document.getElementById('smart-loading').style.display='none';
     lucide.createIcons();
   }
 }
+
 
 function copySmartResult(){
   const text=document.getElementById('smart-result-text').textContent;
