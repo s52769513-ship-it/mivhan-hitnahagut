@@ -468,10 +468,10 @@ tr:last-child td{border-bottom:none}
           </div>
         </div>
         <div class="card" style="max-width:560px;margin-bottom:20px">
-          <div class="card-header"><h3><i data-lucide="zap"></i> עוזר AI – Groq (חינמי, ללא כרטיס אשראי)</h3></div>
+          <div class="card-header"><h3><i data-lucide="zap"></i> עוזר AI – OpenRouter (חינמי, ללא כרטיס אשראי)</h3></div>
           <div class="card-body">
-            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">קבל מפתח חינמי ב-<strong>console.groq.com</strong> → "API Keys" → "Create API Key". מהיר מאוד, ללא כרטיס אשראי.</p>
-            <div class="form-group"><label class="form-label">Groq API Key</label><input type="text" class="form-control" id="settings-groq-key" placeholder="gsk_..." dir="ltr"></div>
+            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">קבל מפתח חינמי ב-<strong>openrouter.ai</strong> → "Sign In" → "Keys" → "Create Key". ללא כרטיס אשראי, מודלים חינמיים זמינים.</p>
+            <div class="form-group"><label class="form-label">OpenRouter API Key</label><input type="text" class="form-control" id="settings-groq-key" placeholder="sk-or-..." dir="ltr"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-primary" onclick="saveGroqSettings()"><i data-lucide="save"></i> שמור</button>
               <button class="btn btn-secondary" id="groq-test-btn" onclick="testGroqConnection()"><i data-lucide="zap"></i> בדוק חיבור</button>
@@ -3912,14 +3912,14 @@ async function testGeminiConnection(){
   }
 }
 
-// === GROQ AI ===
+// === OPENROUTER AI ===
 function saveGroqSettings(){
   const k=document.getElementById('settings-groq-key').value.trim();
-  if(!k) return toast('נא להזין Groq API Key','error');
+  if(!k) return toast('נא להזין OpenRouter API Key','error');
   groqKey=k;
   localStorage.setItem('groq_key',k);
-  document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ Groq נשמר</span>';
-  toast('הגדרות Groq נשמרו','success');
+  document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ OpenRouter נשמר</span>';
+  toast('הגדרות OpenRouter נשמרו','success');
   lucide.createIcons();
 }
 
@@ -3930,13 +3930,13 @@ async function testGroqConnection(){
   btn.disabled=true;
   document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--g500)">בודק חיבור...</span>';
   try{
-    const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+k},
-      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:'היי'}],max_tokens:5})
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+k,'HTTP-Referer':location.origin},
+      body:JSON.stringify({model:'meta-llama/llama-3.3-70b-instruct:free',messages:[{role:'user',content:'היי'}],max_tokens:5})
     });
     if(r.ok){
-      document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ חיבור תקין! Groq מוכן לשימוש</span>';
+      document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ חיבור תקין! OpenRouter מוכן לשימוש</span>';
     } else {
       const e=await r.json();
       document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאה: '+(e.error?.message||'מפתח לא תקין')+'</span>';
@@ -3950,10 +3950,10 @@ async function testGroqConnection(){
 }
 
 async function callGroqSMART(prompt){
-  const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+  const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
     method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey},
-    body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],max_tokens:800,temperature:0.7})
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey,'HTTP-Referer':location.origin},
+    body:JSON.stringify({model:'meta-llama/llama-3.3-70b-instruct:free',messages:[{role:'user',content:prompt}],max_tokens:800,temperature:0.7})
   });
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה מה-API');}
   const data=await r.json();
