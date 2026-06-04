@@ -3933,7 +3933,7 @@ async function testGroqConnection(){
     const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+k,'HTTP-Referer':location.origin},
-      body:JSON.stringify({model:'meta-llama/llama-3.3-70b-instruct:free',messages:[{role:'user',content:'היי'}],max_tokens:5})
+      body:JSON.stringify({model:'google/gemma-3-27b-it:free',messages:[{role:'user',content:'היי'}],max_tokens:5})
     });
     if(r.ok){
       document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ חיבור תקין! OpenRouter מוכן לשימוש</span>';
@@ -3953,7 +3953,7 @@ async function callGroqSMART(prompt){
   const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey,'HTTP-Referer':location.origin},
-    body:JSON.stringify({model:'meta-llama/llama-3.3-70b-instruct:free',messages:[{role:'user',content:prompt}],max_tokens:800,temperature:0.7})
+    body:JSON.stringify({model:'google/gemma-3-27b-it:free',messages:[{role:'user',content:prompt}],max_tokens:800,temperature:0.7})
   });
   if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה מה-API');}
   const data=await r.json();
