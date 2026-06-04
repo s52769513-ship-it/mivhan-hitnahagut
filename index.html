@@ -3924,22 +3924,24 @@ function saveGroqSettings(){
 }
 
 async function testGroqConnection(){
-  const k=document.getElementById('settings-groq-key').value.trim();
+  const k=(document.getElementById('settings-groq-key').value||'').trim() || groqKey;
   if(!k){document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">נא להזין מפתח API תחילה</span>';return;}
   const btn=document.getElementById('groq-test-btn');
   btn.disabled=true;
   document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--g500)">בודק חיבור...</span>';
   try{
+    const headers={'Content-Type':'application/json'};
+    headers['Authorization']='Bearer '+k;
     const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+k,'HTTP-Referer':location.origin},
+      headers,
       body:JSON.stringify({model:'google/gemma-3-27b-it:free',messages:[{role:'user',content:'היי'}],max_tokens:5})
     });
     if(r.ok){
       document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ חיבור תקין! OpenRouter מוכן לשימוש</span>';
     } else {
       const e=await r.json();
-      document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאה: '+(e.error?.message||'מפתח לא תקין')+'</span>';
+      document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאה: '+(e.error?.message||JSON.stringify(e.error)||'מפתח לא תקין')+'</span>';
     }
   }catch(e){
     document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאת רשת: '+e.message+'</span>';
