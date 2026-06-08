@@ -3152,7 +3152,7 @@ function renderGoals(pid){
   const goals=allGoals.filter(g=>g.patient_id===pid);
   document.getElementById('it-treatment').innerHTML=`
     <div style="margin-bottom:12px;display:flex;justify-content:flex-end;gap:8px">
-      <button class="btn btn-secondary btn-sm" onclick="openSmartAssistant('${pid}')"><i data-lucide="sparkles"></i> עוזר SMART</button>
+      <button class="btn btn-secondary btn-sm" onclick="openSmartAiChat('${pid}')"><i data-lucide="sparkles"></i> עוזר SMART</button>
       <button class="btn btn-primary btn-sm" onclick="openGoalForPatient('${pid}')">+ מטרה חדשה</button>
     </div>
     ${goals.length===0?'<div class="empty"><i data-lucide="target"></i><p>אין מטרות טיפוליות עדיין</p></div>':goals.map((g,i)=>`
@@ -4510,15 +4510,39 @@ setInterval(updateClock,1000);
 // ─── AI Chat Panel ───────────────────────────────────────────────────────────
 let aiChatOpen=false;
 let aiChatHistory=[];
+let aiChatSystemPrompt=null;
+
+const SMART_SYSTEM_PROMPT=`אתה מומחה לניתוח התנהגותי יישומי (ABA) המסייע לנסח מטרות SMART לילדים עם קשיים התנהגותיים.
+כאשר מבקשים ממך לנסח מטרה SMART, כלול תמיד:
+• S – Specific: מה בדיוק הילד יעשה
+• M – Measurable: כיצד נמדוד הצלחה (כמות, תדירות, אחוז)
+• A – Achievable: ריאלי ומדורג
+• R – Relevant: קשור לצורך הפונקציונלי של הילד
+• T – Time-bound: מסגרת זמן ברורה
+כתוב תמיד בעברית, בצורה קצרה וברורה המתאימה לרישום בכרטיס טיפול.`;
+
+function _openAiPanel(systemPrompt, welcomeMsg, title){
+  aiChatSystemPrompt=systemPrompt||null;
+  const panel=document.getElementById('ai-chat-panel');
+  const btn=document.getElementById('ai-topbar-btn');
+  const titleEl=document.getElementById('ai-chat-title');
+  if(titleEl) titleEl.textContent=title||'עוזר AI';
+  aiChatHistory=[];
+  const msgs=document.getElementById('ai-chat-messages');
+  msgs.innerHTML=`<div style="text-align:center;color:var(--g400);font-size:13px;margin-top:20px">${welcomeMsg||'שלום! במה אוכל לעזור?'}</div>`;
+  aiChatOpen=true;
+  panel.style.display='flex';
+  btn.classList.add('active');
+  document.getElementById('ai-chat-input').focus();
+  lucide.createIcons();
+}
 
 function toggleAiChat(){
   aiChatOpen=!aiChatOpen;
   const panel=document.getElementById('ai-chat-panel');
   const btn=document.getElementById('ai-topbar-btn');
   if(aiChatOpen){
-    panel.style.display='flex';
-    btn.classList.add('active');
-    document.getElementById('ai-chat-input').focus();
+    _openAiPanel(null,'שלום! במה אוכל לעזור?','עוזר AI');
   } else {
     panel.style.display='none';
     btn.classList.remove('active');
@@ -4526,10 +4550,21 @@ function toggleAiChat(){
   lucide.createIcons();
 }
 
+function openSmartAiChat(pid){
+  _openAiPanel(
+    SMART_SYSTEM_PROMPT,
+    'שלום! אני עוזר SMART לניתוח התנהגותי.\nתאר את ההתנהגות שברצונך לטפל בה ואנסח עבורך מטרה SMART.',
+    'עוזר SMART'
+  );
+}
+
 function clearAiChat(){
   aiChatHistory=[];
   const msgs=document.getElementById('ai-chat-messages');
-  msgs.innerHTML='<div style="text-align:center;color:var(--g400);font-size:13px;margin-top:20px">שלום! במה אוכל לעזור?</div>';
+  const welcome=aiChatSystemPrompt===SMART_SYSTEM_PROMPT
+    ?'תאר את ההתנהגות ואנסח מטרה SMART.'
+    :'שלום! במה אוכל לעזור?';
+  msgs.innerHTML=`<div style="text-align:center;color:var(--g400);font-size:13px;margin-top:20px">${welcome}</div>`;
 }
 
 function copyAiMsg(btn,text){
@@ -4586,10 +4621,12 @@ async function sendAiMessage(){
       reply=d.choices?.[0]?.message?.content||'לא התקבלה תשובה';
     } else {
       const model=aiModel||'gemini-2.0-flash';
+      const body={contents:aiChatHistory,generationConfig:{temperature:0.7,maxOutputTokens:1000}};
+      if(aiChatSystemPrompt) body.system_instruction={parts:[{text:aiChatSystemPrompt}]};
       const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:aiChatHistory,generationConfig:{temperature:0.7,maxOutputTokens:1000}})
+        body:JSON.stringify(body)
       });
       if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה');}
       const d=await r.json();
@@ -4655,7 +4692,7 @@ async function sendAiMessage(){
   <div id="ai-chat-header">
     <div style="display:flex;align-items:center;gap:8px">
       <i data-lucide="sparkles" style="width:17px;height:17px"></i>
-      <span style="font-weight:600;font-size:15px">עוזר AI</span>
+      <span id="ai-chat-title" style="font-weight:600;font-size:15px">עוזר AI</span>
     </div>
     <div style="display:flex;gap:6px">
       <button onclick="clearAiChat()" title="נקה שיחה" style="background:rgba(255,255,255,0.2);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;color:white;font-size:12px;font-family:'Rubik',sans-serif">נקה</button>
