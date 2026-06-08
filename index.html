@@ -206,14 +206,7 @@ tr:last-child td{border-bottom:none}
 .file-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--g100)}
 .file-item:last-child{border-bottom:none}
 .file-icon{font-size:22px;width:32px;text-align:center}
-#ai-chat-panel{position:fixed;bottom:80px;left:24px;width:370px;height:500px;background:white;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.18);z-index:8900;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--g200)}
-#ai-chat-header{background:linear-gradient(135deg,var(--blue2),#1a6fc4);color:white;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:move;flex-shrink:0;user-select:none}
-#ai-chat-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--g50)}
-.ai-msg-user{align-self:flex-end;background:var(--blue2);color:white;padding:9px 14px;border-radius:14px 14px 4px 14px;max-width:85%;font-size:14px;line-height:1.5;word-break:break-word}
-.ai-msg-bot{align-self:flex-start;background:white;color:var(--g800);padding:9px 14px;border-radius:14px 14px 14px 4px;max-width:90%;font-size:14px;line-height:1.6;word-break:break-word;border:1px solid var(--g150);position:relative}
-.ai-msg-copy{position:absolute;top:6px;left:6px;background:var(--g100);border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;color:var(--g500);font-family:'Rubik',sans-serif;opacity:0;transition:opacity .15s}
-.ai-msg-bot:hover .ai-msg-copy{opacity:1}
-.ai-msg-loading{align-self:flex-start;color:var(--g400);font-size:13px;padding:6px 0}
+
 </style>
 </head>
 <body>
@@ -463,28 +456,15 @@ tr:last-child td{border-bottom:none}
           </div>
         </div>
         <div class="card" style="max-width:560px;margin-bottom:20px">
-          <div class="card-header"><h3><i data-lucide="sparkles"></i> עוזר AI – מטרות SMART (Gemini)</h3></div>
+          <div class="card-header"><h3><i data-lucide="sparkles"></i> עוזר AI – מטרות SMART (ChatGPT)</h3></div>
           <div class="card-body">
-            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">קבל מפתח API חינמי ב-<strong>aistudio.google.com</strong> → "Get API key" → "Create API key". המפתח מתחיל ב-<code>AIza...</code></p>
-            <div class="form-group"><label class="form-label">Gemini API Key</label><input type="text" class="form-control" id="settings-gemini-key" placeholder="AIza..." dir="ltr"></div>
-            <div class="form-group"><label class="form-label">מודל AI (ברירת מחדל: gemini-2.0-flash)</label><input type="text" class="form-control" id="settings-ai-model" placeholder="gemini-2.0-flash" dir="ltr"></div>
+            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">קבל מפתח API ב-<strong>platform.openai.com</strong> → API Keys → Create new secret key. המפתח מתחיל ב-<code>sk-...</code></p>
+            <div class="form-group"><label class="form-label">OpenAI API Key</label><input type="text" class="form-control" id="settings-openai-key" placeholder="sk-..." dir="ltr"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-primary" onclick="saveGeminiSettings()"><i data-lucide="save"></i> שמור</button>
-              <button class="btn btn-secondary" id="gemini-test-btn" onclick="testGeminiConnection()"><i data-lucide="zap"></i> בדוק חיבור</button>
+              <button class="btn btn-primary" onclick="saveOpenAISettings()"><i data-lucide="save"></i> שמור</button>
+              <button class="btn btn-secondary" id="openai-test-btn" onclick="testOpenAIConnection()"><i data-lucide="zap"></i> בדוק חיבור</button>
             </div>
-            <div id="gemini-settings-status" style="margin-top:10px;font-size:13px"></div>
-          </div>
-        </div>
-        <div class="card" style="max-width:560px;margin-bottom:20px">
-          <div class="card-header"><h3><i data-lucide="zap"></i> עוזר AI – Hugging Face (חינמי, ללא כרטיס אשראי)</h3></div>
-          <div class="card-body">
-            <p style="font-size:14px;color:var(--g500);margin-bottom:14px">קבל טוקן חינמי ב-<strong>huggingface.co</strong> → הירשם → Settings → Access Tokens → New Token (Read).</p>
-            <div class="form-group"><label class="form-label">Hugging Face Token</label><input type="text" class="form-control" id="settings-groq-key" placeholder="hf_..." dir="ltr"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-primary" onclick="saveGroqSettings()"><i data-lucide="save"></i> שמור</button>
-              <button class="btn btn-secondary" id="groq-test-btn" onclick="testGroqConnection()"><i data-lucide="zap"></i> בדוק חיבור</button>
-            </div>
-            <div id="groq-settings-status" style="margin-top:10px;font-size:13px"></div>
+            <div id="openai-settings-status" style="margin-top:10px;font-size:13px"></div>
           </div>
         </div>
         <div class="card" style="max-width:560px;margin-bottom:20px">
@@ -914,10 +894,8 @@ let ejsPublicKey=localStorage.getItem('ejs_key')||'M0QHmDxKQG3XJgnTQ';
 let ejsServiceId=localStorage.getItem('ejs_service')||'service_dh62bba';
 let ejsTemplateId=localStorage.getItem('ejs_template')||'template_72ogmc7';
 const SB_STORAGE_BUCKET='patient-files';
-let geminiKey=localStorage.getItem('gemini_key')||'';
-let aiModel=localStorage.getItem('ai_model')||'gemini-2.0-flash';
+let openaiKey=localStorage.getItem('openai_key')||'';
 let googleClientId=localStorage.getItem('google_client_id')||'';
-let groqKey=localStorage.getItem('groq_key')||'';
 let gmailToken=null;
 let gmailTokenExpiry=0;
 let gmailTokenClient=null;
@@ -3148,7 +3126,7 @@ function renderGoals(pid){
   const goals=allGoals.filter(g=>g.patient_id===pid);
   document.getElementById('it-treatment').innerHTML=`
     <div style="margin-bottom:12px;display:flex;justify-content:flex-end;gap:8px">
-      <button class="btn btn-secondary btn-sm" onclick="openSmartAiChat('${pid}')"><i data-lucide="sparkles"></i> עוזר SMART</button>
+      <button class="btn btn-secondary btn-sm" onclick="openSmartAssistant('${pid}')"><i data-lucide="sparkles"></i> עוזר SMART</button>
       <button class="btn btn-primary btn-sm" onclick="openGoalForPatient('${pid}')">+ מטרה חדשה</button>
     </div>
     ${goals.length===0?'<div class="empty"><i data-lucide="target"></i><p>אין מטרות טיפוליות עדיין</p></div>':goals.map((g,i)=>`
@@ -3827,14 +3805,12 @@ function loadSettings(){
   const k=document.getElementById('settings-ejs-key'); if(k) k.value=ejsPublicKey;
   const s=document.getElementById('settings-ejs-service'); if(s) s.value=ejsServiceId;
   const t=document.getElementById('settings-ejs-template'); if(t) t.value=ejsTemplateId;
-  const gk=document.getElementById('settings-gemini-key'); if(gk) gk.value=geminiKey;
-  const am=document.getElementById('settings-ai-model'); if(am) am.value=aiModel;
-  const grk=document.getElementById('settings-groq-key'); if(grk) grk.value=groqKey;
+  const ok=document.getElementById('settings-openai-key'); if(ok) ok.value=openaiKey;
   const es=document.getElementById('email-settings-status');
   if(es) es.innerHTML=ejsPublicKey?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> EmailJS מוגדר</span>':'';
   checkStorageBucket();
-  const gs=document.getElementById('gemini-settings-status');
-  if(gs) gs.innerHTML=geminiKey?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> Gemini מוגדר</span>':'';
+  const os=document.getElementById('openai-settings-status');
+  if(os) os.innerHTML=openaiKey?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> OpenAI מוגדר</span>':'';
   updateGmailStatus();
 }
 
@@ -3874,93 +3850,40 @@ async function checkStorageBucket(){
   if(window.lucide) lucide.createIcons();
 }
 
-function saveGeminiSettings(){
-  const k=document.getElementById('settings-gemini-key').value.trim();
-  if(!k) return toast('נא להזין Gemini API Key','error');
-  geminiKey=k;
-  localStorage.setItem('gemini_key',k);
-  const m=(document.getElementById('settings-ai-model').value.trim())||'gemini-2.0-flash';
-  aiModel=m; localStorage.setItem('ai_model',m);
-  document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)">✓ Gemini נשמר ('+m+')</span>';
-  toast('הגדרות Gemini נשמרו','success');
+// === OPENAI ===
+function saveOpenAISettings(){
+  const k=document.getElementById('settings-openai-key').value.trim();
+  if(!k) return toast('נא להזין OpenAI API Key','error');
+  openaiKey=k;
+  localStorage.setItem('openai_key',k);
+  document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--green)">✓ OpenAI Key נשמר</span>';
+  toast('מפתח OpenAI נשמר','success');
 }
 
-async function testGeminiConnection(){
-  const k=document.getElementById('settings-gemini-key').value.trim();
-  if(!k){document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--red)">נא להזין מפתח API תחילה</span>';return;}
-  const m=(document.getElementById('settings-ai-model').value.trim())||'gemini-2.0-flash';
-  const btn=document.getElementById('gemini-test-btn');
+async function testOpenAIConnection(){
+  const k=document.getElementById('settings-openai-key').value.trim();
+  if(!k){document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--red)">נא להזין מפתח תחילה</span>';return;}
+  const btn=document.getElementById('openai-test-btn');
   btn.disabled=true;
-  document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--g500)">בודק חיבור...</span>';
+  document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--g500)">בודק חיבור...</span>';
   try{
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${k}`,{
+    const r=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:'היי'}]}],generationConfig:{maxOutputTokens:5}})
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+k},
+      body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:'היי'}],max_tokens:5})
     });
     if(r.ok){
-      document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--green)">✓ חיבור תקין! מודל: '+m+'</span>';
+      document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--green)">✓ חיבור תקין! OpenAI מוכן</span>';
     } else {
       const e=await r.json();
-      const msg=e.error?.message||'שגיאה לא ידועה';
-      document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאה: '+msg+'</span>';
+      document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאה: '+(e.error?.message||'מפתח לא תקין')+'</span>';
     }
   }catch(e){
-    document.getElementById('gemini-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאת רשת: '+e.message+'</span>';
+    document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאת רשת: '+e.message+'</span>';
   }finally{
     btn.disabled=false;
     lucide.createIcons();
   }
-}
-
-// === HUGGING FACE AI ===
-function saveGroqSettings(){
-  const k=document.getElementById('settings-groq-key').value.trim();
-  if(!k) return toast('נא להזין Hugging Face Token','error');
-  groqKey=k;
-  localStorage.setItem('groq_key',k);
-  document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ Hugging Face Token נשמר</span>';
-  toast('Token נשמר בהצלחה','success');
-  lucide.createIcons();
-}
-
-async function testGroqConnection(){
-  const k=(document.getElementById('settings-groq-key').value||'').trim()||groqKey;
-  if(!k){document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">נא להזין Token תחילה</span>';return;}
-  const btn=document.getElementById('groq-test-btn');
-  btn.disabled=true;
-  document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--g500)">בודק חיבור...</span>';
-  try{
-    const r=await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',{
-      method:'POST',
-      headers:{'Authorization':'Bearer '+k,'Content-Type':'application/json'},
-      body:JSON.stringify({inputs:'היי',parameters:{max_new_tokens:5}})
-    });
-    if(r.ok||r.status===503){
-      document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--green)">✓ Token תקין! Hugging Face מוכן</span>';
-    } else {
-      const e=await r.json();
-      document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאה: '+(e.error||'Token לא תקין')+'</span>';
-    }
-  }catch(e){
-    document.getElementById('groq-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאת רשת: '+e.message+'</span>';
-  }finally{
-    btn.disabled=false;
-    lucide.createIcons();
-  }
-}
-
-async function callGroqSMART(prompt){
-  const formatted=`<s>[INST] ${prompt} [/INST]`;
-  const r=await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',{
-    method:'POST',
-    headers:{'Authorization':'Bearer '+groqKey,'Content-Type':'application/json'},
-    body:JSON.stringify({inputs:formatted,parameters:{max_new_tokens:800,temperature:0.7,return_full_text:false}})
-  });
-  if(!r.ok){const e=await r.json();throw new Error(e.error||'שגיאה מה-API');}
-  const data=await r.json();
-  if(Array.isArray(data)) return data[0]?.generated_text||'לא התקבלה תשובה';
-  throw new Error(data.error||'תשובה לא צפויה');
 }
 
 // === GMAIL API ===
@@ -4209,11 +4132,11 @@ function openSmartAssistant(pid){
 }
 
 async function callGeminiSMART(){
-  if(!groqKey && !geminiKey){
-    toast('נא להגדיר Groq API Key בהגדרות','error');
+  if(!openaiKey){
+    toast('נא להגדיר OpenAI API Key בהגדרות','error');
     closeModal('modal-smart');
     showView('settings');
-    setTimeout(()=>{const el=document.getElementById('settings-groq-key');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}},300);
+    setTimeout(()=>{const el=document.getElementById('settings-openai-key');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}},300);
     return;
   }
   const behavior=document.getElementById('smart-behavior').value.trim();
@@ -4248,20 +4171,15 @@ ${strength?'חוזקות/משאבים: '+strength:''}
 כתוב בעברית בלבד, קצר וברור.`;
 
   try{
-    let text;
-    if(groqKey){
-      text=await callGroqSMART(prompt);
-    } else {
-      const model=aiModel||'gemini-2.0-flash';
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,maxOutputTokens:800}})
-      });
-      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה מה-API');}
-      const data=await r.json();
-      text=data.candidates?.[0]?.content?.parts?.[0]?.text||'לא התקבלה תשובה';
-    }
+    const r=await fetch('https://api.openai.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+openaiKey},
+      body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],max_tokens:800,temperature:0.7})
+    });
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה מה-API');}
+    const data=await r.json();
+    const text=data.choices?.[0]?.message?.content||'לא התקבלה תשובה';
+    {
     const el=document.getElementById('smart-result-text');
     el.textContent=text;
     el.style.color='';
@@ -4503,197 +4421,7 @@ function updateClock(){
 updateClock();
 setInterval(updateClock,1000);
 
-// ─── AI Chat Panel ───────────────────────────────────────────────────────────
-let aiChatOpen=false;
-let aiChatHistory=[];
-let aiChatSystemPrompt=null;
 
-const SMART_SYSTEM_PROMPT=`אתה מומחה לניתוח התנהגותי יישומי (ABA) המסייע לנסח מטרות SMART לילדים עם קשיים התנהגותיים.
-כאשר מבקשים ממך לנסח מטרה SMART, כלול תמיד:
-• S – Specific: מה בדיוק הילד יעשה
-• M – Measurable: כיצד נמדוד הצלחה (כמות, תדירות, אחוז)
-• A – Achievable: ריאלי ומדורג
-• R – Relevant: קשור לצורך הפונקציונלי של הילד
-• T – Time-bound: מסגרת זמן ברורה
-כתוב תמיד בעברית, בצורה קצרה וברורה המתאימה לרישום בכרטיס טיפול.`;
-
-function closeAiChat(){
-  document.getElementById('ai-chat-panel').style.display='none';
-  aiChatOpen=false;
-}
-
-function openSmartAiChat(pid){
-  aiChatSystemPrompt=SMART_SYSTEM_PROMPT;
-  aiChatHistory=[];
-  const panel=document.getElementById('ai-chat-panel');
-  const titleEl=document.getElementById('ai-chat-title');
-  if(titleEl) titleEl.textContent='עוזר SMART';
-  const msgs=document.getElementById('ai-chat-messages');
-  msgs.innerHTML='<div style="text-align:center;color:var(--g400);font-size:13px;margin-top:20px">שלום! אני עוזר SMART לניתוח התנהגותי.<br>תאר את ההתנהגות שברצונך לטפל בה ואנסח עבורך מטרה SMART.</div>';
-  aiChatOpen=true;
-  panel.style.display='flex';
-  document.getElementById('ai-chat-input').focus();
-  lucide.createIcons();
-}
-
-function clearAiChat(){
-  aiChatHistory=[];
-  const msgs=document.getElementById('ai-chat-messages');
-  const welcome=aiChatSystemPrompt===SMART_SYSTEM_PROMPT
-    ?'תאר את ההתנהגות ואנסח מטרה SMART.'
-    :'שלום! במה אוכל לעזור?';
-  msgs.innerHTML=`<div style="text-align:center;color:var(--g400);font-size:13px;margin-top:20px">${welcome}</div>`;
-}
-
-function copyAiMsg(btn,text){
-  navigator.clipboard.writeText(text).then(()=>{
-    btn.textContent='הועתק!';
-    setTimeout(()=>{btn.textContent='העתק';},1500);
-  });
-}
-
-async function sendAiMessage(){
-  const input=document.getElementById('ai-chat-input');
-  const text=input.value.trim();
-  if(!text)return;
-  if(!geminiKey&&!groqKey){
-    toast('נא להגדיר מפתח API בהגדרות','error');
-    showView('settings');
-    closeAiChat();
-    return;
-  }
-  const msgs=document.getElementById('ai-chat-messages');
-  // remove welcome placeholder
-  const placeholder=msgs.querySelector('div[style*="text-align:center"]');
-  if(placeholder)placeholder.remove();
-
-  // user bubble
-  const userBubble=document.createElement('div');
-  userBubble.className='ai-msg-user';
-  userBubble.textContent=text;
-  msgs.appendChild(userBubble);
-  input.value='';
-  input.style.height='auto';
-
-  // loading indicator
-  const loading=document.createElement('div');
-  loading.className='ai-msg-loading';
-  loading.textContent='מחשב...';
-  msgs.appendChild(loading);
-  msgs.scrollTop=msgs.scrollHeight;
-
-  document.getElementById('ai-send-btn').disabled=true;
-  aiChatHistory.push({role:'user',parts:[{text}]});
-
-  try{
-    let reply;
-    if(geminiKey){
-      const model=(aiModel||'').trim()||'gemini-2.0-flash';
-      const body={contents:aiChatHistory,generationConfig:{temperature:0.7,maxOutputTokens:1000}};
-      if(aiChatSystemPrompt) body.system_instruction={parts:[{text:aiChatSystemPrompt}]};
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(body)
-      });
-      if(!r.ok){const e=await r.json();throw new Error(`[${model}] ${e.error?.message||'שגיאה מGemini'}`);}
-      const d=await r.json();
-      reply=d.candidates?.[0]?.content?.parts?.[0]?.text||'לא התקבלה תשובה';
-    } else {
-      // HuggingFace fallback – Mistral [INST] format
-      let prompt='<s>';
-      const history=[...aiChatHistory];
-      if(aiChatSystemPrompt) history[0]={role:'user',parts:[{text:aiChatSystemPrompt+'\n\n'+history[0].parts[0].text}]};
-      for(let i=0;i<history.length;i++){
-        const m=history[i];
-        if(m.role==='user') prompt+=`[INST] ${m.parts[0].text} [/INST]`;
-        else prompt+=` ${m.parts[0].text} </s>`;
-      }
-      const r=await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',{
-        method:'POST',
-        headers:{'Authorization':'Bearer '+groqKey,'Content-Type':'application/json'},
-        body:JSON.stringify({inputs:prompt,parameters:{max_new_tokens:800,temperature:0.7,return_full_text:false}})
-      });
-      if(!r.ok){const e=await r.json();throw new Error(e.error||'שגיאה מHuggingFace');}
-      const d=await r.json();
-      reply=Array.isArray(d)?d[0]?.generated_text||'לא התקבלה תשובה':(()=>{throw new Error(d.error||'תשובה לא צפויה');})();
-    }
-    aiChatHistory.push({role:'model',parts:[{text:reply}]});
-    loading.remove();
-    const botBubble=document.createElement('div');
-    botBubble.className='ai-msg-bot';
-    botBubble.innerHTML=reply.replace(/\n/g,'<br>');
-    const copyBtn=document.createElement('button');
-    copyBtn.className='ai-msg-copy';
-    copyBtn.textContent='העתק';
-    copyBtn.onclick=()=>copyAiMsg(copyBtn,reply);
-    botBubble.appendChild(copyBtn);
-    msgs.appendChild(botBubble);
-  }catch(e){
-    loading.remove();
-    const errBubble=document.createElement('div');
-    errBubble.className='ai-msg-bot';
-    errBubble.style.color='var(--red)';
-    errBubble.textContent='שגיאה: '+(e.message||'נסה שוב');
-    msgs.appendChild(errBubble);
-    aiChatHistory.pop();
-  }finally{
-    document.getElementById('ai-send-btn').disabled=false;
-    msgs.scrollTop=msgs.scrollHeight;
-    lucide.createIcons();
-  }
-}
-
-// drag support for the panel
-(function(){
-  let dragging=false,ox=0,oy=0;
-  document.addEventListener('mousedown',e=>{
-    const h=document.getElementById('ai-chat-header');
-    if(h&&h.contains(e.target)&&!e.target.closest('button')){
-      dragging=true;
-      const panel=document.getElementById('ai-chat-panel');
-      const rect=panel.getBoundingClientRect();
-      ox=e.clientX-rect.left;
-      oy=e.clientY-rect.top;
-      panel.style.transition='none';
-      e.preventDefault();
-    }
-  });
-  document.addEventListener('mousemove',e=>{
-    if(!dragging)return;
-    const panel=document.getElementById('ai-chat-panel');
-    let x=e.clientX-ox, y=e.clientY-oy;
-    x=Math.max(0,Math.min(x,window.innerWidth-panel.offsetWidth));
-    y=Math.max(0,Math.min(y,window.innerHeight-panel.offsetHeight));
-    panel.style.left=x+'px';
-    panel.style.top=y+'px';
-    panel.style.bottom='auto';
-  });
-  document.addEventListener('mouseup',()=>{dragging=false;});
-})();
-</script>
-
-<!-- AI Chat Panel -->
-<div id="ai-chat-panel" style="display:none">
-  <div id="ai-chat-header">
-    <div style="display:flex;align-items:center;gap:8px">
-      <i data-lucide="sparkles" style="width:17px;height:17px"></i>
-      <span id="ai-chat-title" style="font-weight:600;font-size:15px">עוזר AI</span>
-    </div>
-    <div style="display:flex;gap:6px">
-      <button onclick="clearAiChat()" title="נקה שיחה" style="background:rgba(255,255,255,0.2);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;color:white;font-size:12px;font-family:'Rubik',sans-serif">נקה</button>
-      <button onclick="closeAiChat()" style="background:rgba(255,255,255,0.2);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;color:white;display:flex;align-items:center"><i data-lucide="x" style="width:14px;height:14px"></i></button>
-    </div>
-  </div>
-  <div id="ai-chat-messages">
-    <div style="text-align:center;color:var(--g400);font-size:13px;margin-top:20px">שלום! במה אוכל לעזור?</div>
-  </div>
-  <div style="padding:10px;background:white;border-top:1px solid var(--g200);flex-shrink:0">
-    <div style="display:flex;gap:8px;align-items:flex-end">
-      <textarea id="ai-chat-input" placeholder="כתוב שאלה... (Enter לשליחה)" style="flex:1;resize:none;border:1px solid var(--g200);border-radius:10px;padding:8px 12px;font-size:14px;font-family:'Rubik',sans-serif;direction:rtl;outline:none;min-height:40px;max-height:110px;line-height:1.45" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage();}"></textarea>
-      <button onclick="sendAiMessage()" id="ai-send-btn" style="background:var(--blue2);color:white;border:none;border-radius:10px;padding:8px 14px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;gap:4px;font-size:14px;font-family:'Rubik',sans-serif;height:40px"><i data-lucide="send" style="width:16px;height:16px"></i></button>
-    </div>
-  </div>
 </div>
 
 </body>
