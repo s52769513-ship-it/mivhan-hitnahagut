@@ -4587,8 +4587,20 @@ async function sendAiMessage(){
 
   try{
     let reply;
-    if(groqKey){
-      // build Mistral [INST] multi-turn format (same as callGroqSMART)
+    if(geminiKey){
+      const model=aiModel||'gemini-2.0-flash';
+      const body={contents:aiChatHistory,generationConfig:{temperature:0.7,maxOutputTokens:1000}};
+      if(aiChatSystemPrompt) body.system_instruction={parts:[{text:aiChatSystemPrompt}]};
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(body)
+      });
+      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה מGemini');}
+      const d=await r.json();
+      reply=d.candidates?.[0]?.content?.parts?.[0]?.text||'לא התקבלה תשובה';
+    } else {
+      // HuggingFace fallback – Mistral [INST] format
       let prompt='<s>';
       const history=[...aiChatHistory];
       if(aiChatSystemPrompt) history[0]={role:'user',parts:[{text:aiChatSystemPrompt+'\n\n'+history[0].parts[0].text}]};
@@ -4602,21 +4614,9 @@ async function sendAiMessage(){
         headers:{'Authorization':'Bearer '+groqKey,'Content-Type':'application/json'},
         body:JSON.stringify({inputs:prompt,parameters:{max_new_tokens:800,temperature:0.7,return_full_text:false}})
       });
-      if(!r.ok){const e=await r.json();throw new Error(e.error||'שגיאה מה-API');}
+      if(!r.ok){const e=await r.json();throw new Error(e.error||'שגיאה מHuggingFace');}
       const d=await r.json();
       reply=Array.isArray(d)?d[0]?.generated_text||'לא התקבלה תשובה':(()=>{throw new Error(d.error||'תשובה לא צפויה');})();
-    } else {
-      const model=aiModel||'gemini-2.0-flash';
-      const body={contents:aiChatHistory,generationConfig:{temperature:0.7,maxOutputTokens:1000}};
-      if(aiChatSystemPrompt) body.system_instruction={parts:[{text:aiChatSystemPrompt}]};
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(body)
-      });
-      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה');}
-      const d=await r.json();
-      reply=d.candidates?.[0]?.content?.parts?.[0]?.text||'לא התקבלה תשובה';
     }
     aiChatHistory.push({role:'model',parts:[{text:reply}]});
     loading.remove();
