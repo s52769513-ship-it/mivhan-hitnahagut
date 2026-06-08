@@ -214,9 +214,6 @@ tr:last-child td{border-bottom:none}
 .ai-msg-copy{position:absolute;top:6px;left:6px;background:var(--g100);border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;color:var(--g500);font-family:'Rubik',sans-serif;opacity:0;transition:opacity .15s}
 .ai-msg-bot:hover .ai-msg-copy{opacity:1}
 .ai-msg-loading{align-self:flex-start;color:var(--g400);font-size:13px;padding:6px 0}
-#ai-topbar-btn{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--blue2),#1a6fc4);color:white;border:none;border-radius:20px;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Rubik',sans-serif;transition:all .2s;box-shadow:0 2px 8px rgba(24,95,165,0.3)}
-#ai-topbar-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(24,95,165,0.4)}
-#ai-topbar-btn.active{background:linear-gradient(135deg,#0a2d4a,#0c3a5f)}
 </style>
 </head>
 <body>
@@ -280,7 +277,6 @@ tr:last-child td{border-bottom:none}
             <option value="">עצמי (מנהל)</option>
           </select>
         </div>
-        <button id="ai-topbar-btn" onclick="toggleAiChat()"><i data-lucide="sparkles" style="width:15px;height:15px"></i> עוזר AI</button>
         <div id="clock-widget">
           <div id="clock-time"></div>
           <div id="clock-date-he"></div>
@@ -4521,41 +4517,23 @@ const SMART_SYSTEM_PROMPT=`אתה מומחה לניתוח התנהגותי יי�
 • T – Time-bound: מסגרת זמן ברורה
 כתוב תמיד בעברית, בצורה קצרה וברורה המתאימה לרישום בכרטיס טיפול.`;
 
-function _openAiPanel(systemPrompt, welcomeMsg, title){
-  aiChatSystemPrompt=systemPrompt||null;
-  const panel=document.getElementById('ai-chat-panel');
-  const btn=document.getElementById('ai-topbar-btn');
-  const titleEl=document.getElementById('ai-chat-title');
-  if(titleEl) titleEl.textContent=title||'עוזר AI';
-  aiChatHistory=[];
-  const msgs=document.getElementById('ai-chat-messages');
-  msgs.innerHTML=`<div style="text-align:center;color:var(--g400);font-size:13px;margin-top:20px">${welcomeMsg||'שלום! במה אוכל לעזור?'}</div>`;
-  aiChatOpen=true;
-  panel.style.display='flex';
-  btn.classList.add('active');
-  document.getElementById('ai-chat-input').focus();
-  lucide.createIcons();
-}
-
-function toggleAiChat(){
-  aiChatOpen=!aiChatOpen;
-  const panel=document.getElementById('ai-chat-panel');
-  const btn=document.getElementById('ai-topbar-btn');
-  if(aiChatOpen){
-    _openAiPanel(null,'שלום! במה אוכל לעזור?','עוזר AI');
-  } else {
-    panel.style.display='none';
-    btn.classList.remove('active');
-  }
-  lucide.createIcons();
+function closeAiChat(){
+  document.getElementById('ai-chat-panel').style.display='none';
+  aiChatOpen=false;
 }
 
 function openSmartAiChat(pid){
-  _openAiPanel(
-    SMART_SYSTEM_PROMPT,
-    'שלום! אני עוזר SMART לניתוח התנהגותי.\nתאר את ההתנהגות שברצונך לטפל בה ואנסח עבורך מטרה SMART.',
-    'עוזר SMART'
-  );
+  aiChatSystemPrompt=SMART_SYSTEM_PROMPT;
+  aiChatHistory=[];
+  const panel=document.getElementById('ai-chat-panel');
+  const titleEl=document.getElementById('ai-chat-title');
+  if(titleEl) titleEl.textContent='עוזר SMART';
+  const msgs=document.getElementById('ai-chat-messages');
+  msgs.innerHTML='<div style="text-align:center;color:var(--g400);font-size:13px;margin-top:20px">שלום! אני עוזר SMART לניתוח התנהגותי.<br>תאר את ההתנהגות שברצונך לטפל בה ואנסח עבורך מטרה SMART.</div>';
+  aiChatOpen=true;
+  panel.style.display='flex';
+  document.getElementById('ai-chat-input').focus();
+  lucide.createIcons();
 }
 
 function clearAiChat(){
@@ -4581,7 +4559,7 @@ async function sendAiMessage(){
   if(!geminiKey&&!groqKey){
     toast('נא להגדיר מפתח API בהגדרות','error');
     showView('settings');
-    toggleAiChat();
+    closeAiChat();
     return;
   }
   const msgs=document.getElementById('ai-chat-messages');
@@ -4704,7 +4682,7 @@ async function sendAiMessage(){
     </div>
     <div style="display:flex;gap:6px">
       <button onclick="clearAiChat()" title="נקה שיחה" style="background:rgba(255,255,255,0.2);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;color:white;font-size:12px;font-family:'Rubik',sans-serif">נקה</button>
-      <button onclick="toggleAiChat()" style="background:rgba(255,255,255,0.2);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;color:white;display:flex;align-items:center"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+      <button onclick="closeAiChat()" style="background:rgba(255,255,255,0.2);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;color:white;display:flex;align-items:center"><i data-lucide="x" style="width:14px;height:14px"></i></button>
     </div>
   </div>
   <div id="ai-chat-messages">
