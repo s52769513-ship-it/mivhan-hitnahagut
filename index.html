@@ -4610,15 +4610,23 @@ async function sendAiMessage(){
   try{
     let reply;
     if(groqKey){
-      const hfMessages=aiChatHistory.map(m=>({role:m.role==='model'?'assistant':'user',content:m.parts[0].text}));
-      const r=await fetch('https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1/v1/chat/completions',{
+      // build Mistral [INST] multi-turn format (same as callGroqSMART)
+      let prompt='<s>';
+      const history=[...aiChatHistory];
+      if(aiChatSystemPrompt) history[0]={role:'user',parts:[{text:aiChatSystemPrompt+'\n\n'+history[0].parts[0].text}]};
+      for(let i=0;i<history.length;i++){
+        const m=history[i];
+        if(m.role==='user') prompt+=`[INST] ${m.parts[0].text} [/INST]`;
+        else prompt+=` ${m.parts[0].text} </s>`;
+      }
+      const r=await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',{
         method:'POST',
         headers:{'Authorization':'Bearer '+groqKey,'Content-Type':'application/json'},
-        body:JSON.stringify({model:'mistralai/Mixtral-8x7B-Instruct-v0.1',messages:hfMessages,max_tokens:800,temperature:0.7})
+        body:JSON.stringify({inputs:prompt,parameters:{max_new_tokens:800,temperature:0.7,return_full_text:false}})
       });
-      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה');}
+      if(!r.ok){const e=await r.json();throw new Error(e.error||'שגיאה מה-API');}
       const d=await r.json();
-      reply=d.choices?.[0]?.message?.content||'לא התקבלה תשובה';
+      reply=Array.isArray(d)?d[0]?.generated_text||'לא התקבלה תשובה':(()=>{throw new Error(d.error||'תשובה לא צפויה');})();
     } else {
       const model=aiModel||'gemini-2.0-flash';
       const body={contents:aiChatHistory,generationConfig:{temperature:0.7,maxOutputTokens:1000}};
