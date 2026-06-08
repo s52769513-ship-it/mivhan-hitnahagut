@@ -4179,7 +4179,6 @@ ${strength?'חוזקות/משאבים: '+strength:''}
     if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה מה-API');}
     const data=await r.json();
     const text=data.choices?.[0]?.message?.content||'לא התקבלה תשובה';
-    {
     const el=document.getElementById('smart-result-text');
     el.textContent=text;
     el.style.color='';
