@@ -244,6 +244,7 @@ tr:last-child td{border-bottom:none}
       <button id="nav-appointments" class="nav-item" onclick="showView('appointments')"><span class="ni"><i data-lucide="clock"></i></span>פגישות</button>
       <div class="nav-section-title">ניהול</div>
       <button id="nav-tasks" class="nav-item" onclick="showView('tasks')"><span class="ni"><i data-lucide="check-square"></i></span>משימות</button>
+      <button id="nav-all-notes" class="nav-item" onclick="showView('all-notes')"><span class="ni"><i data-lucide="message-square"></i></span>עדכונים</button>
       <button id="nav-finances" class="nav-item" onclick="showView('finances')"><span class="ni"><i data-lucide="banknote"></i></span>כספים</button>
       <div id="nav-section-admin" class="nav-section-title">ניהול משתמשים</div>
       <button id="nav-users" class="nav-item" onclick="showView('users')"><span class="ni"><i data-lucide="user"></i></span>משתמשים</button>
@@ -417,6 +418,19 @@ tr:last-child td{border-bottom:none}
             </div>
           </div>
           <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>פירוט</th><th>תאריך</th><th>סטטוס</th><th></th></tr></thead><tbody id="tasks-tbody"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- ALL NOTES -->
+      <div class="view" id="view-all-notes">
+        <div class="card">
+          <div class="card-header">
+            <h3><i data-lucide="message-square"></i> כל העדכונים</h3>
+            <div style="display:flex;gap:10px;align-items:center">
+              <select id="notes-patient-filter" class="form-control" style="width:200px;font-size:13px" onchange="renderAllNotes()"><option value="">כל המטופלים</option></select>
+            </div>
+          </div>
+          <div id="all-notes-list" style="padding:12px"></div>
         </div>
       </div>
 
@@ -1352,7 +1366,7 @@ function showView(v){
   document.getElementById('view-'+v).classList.add('active');
   const nav = document.querySelector(`[onclick="showView('${v}')"]`);
   if(nav) nav.classList.add('active');
-  const titles={dashboard:'לוח בקרה',patients:'מטופלים',diary:'יומן פגישות',appointments:'פגישות',tasks:'משימות',finances:'כספים',settings:'הגדרות','patient-detail':'כרטיס מטופל'};
+  const titles={dashboard:'לוח בקרה',patients:'מטופלים',diary:'יומן פגישות',appointments:'פגישות',tasks:'משימות','all-notes':'עדכונים',finances:'כספים',settings:'הגדרות','patient-detail':'כרטיס מטופל'};
   document.getElementById('topbar-title').textContent=titles[v]||'';
   if(v==='dashboard') renderDashboard();
   if(v==='users') renderUsersView();
@@ -1361,6 +1375,7 @@ function showView(v){
   if(v==='diary') renderDiaryCalendar();
   if(v==='appointments') renderAppointments();
   if(v==='tasks') renderTasks();
+  if(v==='all-notes'){ populateNotesPatientFilter(); renderAllNotes(); }
   if(v==='finances') renderFinances();
   if(v==='settings') loadSettings();
 }
@@ -2281,12 +2296,12 @@ async function renderPatientNotes(pid){
   const panel=document.getElementById('patient-notes-panel');
   if(!panel) return;
   const [nr, pr] = await Promise.all([
-    sbAdmin('notes',`?patient_id=eq.${pid}&order=created_at.asc`),
+    sbAdmin('notes',`?patient_id=eq.${pid}&order=created_at.desc`),
     sbAdmin('user_profiles','?select=id,display_name,role')
   ]);
   if(nr.data) allNotes=[...allNotes.filter(n=>n.patient_id!==pid), ...nr.data];
   if(pr.data?.length) allUserProfiles=pr.data;
-  const notes=(nr.data||allNotes.filter(n=>n.patient_id===pid)).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const notes=(nr.data||allNotes.filter(n=>n.patient_id===pid)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   panel.innerHTML=`
     <div class="card" style="padding:0;overflow:hidden">
       <div class="card-header" style="padding:12px 14px">
@@ -3434,6 +3449,47 @@ function renderTasksTable(){
 }
 
 function setTaskFilter(f,btn){ taskFilter=f; document.querySelectorAll('.filter-pills .pill').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); renderTasksTable(); }
+
+async function renderAllNotes(){
+  const sel=document.getElementById('notes-patient-filter');
+  const filterPid=sel?sel.value:'';
+  const list=document.getElementById('all-notes-list');
+  if(!list) return;
+  list.innerHTML='<div style="color:var(--g400);font-size:13px">טוען...</div>';
+  const [nr,pr]=await Promise.all([
+    sbAdmin('notes','?order=created_at.desc'),
+    sbAdmin('user_profiles','?select=id,display_name')
+  ]);
+  if(pr.data?.length) allUserProfiles=pr.data;
+  let notes=(nr.data||[]);
+  const visiblePids=new Set(allPatients.map(p=>p.id));
+  notes=notes.filter(n=>visiblePids.has(n.patient_id));
+  if(filterPid) notes=notes.filter(n=>n.patient_id===filterPid);
+  if(notes.length===0){list.innerHTML='<div class="empty"><i data-lucide="message-square"></i><p>אין עדכונים</p></div>';if(window.lucide)lucide.createIcons();return;}
+  list.innerHTML=notes.map(n=>{
+    const patient=allPatients.find(p=>p.id===n.patient_id);
+    const profile=n.user_id?allUserProfiles.find(u=>u.id===n.user_id):null;
+    const authorName=profile?.display_name||n.title||'';
+    return`<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;margin-bottom:2px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="font-size:12px;font-weight:600;color:var(--primary);cursor:pointer" onclick="openPatient('${n.patient_id}')">${patient?.name||'—'}</span>
+          ${authorName?`<span style="font-size:11px;color:var(--g500)">${authorName}</span>`:''}
+        </div>
+        <span style="font-size:11px;color:var(--g400)">${n.created_at?fmtDate(n.created_at):''}</span>
+      </div>
+      <div style="border:1px solid var(--g200);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--g700);white-space:pre-wrap;line-height:1.6">${(n.content||'').replace(/</g,'&lt;')}</div>
+    </div>`;
+  }).join('');
+  if(window.lucide) lucide.createIcons();
+}
+
+function populateNotesPatientFilter(){
+  const sel=document.getElementById('notes-patient-filter');
+  if(!sel) return;
+  sel.innerHTML='<option value="">כל המטופלים</option>'+
+    allPatients.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+}
 
 async function createTask(){
   const name=document.getElementById('nt-name').value.trim();
