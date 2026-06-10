@@ -4379,11 +4379,13 @@ async function migrateCloudinaryFiles(){
   const cloudFiles=allFiles.filter(f=>f.drive_url?.includes('cloudinary.com'));
   if(cloudFiles.length===0) return toast('אין קבצי Cloudinary להעברה','success');
   if(!confirm(`נמצאו ${cloudFiles.length} קבצים מ-Cloudinary. להעביר לSupabase Storage?`)) return;
-  let ok=0,fail=0;
+  let ok=0; const failed=[];
   toast('מעביר קבצים...','');
   for(const f of cloudFiles){
     try{
-      const blob=await fetch(f.drive_url).then(r=>r.blob());
+      const resp=await fetch(f.drive_url);
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      const blob=await resp.blob();
       const ts=Date.now();
       const safeName=(f.name||'file').replace(/[^א-תa-zA-Z0-9._-]/g,'_');
       const aptMatch=f.drive_file_id?.match(/\|\|apt:(.+)$/);
@@ -4394,9 +4396,14 @@ async function migrateCloudinaryFiles(){
       const idx=allFiles.findIndex(x=>x.id===f.id);
       if(idx>=0){allFiles[idx].drive_url=newUrl;allFiles[idx].drive_file_id=newFileId;}
       ok++;
-    }catch(e){ console.error('migrate fail',f.id,e); fail++; }
+    }catch(e){ console.error('migrate fail',f.name,e.message); failed.push(f.name||f.id); }
   }
-  toast(`העברה הסתיימה: ${ok} הצליחו${fail?', '+fail+' נכשלו':''}`,fail?'error':'success');
+  if(failed.length){
+    toast(`הועברו ${ok}. נכשלו ${failed.length} (לא נגישים מ-Cloudinary):`,'error');
+    setTimeout(()=>alert('קבצים שנכשלו — יש להעלות אותם מחדש ידנית:\n\n'+failed.join('\n')),500);
+  } else {
+    toast(`כל ${ok} הקבצים הועברו בהצלחה`,'success');
+  }
 }
 
 // === HELPERS ===
