@@ -1670,8 +1670,10 @@ const CLASS_ORDER=['ב','ג','ד','ה','ו','ז','ח','ט'];
 async function findOrCreateInstitution(name, type='general'){
   name=(name||'').trim();
   if(!name) return null;
-  const existing=allInstitutions.find(i=>i.name===name&&i.type===type)||allInstitutions.find(i=>i.name===name);
-  if(existing) return existing.id;
+  const exact=allInstitutions.find(i=>i.name===name&&i.type===type);
+  if(exact) return exact.id;
+  const byName=allInstitutions.find(i=>i.name===name);
+  if(byName&&(type==='general'||!type)) return byName.id;
   const r=await sbInsert('institutions',{name,type});
   if(r.error||!r.data?.[0]) return null;
   allInstitutions.push(r.data[0]);
