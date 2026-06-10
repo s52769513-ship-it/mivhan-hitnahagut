@@ -2300,7 +2300,7 @@ async function renderPatientNotes(pid){
         ${notes.length===0?'<div class="empty" style="padding:24px"><i data-lucide="message-square"></i><p>אין עדכונים</p></div>':
         notes.map(n=>{
           const profile=n.user_id?allUserProfiles.find(u=>u.id===n.user_id):null;
-          const authorName=profile?.display_name||n.author_name||'';
+          const authorName=profile?.display_name||'';
           return`<div style="border:1px solid var(--g200);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:background 0.15s" onclick="openNoteEdit('${n.id}','${pid}')" onmouseenter="this.style.background='var(--g50)'" onmouseleave="this.style.background=''">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
               <span style="font-size:12px;font-weight:700;color:var(--primary)">${authorName||'—'}</span>
@@ -3680,7 +3680,7 @@ async function saveNoteModal(){
     toast('עדכון נשמר <i data-lucide="check-circle"></i>','success');
     allNotes=allNotes.map(n=>n.id===noteId?{...n,content}:n);
   } else {
-    const base={patient_id:currentPayPatientId,content,title:'',note_type:'general',author_name};
+    const base={patient_id:currentPayPatientId,content,title:'',note_type:'general'};
     let r=await sbAdminInsert('notes',{...base,user_id:currentUser?.id||null});
     if(r.error) r=await sbAdminInsert('notes',base);
     if(r.error) return toast('שגיאה: '+r.error,'error');
