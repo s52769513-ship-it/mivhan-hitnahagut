@@ -1195,7 +1195,7 @@ async function afterLogin(user){
   document.getElementById('sidebar-user').textContent=currentUser.display_name||currentUser.email;
   if(isAdmin) populateViewAsSelect();
   setupUIForRole();
-  await loadAll();
+  await Promise.all([loadAll(), loadAppSettings()]);
   requestNotificationPermission();
   startQueueWidgetTimer();
   if(isAdmin) renderDashboard();
@@ -4132,12 +4132,39 @@ async function checkStorageBucket(){
   if(window.lucide) lucide.createIcons();
 }
 
+// === APP SETTINGS (Supabase-backed) ===
+async function sbAppSettingSet(key, value){
+  // Upsert into app_settings using service role
+  try {
+    await fetch(`${SB_URL}/rest/v1/app_settings`,{
+      method:'POST',
+      headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({key,value})
+    });
+  } catch(e){}
+}
+async function sbAppSettingGet(key){
+  try {
+    const r=await fetch(`${SB_URL}/rest/v1/app_settings?key=eq.${encodeURIComponent(key)}&select=value`,{
+      headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK}
+    });
+    if(!r.ok) return null;
+    const d=await r.json();
+    return d?.[0]?.value||null;
+  } catch(e){ return null; }
+}
+async function loadAppSettings(){
+  const k=await sbAppSettingGet('openai_key');
+  if(k){ openaiKey=k; localStorage.setItem('openai_key',k); }
+}
+
 // === OPENAI ===
-function saveOpenAISettings(){
+async function saveOpenAISettings(){
   const k=document.getElementById('settings-openai-key').value.trim();
   if(!k) return toast('נא להזין OpenAI API Key','error');
   openaiKey=k;
   localStorage.setItem('openai_key',k);
+  await sbAppSettingSet('openai_key',k);
   document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--green)">✓ OpenAI Key נשמר</span>';
   toast('מפתח OpenAI נשמר','success');
 }
