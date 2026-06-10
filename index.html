@@ -1998,7 +1998,7 @@ function renderPersonalTab(p){
           <div class="detail-row"><div class="detail-label">כתובת</div><div class="detail-value"><input type="text" id="pf-address" value="${p.address||''}"></div></div>
           <div class="detail-row" style="grid-column:1/-1"><div class="detail-label">אימייל</div><div class="detail-value"><input type="email" id="pf-email" value="${p.email||''}" dir="ltr" placeholder="example@email.com"></div></div>
           <div class="detail-row" style="grid-column:1/-1"><div class="detail-label">הורים / איש קשר</div><div class="detail-value"><input type="text" id="pf-parents" value="${p.parents||''}"></div></div>
-          <div class="detail-row"><div class="detail-label">שיוך ל:</div><div class="detail-value"><select id="pf-affiliation"><option value="">-- ללא --</option><option value="clinic" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='clinic'?'selected':''}>קליניקה</option><option value="vizhnitz" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='vizhnitz'?'selected':''}>ויזניץ</option><option value="education" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='education'?'selected':''}>משרד החינוך</option><option value="ponivez" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='ponivez'?'selected':''}>פוניבז</option></select></div></div>
+          <div class="detail-row"><div class="detail-label">שיוך ל:</div><div class="detail-value"><select id="pf-affiliation" onchange="updatePfClassOptions()"><option value="">-- ללא --</option><option value="clinic" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='clinic'?'selected':''}>קליניקה</option><option value="vizhnitz" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='vizhnitz'?'selected':''}>ויזניץ</option><option value="education" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='education'?'selected':''}>משרד החינוך</option><option value="ponivez" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='ponivez'?'selected':''}>פוניבז</option></select></div></div>
           <div class="detail-row"><div class="detail-label">מוסד</div><div class="detail-value"><input type="text" id="pf-inst" value="${allInstitutions.find(i=>i.id===p.institution_id)?.name||''}"></div></div>
           <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${[...allClasses].filter(c=>p.institution_id?c.institution_id===p.institution_id:true).sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);}).map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
         </div>
@@ -2016,6 +2016,19 @@ function renderPersonalTab(p){
         <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
       </div>
     </div>`:''}  `;
+}
+
+function updatePfClassOptions(){
+  const aff=document.getElementById('pf-affiliation')?.value||'';
+  const instInput=document.getElementById('pf-inst');
+  const ctxDef={education:'משרד החינוך',clinic:'קליניקה',ponivez:'פוניבז',vizhnitz:'ויזניץ'};
+  if(aff&&ctxDef[aff]) instInput.value=ctxDef[aff];
+  const matchInsts=aff?allInstitutions.filter(i=>i.type===aff):allInstitutions;
+  const instIds=new Set(matchInsts.map(i=>i.id));
+  const classes=[...allClasses].filter(c=>instIds.has(c.institution_id)).sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
+  const sel=document.getElementById('pf-class');
+  if(!sel) return;
+  sel.innerHTML='<option value="">-- ללא --</option>'+classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
 }
 
 async function savePersonal(id){
