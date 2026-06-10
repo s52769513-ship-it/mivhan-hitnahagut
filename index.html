@@ -2297,7 +2297,7 @@ async function renderPatientNotes(pid){
         ${notes.length===0?'<div class="empty" style="padding:24px"><i data-lucide="message-square"></i><p>אין עדכונים</p></div>':
         notes.map(n=>{
           const profile=n.user_id?allUserProfiles.find(u=>u.id===n.user_id):null;
-          const authorName=profile?.display_name||'';
+          const authorName=profile?.display_name||n.title||'';
           return`<div style="margin-bottom:8px">
             <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;margin-bottom:2px">
               <span style="font-size:11px;color:var(--g500)">${authorName||''}</span>
@@ -3679,7 +3679,7 @@ async function saveNoteModal(){
     toast('עדכון נשמר <i data-lucide="check-circle"></i>','success');
     allNotes=allNotes.map(n=>n.id===noteId?{...n,content}:n);
   } else {
-    const base={patient_id:currentPayPatientId,content,title:'',note_type:'general'};
+    const base={patient_id:currentPayPatientId,content,title:author_name,note_type:'general'};
     let r=await sbAdminInsert('notes',{...base,user_id:currentUser?.id||null});
     if(r.error) r=await sbAdminInsert('notes',base);
     if(r.error) return toast('שגיאה: '+r.error,'error');
