@@ -491,6 +491,74 @@ tr:last-child td{border-bottom:none}
             <button class="btn btn-warning" onclick="migrateCloudinaryFiles()" style="margin-right:8px"><i data-lucide="move"></i> העבר קבצים קיימים מ-Cloudinary</button>
           </div>
         </div>
+
+        <!-- Sound Settings (admin only) -->
+        <div class="card" style="max-width:560px;margin-bottom:20px" id="sound-settings-card">
+          <div class="card-header"><h3><i data-lucide="bell"></i> הגדרות צלילים</h3></div>
+          <div class="card-body">
+            <p style="font-size:14px;color:var(--g500);margin-bottom:16px">בחר סוג צליל ומספר צלצולים עבור כל סוג התראה.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+              <!-- Appointment sounds -->
+              <div>
+                <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="calendar"></i> פגישה</div>
+                <div class="form-group">
+                  <label class="form-label">סוג צליל</label>
+                  <select class="form-control" id="sound-apt-type">
+                    <option value="1">1 – עדין</option>
+                    <option value="2">2 – פינג כפול</option>
+                    <option value="3">3 – עולה</option>
+                    <option value="4">4 – פעמון</option>
+                    <option value="5">5 – אזעקה</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">מספר צלצולים</label>
+                  <select class="form-control" id="sound-apt-count">
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                  </select>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="btn btn-secondary btn-sm" onclick="previewSoundType('apt',1)">1 – עדין ▶</button>
+                  <button class="btn btn-secondary btn-sm" onclick="previewSoundType('apt',2)">2 – פינג ▶</button>
+                  <button class="btn btn-secondary btn-sm" onclick="previewSoundType('apt',3)">3 – עולה ▶</button>
+                  <button class="btn btn-secondary btn-sm" onclick="previewSoundType('apt',4)">4 – פעמון ▶</button>
+                  <button class="btn btn-secondary btn-sm" onclick="previewSoundType('apt',5)">5 – אזעקה ▶</button>
+                </div>
+                <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="previewSound('apt')"><i data-lucide="play"></i> נגן בחירה</button>
+              </div>
+              <!-- Task sounds -->
+              <div>
+                <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="check-square"></i> משימה</div>
+                <div class="form-group">
+                  <label class="form-label">סוג צליל</label>
+                  <select class="form-control" id="sound-task-type">
+                    <option value="1">1 – עדין</option>
+                    <option value="2">2 – פינג כפול</option>
+                    <option value="3">3 – עולה</option>
+                    <option value="4">4 – פעמון</option>
+                    <option value="5">5 – אזעקה</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">מספר צלצולים</label>
+                  <select class="form-control" id="sound-task-count">
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                  </select>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="btn btn-secondary btn-sm" onclick="previewSoundType('task',1)">1 – עדין ▶</button>
+                  <button class="btn btn-secondary btn-sm" onclick="previewSoundType('task',2)">2 – פינג ▶</button>
+                  <button class="btn btn-secondary btn-sm" onclick="previewSoundType('task',3)">3 – עולה ▶</button>
+                  <button class="btn btn-secondary btn-sm" onclick="previewSoundType('task',4)">4 – פעמון ▶</button>
+                  <button class="btn btn-secondary btn-sm" onclick="previewSoundType('task',5)">5 – אזעקה ▶</button>
+                </div>
+                <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="previewSound('task')"><i data-lucide="play"></i> נגן בחירה</button>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:16px" onclick="saveSoundSettings()"><i data-lucide="save"></i> שמור הגדרות צלילים</button>
+            <div id="sound-settings-status" style="margin-top:8px;font-size:13px"></div>
+          </div>
+        </div>
       </div>
 
 
@@ -600,7 +668,10 @@ tr:last-child td{border-bottom:none}
     <div class="modal-body">
       <div class="form-group"><label class="form-label">שם משימה *</label><input type="text" class="form-control" id="nt-name"></div>
       <div class="form-group"><label class="form-label">פירוט</label><textarea class="form-control" id="nt-detail" rows="3"></textarea></div>
-      <div class="form-group"><label class="form-label">תאריך יעד</label><input type="date" class="form-control" id="nt-date" dir="ltr"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">תאריך יעד</label><input type="date" class="form-control" id="nt-date" dir="ltr"></div>
+        <div class="form-group"><label class="form-label">שעה (לתזכורת)</label><input type="time" class="form-control" id="nt-time" dir="ltr"></div>
+      </div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-task')">ביטול</button><button class="btn btn-primary" onclick="createTask()">צור משימה</button></div>
   </div>
@@ -674,7 +745,10 @@ tr:last-child td{border-bottom:none}
     <div class="modal-body">
       <div class="form-group"><label class="form-label">שם משימה *</label><input type="text" class="form-control" id="et-name"></div>
       <div class="form-group"><label class="form-label">פירוט</label><textarea class="form-control" id="et-detail" rows="3"></textarea></div>
-      <div class="form-group"><label class="form-label">תאריך יעד</label><input type="date" class="form-control" id="et-date" dir="ltr"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">תאריך יעד</label><input type="date" class="form-control" id="et-date" dir="ltr"></div>
+        <div class="form-group"><label class="form-label">שעה (לתזכורת)</label><input type="time" class="form-control" id="et-time" dir="ltr"></div>
+      </div>
       <div class="form-group" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="et-done" style="width:16px;height:16px"><label class="form-label" style="margin:0;cursor:pointer" for="et-done">בוצע</label></div>
     </div>
     <div class="modal-footer">
@@ -1461,22 +1535,92 @@ function checkAptReminders(){
     }
   });
 }
-function playReminderSound(){
+const SOUND_PATTERNS={
+  1:[[520,0],[660,0.18],[520,0.36]],           // עדין - שלוש נגינות רכות
+  2:[[880,0],[880,0.15]],                        // פינג כפול
+  3:[[440,0],[550,0.2],[660,0.4],[880,0.6]],    // עולה - ארבע תווים
+  4:[[523,0],[659,0.1],[784,0.2],[659,0.35],[523,0.5]], // פעמון
+  5:[[1047,0],[1047,0.1],[1047,0.2],[1047,0.3],[1047,0.4]] // אזעקה - חמישה צפצופים
+};
+function _playOnce(type){
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    [[520,0],[660,0.18],[520,0.36]].forEach(([freq,start])=>{
+    const notes=SOUND_PATTERNS[type]||SOUND_PATTERNS[1];
+    notes.forEach(([freq,start])=>{
       const osc=ctx.createOscillator();
       const gain=ctx.createGain();
       osc.connect(gain);gain.connect(ctx.destination);
-      osc.type='sine';osc.frequency.value=freq;
+      osc.type=type===4?'triangle':'sine';
+      osc.frequency.value=freq;
       gain.gain.setValueAtTime(0,ctx.currentTime+start);
-      gain.gain.linearRampToValueAtTime(0.25,ctx.currentTime+start+0.04);
+      gain.gain.linearRampToValueAtTime(0.3,ctx.currentTime+start+0.04);
       gain.gain.linearRampToValueAtTime(0,ctx.currentTime+start+0.18);
       osc.start(ctx.currentTime+start);
-      osc.stop(ctx.currentTime+start+0.2);
+      osc.stop(ctx.currentTime+start+0.25);
     });
   }catch(e){}
 }
+function playReminderSound(kind='apt'){
+  const type=parseInt(localStorage.getItem('sound_'+kind+'_type')||'1');
+  const count=parseInt(localStorage.getItem('sound_'+kind+'_count')||'1');
+  for(let i=0;i<count;i++) setTimeout(()=>_playOnce(type),i*700);
+}
+function previewSoundType(kind,type){
+  const count=parseInt(document.getElementById('sound-'+kind+'-count')?.value||'1');
+  for(let i=0;i<count;i++) setTimeout(()=>_playOnce(type),i*700);
+}
+function saveSoundSettings(){
+  ['apt','task'].forEach(k=>{
+    const t=document.getElementById('sound-'+k+'-type')?.value||'1';
+    const c=document.getElementById('sound-'+k+'-count')?.value||'1';
+    localStorage.setItem('sound_'+k+'_type',t);
+    localStorage.setItem('sound_'+k+'_count',c);
+  });
+  const s=document.getElementById('sound-settings-status');
+  if(s) s.innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> הגדרות צלילים נשמרו</span>';
+  toast('הגדרות צלילים נשמרו','success');
+}
+function previewSound(kind){
+  const type=parseInt(document.getElementById('sound-'+kind+'-type').value||'1');
+  const count=parseInt(document.getElementById('sound-'+kind+'-count').value||'1');
+  for(let i=0;i<count;i++) setTimeout(()=>_playOnce(type),i*700);
+}
+
+const notifiedTasks=new Set();
+function checkTaskReminders(){
+  if(!allTasks.length||!currentUser) return;
+  const now=new Date();
+  allTasks.filter(t=>!t.done&&t.due_date).forEach(t=>{
+    if(notifiedTasks.has(t.id)) return;
+    const {time}=decodeTaskDetail(t.detail);
+    if(!time) return;
+    const [h,m]=time.split(':').map(Number);
+    const due=new Date(t.due_date.slice(0,10)+'T00:00:00');
+    due.setHours(h,m,0,0);
+    const diff=due-now;
+    if(diff>=-60000&&diff<=120000){
+      notifiedTasks.add(t.id);
+      playReminderSound('task');
+      const container=document.getElementById('apt-reminder-container');
+      if(!container) return;
+      const div=document.createElement('div');
+      div.className='apt-reminder';
+      div.style.pointerEvents='all';
+      div.style.borderColor='var(--amber)';
+      div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:700;color:var(--amber)"><i data-lucide="check-square"></i> תזכורת משימה</span>
+        <button onclick="this.closest('.apt-reminder').remove()" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--g400)"><i data-lucide="x"></i></button>
+      </div>
+      <div style="font-size:15px;font-weight:700">${t.name}</div>
+      <div style="font-size:12px;color:var(--g500);margin-top:3px"><i data-lucide="clock"></i> ${time}</div>`;
+      div.onclick=e=>{if(e.target.tagName!=='BUTTON'){openEditTask(t.id);div.remove();}};
+      container.appendChild(div);
+      if(window.lucide) lucide.createIcons();
+      setTimeout(()=>{div.style.transition='opacity .6s';div.style.opacity='0';setTimeout(()=>div.remove(),600);},30000);
+    }
+  });
+}
+setInterval(checkTaskReminders,30000);
 function requestNotificationPermission(){ /* triggered by user click in queue widget */ }
 
 function sendBrowserNotification(a,p){
@@ -2271,11 +2415,12 @@ function renderPatientTasks(pid){
     <div class="card">
       <div class="card-header"><h3>משימות</h3><button class="btn btn-primary btn-sm" onclick="openNewTaskForPatient('${pid}')">+ משימה</button></div>
       <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>תאריך יעד</th><th>סטטוס</th><th></th></tr></thead>
-      <tbody>${tasks.length===0?'<tr><td colspan="4"><div class="empty"><p>אין משימות</p></div></td></tr>':tasks.map(t=>`<tr style="cursor:pointer" onclick="openEditTaskFromPatient('${t.id}','${pid}')">
-        <td>${t.name}</td><td>${t.due_date?fmtDateStr(t.due_date):'-'}</td>
+      <tbody>${tasks.length===0?'<tr><td colspan="4"><div class="empty"><p>אין משימות</p></div></td></tr>':tasks.map(t=>{const {time,detail}=decodeTaskDetail(t.detail);return`<tr style="cursor:pointer" onclick="openEditTaskFromPatient('${t.id}','${pid}')">
+        <td>${t.name}${detail?`<div style="font-size:11px;color:var(--g400)">${detail}</div>`:''}</td>
+        <td>${t.due_date?fmtDateStr(t.due_date):'-'}${time?`<div style="font-size:11px;color:var(--blue2)"><i data-lucide="clock" style="width:11px;height:11px"></i> ${time}</div>`:''}</td>
         <td><span class="badge ${t.done?'badge-green':'badge-amber'}">${t.done?'בוצע':'ממתין'}</span></td>
         <td onclick="event.stopPropagation()"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px"></td>
-      </tr>`).join('')}</tbody></table></div>
+      </tr>`;}).join('')}</tbody></table></div>
     </div>`;
 }
 
@@ -3491,15 +3636,20 @@ function populateNotesPatientFilter(){
     allPatients.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
 }
 
+function encodeTaskDetail(detail, time){ return time?`⏰${time}\n${detail||''}`:detail||''; }
+function decodeTaskDetail(raw){ const m=(raw||'').match(/^⏰(\d{2}:\d{2})\n?([\s\S]*)$/); return m?{time:m[1],detail:m[2]}:{time:'',detail:raw||''}; }
+
 async function createTask(){
   const name=document.getElementById('nt-name').value.trim();
   if(!name) return toast('נא להכניס שם','error');
-  const body={name,detail:document.getElementById('nt-detail').value,due_date:document.getElementById('nt-date').value||null,done:false};
+  const time=document.getElementById('nt-time').value||'';
+  const detail=encodeTaskDetail(document.getElementById('nt-detail').value, time);
+  const body={name,detail,due_date:document.getElementById('nt-date').value||null,done:false};
   if(currentTaskPatientId) body.patient_id=currentTaskPatientId;
   const r=await sbInsert('tasks',body);
   if(r.error) return toast('שגיאה','error');
   toast('משימה נוצרה <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-task');
-  ['nt-name','nt-detail','nt-date'].forEach(id=>document.getElementById(id).value='');
+  ['nt-name','nt-detail','nt-date','nt-time'].forEach(id=>document.getElementById(id).value='');
   const taskPid=currentTaskPatientId;
   currentTaskPatientId=null;
   await loadAll();
@@ -3595,29 +3745,29 @@ async function deleteAptFromModal(){
 
 // === EDIT TASK MODAL ===
 let editTaskId=null, editTaskPatientId=null;
+function _fillEditTaskModal(t){
+  const {time,detail}=decodeTaskDetail(t.detail);
+  document.getElementById('et-name').value=t.name||'';
+  document.getElementById('et-detail').value=detail;
+  document.getElementById('et-time').value=time;
+  document.getElementById('et-date').value=t.due_date?t.due_date.slice(0,10):'';
+  document.getElementById('et-done').checked=t.done||false;
+}
 function openEditTask(id){
   editTaskPatientId=null;
   const t=allTasks.find(x=>x.id===id); if(!t) return;
-  editTaskId=id;
-  document.getElementById('et-name').value=t.name||'';
-  document.getElementById('et-detail').value=t.detail||'';
-  document.getElementById('et-date').value=t.due_date?t.due_date.slice(0,10):'';
-  document.getElementById('et-done').checked=t.done||false;
-  openModal('modal-edit-task');
+  editTaskId=id; _fillEditTaskModal(t); openModal('modal-edit-task');
 }
 function openEditTaskFromPatient(id, pid){
   editTaskPatientId=pid;
   const t=allTasks.find(x=>x.id===id); if(!t) return;
-  editTaskId=id;
-  document.getElementById('et-name').value=t.name||'';
-  document.getElementById('et-detail').value=t.detail||'';
-  document.getElementById('et-date').value=t.due_date?t.due_date.slice(0,10):'';
-  document.getElementById('et-done').checked=t.done||false;
-  openModal('modal-edit-task');
+  editTaskId=id; _fillEditTaskModal(t); openModal('modal-edit-task');
 }
 async function saveEditTask(){
   if(!editTaskId) return;
-  const body={name:document.getElementById('et-name').value,detail:document.getElementById('et-detail').value,due_date:document.getElementById('et-date').value||null,done:document.getElementById('et-done').checked};
+  const time=document.getElementById('et-time').value||'';
+  const detail=encodeTaskDetail(document.getElementById('et-detail').value, time);
+  const body={name:document.getElementById('et-name').value,detail,due_date:document.getElementById('et-date').value||null,done:document.getElementById('et-done').checked};
   const r=await sbUpdate('tasks',editTaskId,body);
   if(r.error) return toast('שגיאה: '+r.error,'error');
   toast('משימה עודכנה <i data-lucide="check-circle"></i>','success'); closeModal('modal-edit-task');
@@ -3935,6 +4085,15 @@ function loadSettings(){
   const os=document.getElementById('openai-settings-status');
   if(os) os.innerHTML=openaiKey?'<span style="color:var(--green)"><i data-lucide="check-circle"></i> OpenAI מוגדר</span>':'';
   updateGmailStatus();
+  // Sound settings (admin only)
+  const sc=document.getElementById('sound-settings-card');
+  if(sc) sc.style.display=isAdmin?'':'none';
+  if(isAdmin){
+    const at=document.getElementById('sound-apt-type'); if(at) at.value=localStorage.getItem('sound_apt_type')||'1';
+    const ac=document.getElementById('sound-apt-count'); if(ac) ac.value=localStorage.getItem('sound_apt_count')||'1';
+    const tt=document.getElementById('sound-task-type'); if(tt) tt.value=localStorage.getItem('sound_task_type')||'1';
+    const tc=document.getElementById('sound-task-count'); if(tc) tc.value=localStorage.getItem('sound_task_count')||'1';
+  }
 }
 
 function saveEmailSettings(){
