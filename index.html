@@ -2302,15 +2302,15 @@ async function renderPatientNotes(pid){
         notes.map(n=>{
           const profile=n.user_id?allUserProfiles.find(u=>u.id===n.user_id):null;
           const authorName=profile?.display_name||'';
-          return`<div style="border:1px solid var(--g200);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:background 0.15s" onclick="openNoteEdit('${n.id}','${pid}')" onmouseenter="this.style.background='var(--g50)'" onmouseleave="this.style.background=''">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <span style="font-size:12px;font-weight:700;color:var(--primary)">${authorName||'—'}</span>
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:11px;color:var(--g400)">${n.created_at?fmtDate(n.created_at):''}</span>
-                ${isAdmin?`<button class="btn btn-danger btn-sm" style="padding:2px 6px" onclick="event.stopPropagation();deleteNote('${n.id}','${pid}')"><i data-lucide="trash-2"></i></button>`:''}
-              </div>
+          return`<div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;margin-bottom:2px">
+              <span style="font-size:11px;color:var(--g500)">${authorName||''}</span>
+              <span style="font-size:11px;color:var(--g400)">${n.created_at?fmtDate(n.created_at):''}</span>
             </div>
-            <div style="font-size:13px;color:var(--g700);white-space:pre-wrap;line-height:1.6">${(n.content||'').replace(/</g,'&lt;')}</div>
+            <div style="border:1px solid var(--g200);border-radius:8px;padding:10px 12px;cursor:pointer;transition:background 0.15s;position:relative" onclick="openNoteEdit('${n.id}','${pid}')" onmouseenter="this.style.background='var(--g50)'" onmouseleave="this.style.background=''">
+              <div style="font-size:13px;color:var(--g700);white-space:pre-wrap;line-height:1.6">${(n.content||'').replace(/</g,'&lt;')}</div>
+              ${isAdmin?`<button class="btn btn-danger btn-sm" style="padding:2px 6px;position:absolute;top:6px;left:6px" onclick="event.stopPropagation();deleteNote('${n.id}','${pid}')"><i data-lucide="trash-2"></i></button>`:''}
+            </div>
           </div>`;
         }).join('')}
       </div>
