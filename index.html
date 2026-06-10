@@ -339,13 +339,14 @@ tr:last-child td{border-bottom:none}
             <button class="tab-btn" onclick="showTab('tab-appointments')">פגישות</button>
             <button class="tab-btn" data-admin-tab onclick="showTab('tab-payments')">תשלומים</button>
             <button class="tab-btn" onclick="showTab('tab-tasks')">משימות</button>
+            <button class="tab-btn" onclick="showTab('tab-notes')">עדכונים</button>
             <button class="tab-btn" onclick="showTab('tab-emails')"><i data-lucide="mail"></i> מיילים</button>
           </div>
           <div class="tab-content active" id="tab-personal"></div>
           <div class="tab-content" id="tab-appointments"></div>
           <div class="tab-content" id="tab-payments"></div>
           <div class="tab-content" id="tab-tasks"></div>
-          <div class="tab-content" id="tab-notes" style="display:none"></div>
+          <div class="tab-content" id="tab-notes"></div>
           <div class="tab-content" id="tab-emails"></div>
           </div>
           <div id="patient-notes-panel" style="position:sticky;top:16px"></div>
@@ -2314,6 +2315,8 @@ async function renderPatientNotes(pid){
         }).join('')}
       </div>
     </div>`;
+  const tabNotes=document.getElementById('tab-notes');
+  if(tabNotes) tabNotes.innerHTML=panel.innerHTML;
   if(window.lucide) lucide.createIcons();
 }
 
