@@ -737,7 +737,7 @@ tr:last-child td{border-bottom:none}
 
 <div class="modal-backdrop" id="modal-new-goal" style="display:none" onclick="closeModal('modal-new-goal')">
   <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header"><h2><i data-lucide="plus-circle"></i> מטרה חדשה</h2><button class="btn btn-icon" onclick="closeModal('modal-new-goal')"><i data-lucide="x"></i></button></div>
+    <div class="modal-header"><h2 id="modal-new-goal-title"><i data-lucide="plus-circle"></i> מטרה חדשה</h2><button class="btn btn-icon" onclick="closeModal('modal-new-goal')"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
       <div class="form-group"><label class="form-label">תיאור</label><textarea class="form-control" id="ng-desc" rows="2"></textarea></div>
       <div class="form-group"><label class="form-label">ניתוח פונקציונלי</label><textarea class="form-control" id="ng-func" rows="2"></textarea></div>
@@ -751,7 +751,7 @@ tr:last-child td{border-bottom:none}
       </div>
       <div class="form-group"><label class="form-label">תגובות</label><textarea class="form-control" id="ng-resp" rows="2"></textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-goal')">ביטול</button><button class="btn btn-primary" onclick="createGoal()">צור מטרה</button></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-goal')">ביטול</button><button class="btn btn-primary" id="goal-save-btn" onclick="editGoalId?saveGoalEdit():createGoal()">צור מטרה</button></div>
   </div>
 </div>
 
@@ -3145,7 +3145,7 @@ function renderGoals(pid){
     </div>
     ${goals.length===0?'<div class="empty"><i data-lucide="target"></i><p>אין מטרות טיפוליות עדיין</p></div>':goals.map((g,i)=>`
     <div class="goal-card">
-      <div class="goal-header"><span style="font-weight:600">מטרה #${i+1}</span><button class="btn btn-danger btn-sm" onclick="deleteGoal('${g.id}','${pid}')"><i data-lucide="trash-2"></i></button></div>
+      <div class="goal-header"><span style="font-weight:600">מטרה #${i+1}</span><div style="display:flex;gap:6px"><button class="btn btn-secondary btn-sm" onclick="openEditGoal('${g.id}','${pid}')"><i data-lucide="pencil"></i></button><button class="btn btn-danger btn-sm" onclick="deleteGoal('${g.id}','${pid}')"><i data-lucide="trash-2"></i></button></div></div>
       <div class="goal-body">
         ${g.description?`<div class="obs-field" style="grid-column:1/-1"><label>תיאור</label><p>${g.description}</p></div>`:''}
         ${g.functional_analysis?`<div class="obs-field"><label>ניתוח פונקציונלי</label><p>${g.functional_analysis}</p></div>`:''}
@@ -3721,7 +3721,10 @@ async function deleteObs(id,pid){ if(!confirm('למחוק?')) return; await sbDe
 
 // === GOALS ===
 function openGoalForPatient(pid,prefillText){
-  currentPayPatientId=pid;
+  currentPayPatientId=pid; editGoalId=null;
+  document.getElementById('modal-new-goal-title').textContent='מטרה חדשה';
+  document.getElementById('goal-save-btn').textContent='צור מטרה';
+  ['ng-desc','ng-func','ng-hypo','ng-target','ng-bhv','ng-path','ng-short','ng-long','ng-resp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   openModal('modal-new-goal');
   if(prefillText){
     const el=document.getElementById('ng-bhv');
@@ -3736,6 +3739,26 @@ async function createGoal(){
   await loadAll(); renderGoals(currentPayPatientId);
 }
 async function deleteGoal(id,pid){ if(!confirm('למחוק?')) return; await sbDelete('treatment_goals',id); await loadAll(); renderGoals(pid); }
+
+let editGoalId=null;
+function openEditGoal(id,pid){
+  const g=allGoals.find(x=>x.id===id); if(!g) return;
+  editGoalId=id; currentPayPatientId=pid;
+  ['ng-desc','ng-func','ng-hypo','ng-target','ng-bhv','ng-path','ng-short','ng-long','ng-resp'].forEach(fid=>{
+    const map={desc:'description',func:'functional_analysis',hypo:'hypothesis',target:'target',bhv:'behavioral_goal',path:'path',short:'short_reinforcement',long:'long_reinforcement',resp:'responses'};
+    const key=map[fid.replace('ng-','')];
+    const el=document.getElementById(fid); if(el) el.value=g[key]||'';
+  });
+  document.getElementById('modal-new-goal-title').textContent='עריכת מטרה';
+  document.getElementById('goal-save-btn').textContent='שמור שינויים';
+  openModal('modal-new-goal');
+}
+async function saveGoalEdit(){
+  const r=await sbAdminUpdate('treatment_goals',editGoalId,{description:document.getElementById('ng-desc').value,functional_analysis:document.getElementById('ng-func').value,hypothesis:document.getElementById('ng-hypo').value,target:document.getElementById('ng-target').value,behavioral_goal:document.getElementById('ng-bhv').value,path:document.getElementById('ng-path').value,short_reinforcement:document.getElementById('ng-short').value,long_reinforcement:document.getElementById('ng-long').value,responses:document.getElementById('ng-resp').value});
+  if(r.error) return toast('שגיאה','error');
+  toast('מטרה עודכנה <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-goal');
+  editGoalId=null; await loadAll(); renderGoals(currentPayPatientId);
+}
 
 // === INSTITUTIONS & CLASSES ===
 function openNewEduInstitution(){
@@ -4218,26 +4241,28 @@ async function callGeminiSMART(){
   document.getElementById('smart-loading').style.display='block';
   document.getElementById('smart-result').style.display='none';
 
-  const prompt=`אתה מומחה לניתוח התנהגותי יישומי (ABA) ועוזר לנסח מטרות התנהגותיות לפי מתכונת SMART.
-נסח מטרה התנהגותית אחת ברורה ומלאה בעברית לפי המידע הבא:
+  const prompt=`אתה מומחה לניתוח התנהגותי יישומי (ABA). נסח מטרה התנהגותית SMART אחת בעברית לפי הנתונים הבאים:
 
 התנהגות בעייתית: ${behavior}
 הקשר/מצב: ${context||'לא צוין'}
 התנהגות חלופית רצויה: ${desired}
-${strength?'חוזקות/משאבים: '+strength:''}
+${strength?'חוזקות: '+strength:''}
 
-אנא נסח מטרה SMART אחת שכוללת:
-• S – Specific (ספציפי): מה בדיוק הילד יעשה
-• M – Measurable (מדיד): כיצד נמדוד הצלחה
-• A – Achievable (ישים): שיהיה ריאלי
-• R – Relevant (רלוונטי): קשור לצורך הילד
-• T – Time-bound (מוגבל בזמן): מסגרת זמן ברורה
+עצב את הפלט כך — ללא כוכביות, ללא מקפים כפולים, ללא ציון שנכתב ע"י AI:
 
-לאחר המטרה, הוסף:
-- עצה אחת קצרה לחיזוק ההצלחה
-- נוסח קצר לרישום ב"מטרה התנהגותית" בכרטיס הטיפול
+מטרה התנהגותית
+[נסח כאן מטרה SMART אחת, ברורה ומלאה, עם כל חמשת הרכיבים SMART משולבים בתוך המשפט]
 
-כתוב בעברית בלבד, קצר וברור.`;
+מדידה
+[כיצד נמדוד הצלחה — תדירות / אחוז / תצפית]
+
+מסגרת זמן
+[מועד יעד ריאלי]
+
+המלצה ליישום
+[עצה קצרה אחת לחיזוק ההצלחה]
+
+כתוב בעברית בלבד, בשפה מקצועית וקולחת.`;
 
   try{
     let text;
@@ -4255,7 +4280,10 @@ ${strength?'חוזקות/משאבים: '+strength:''}
       text=data.candidates?.[0]?.content?.parts?.[0]?.text||'לא התקבלה תשובה';
     }
     const el=document.getElementById('smart-result-text');
-    el.textContent=text;
+    el.innerHTML=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/^([^\n<].{0,40})\n/gm,'<div style="font-weight:700;font-size:14px;margin-top:12px;margin-bottom:2px;color:var(--primary)">$1</div>')
+      .replace(/\n/g,'<br>');
     el.style.color='';
     document.getElementById('smart-result').style.display='block';
     lucide.createIcons();
