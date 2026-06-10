@@ -332,8 +332,6 @@ tr:last-child td{border-bottom:none}
           <button class="main-tab-btn orange" onclick="showMainTab('reports')"><i data-lucide="file-text"></i> דוחות</button>
         </div>
         <div id="main-tab-clinical">
-          <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start">
-          <div>
           <div class="tabs" id="clinical-tabs">
             <button class="tab-btn active" onclick="showTab('tab-personal')">פרטים אישיים</button>
             <button class="tab-btn" onclick="showTab('tab-appointments')">פגישות</button>
@@ -348,9 +346,7 @@ tr:last-child td{border-bottom:none}
           <div class="tab-content" id="tab-tasks"></div>
           <div class="tab-content" id="tab-notes"></div>
           <div class="tab-content" id="tab-emails"></div>
-          </div>
-          <div id="patient-notes-panel" style="position:sticky;top:16px"></div>
-          </div>
+          <div id="patient-notes-panel" style="display:none"></div>
         </div>
         <div id="main-tab-data" style="display:none">
           <div class="tabs">
