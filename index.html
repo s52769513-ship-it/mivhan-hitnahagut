@@ -743,6 +743,7 @@ tr:last-child td{border-bottom:none}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header"><h2><i data-lucide="pencil"></i> עריכת משימה</h2><button class="btn btn-icon" onclick="closeModal('modal-edit-task')"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
+      <div id="et-patient-banner" style="display:none;background:var(--blue-light);color:var(--blue);padding:7px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:12px"></div>
       <div class="form-group"><label class="form-label">שם משימה *</label><input type="text" class="form-control" id="et-name"></div>
       <div class="form-group"><label class="form-label">פירוט</label><textarea class="form-control" id="et-detail" rows="3"></textarea></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -3758,6 +3759,10 @@ function _fillEditTaskModal(t){
   document.getElementById('et-time').value=time;
   document.getElementById('et-date').value=t.due_date?t.due_date.slice(0,10):'';
   document.getElementById('et-done').checked=t.done||false;
+  const banner=document.getElementById('et-patient-banner');
+  const pat=t.patient_id?allPatients.find(p=>p.id===t.patient_id):null;
+  if(pat){ banner.style.display=''; banner.innerHTML=`<i data-lucide="user" style="width:13px;height:13px"></i> מטופל: ${pat.name}`; }
+  else { banner.style.display='none'; }
 }
 function openEditTask(id){
   editTaskPatientId=null;
