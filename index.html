@@ -417,7 +417,7 @@ tr:last-child td{border-bottom:none}
               <button class="btn btn-primary" onclick="openModal('modal-new-task')">+ משימה</button>
             </div>
           </div>
-          <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>מטופל</th><th>אחראי</th><th>פירוט</th><th>תאריך</th><th>סטטוס</th><th></th></tr></thead><tbody id="tasks-tbody"></tbody></table></div>
+          <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>מטופל</th><th>פירוט</th><th>תאריך</th><th>סטטוס</th><th></th></tr></thead><tbody id="tasks-tbody"></tbody></table></div>
         </div>
       </div>
 
@@ -1249,7 +1249,7 @@ async function renderUserDashboard(){
   const pList=document.getElementById('user-patients-list');
   pList.innerHTML=myPats.length===0?'<div class="empty"><i data-lucide="users"></i><p>אין מטופלים מוקצים</p></div>':myPats.map(p=>`<div onclick="openPatient('${p.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><div class="avatar" style="background:var(--blue2)">${initials(p.name)}</div><div style="font-size:14px;font-weight:600">${p.name}</div></div>`).join('');
   const tList=document.getElementById('user-tasks-list');
-  tList.innerHTML=myTasks.length===0?'<div class="empty"><i data-lucide="check-circle"></i><p>אין משימות</p></div>':myTasks.map(t=>`<div onclick="openEditTask('${t.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0" onclick="event.stopPropagation()"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}</span><i data-lucide="chevron-left" style="color:var(--g400);flex-shrink:0;width:16px;height:16px;"></i></div>`).join('');
+  tList.innerHTML=myTasks.length===0?'<div class="empty"><i data-lucide="check-circle"></i><p>אין משימות</p></div>':myTasks.map(t=>{const pat=t.patient_id?allPatients.find(p=>p.id===t.patient_id):null;return`<div onclick="openEditTask('${t.id}')" style="padding:10px 16px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px;flex-shrink:0" onclick="event.stopPropagation()"><span style="font-size:14px;flex:1;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}${pat?`<span style="font-size:11px;color:var(--g400);margin-right:6px">· ${pat.name}</span>`:''}</span><i data-lucide="chevron-left" style="color:var(--g400);flex-shrink:0;width:16px;height:16px;"></i></div>`;}).join('');
 }
 
 // === USER MANAGEMENT (ADMIN) ===
@@ -2414,10 +2414,9 @@ function renderPatientTasks(pid){
   document.getElementById('tab-tasks').innerHTML=`
     <div class="card">
       <div class="card-header"><h3>משימות</h3><button class="btn btn-primary btn-sm" onclick="openNewTaskForPatient('${pid}')">+ משימה</button></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>אחראי</th><th>תאריך יעד</th><th>סטטוס</th><th></th></tr></thead>
-      <tbody>${tasks.length===0?'<tr><td colspan="5"><div class="empty"><p>אין משימות</p></div></td></tr>':tasks.map(t=>{const {time,detail}=decodeTaskDetail(t.detail);const assignee=t.assigned_to?allUserProfiles.find(u=>u.id===t.assigned_to):null;return`<tr style="cursor:pointer" onclick="openEditTaskFromPatient('${t.id}','${pid}')">
+      <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>תאריך יעד</th><th>סטטוס</th><th></th></tr></thead>
+      <tbody>${tasks.length===0?'<tr><td colspan="4"><div class="empty"><p>אין משימות</p></div></td></tr>':tasks.map(t=>{const {time,detail}=decodeTaskDetail(t.detail);return`<tr style="cursor:pointer" onclick="openEditTaskFromPatient('${t.id}','${pid}')">
         <td>${t.name}${detail?`<div style="font-size:11px;color:var(--g400)">${detail}</div>`:''}</td>
-        <td><span style="font-size:12px;background:var(--blue-light);color:var(--blue);padding:2px 7px;border-radius:12px">${assignee?assignee.display_name:'-'}</span></td>
         <td>${t.due_date?fmtDateStr(t.due_date):'-'}${time?`<div style="font-size:11px;color:var(--blue2)"><i data-lucide="clock" style="width:11px;height:11px"></i> ${time}</div>`:''}</td>
         <td><span class="badge ${t.done?'badge-green':'badge-amber'}">${t.done?'בוצע':'ממתין'}</span></td>
         <td onclick="event.stopPropagation()"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)" style="width:16px;height:16px"></td>
@@ -3584,17 +3583,15 @@ function renderTasksTable(){
   if(taskFilter==='overdue') tasks=allTasks.filter(t=>t.due_date&&new Date(t.due_date)<today&&!t.done);
   if(taskFilter==='done') tasks=allTasks.filter(t=>t.done);
   const tb=document.getElementById('tasks-tbody');
-  if(tasks.length===0){tb.innerHTML=`<tr><td colspan="7"><div class="empty"><p>אין משימות</p></div></td></tr>`;return;}
+  if(tasks.length===0){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><p>אין משימות</p></div></td></tr>`;return;}
   tb.innerHTML=tasks.map(t=>{
     const d=t.due_date?new Date(t.due_date):null;
     const isOverdue=d&&d<today&&!t.done;
     const patient=t.patient_id?allPatients.find(p=>p.id===t.patient_id):null;
-    const assignee=t.assigned_to?allUserProfiles.find(u=>u.id===t.assigned_to):null;
     const {time,detail}=decodeTaskDetail(t.detail);
     return`<tr onclick="openEditTask('${t.id}')" style="cursor:pointer">
       <td style="font-weight:600;${t.done?'text-decoration:line-through;color:var(--g400)':''}">${t.name}${time?`<div style="font-size:11px;color:var(--blue2)"><i data-lucide="clock" style="width:11px;height:11px"></i> ${time}</div>`:''}</td>
       <td style="color:var(--g600)">${patient?patient.name:'-'}</td>
-      <td><span style="font-size:12px;background:var(--blue-light);color:var(--blue);padding:2px 7px;border-radius:12px">${assignee?assignee.display_name:'-'}</span></td>
       <td style="color:var(--g500)">${detail||'-'}</td>
       <td>${d?fmtDateStr(t.due_date):'-'}</td>
       <td><span class="badge ${t.done?'badge-green':isOverdue?'badge-red':'badge-amber'}">${t.done?'בוצע':isOverdue?'באיחור':'ממתין'}</span></td>
