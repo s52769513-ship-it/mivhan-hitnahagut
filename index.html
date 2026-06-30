@@ -3784,7 +3784,7 @@ async function uploadAptFile(input){
   toast('מעלה קובץ...','');
   try{
     const ts=Date.now();
-    const safeName=file.name.replace(/[^א-תa-zA-Z0-9._-]/g,'_');
+    const safeName=safeStorageName(file.name);
     const storagePath=`apt-${editAptId}/${ts}-${safeName}`;
     const url=await sbStorageUpload(storagePath,file);
     const fileIdWithApt=`${storagePath}||apt:${editAptId}`;
@@ -4693,6 +4693,18 @@ async function sendEmail(pid){
 }
 
 // === SUPABASE STORAGE ===
+// Supabase Storage דורש מפתח אובייקט באנגלית בלבד — נמיר שם עברי/לא-לטיני לשם בטוח
+// (השם המקורי בעברית נשמר בנפרד בשדה name להצגה למשתמש)
+function safeStorageName(name){
+  name=(name||'file').normalize('NFC');
+  const dot=name.lastIndexOf('.');
+  let base=dot>0?name.slice(0,dot):name;
+  let ext=dot>0?name.slice(dot+1):'';
+  base=base.replace(/[^a-zA-Z0-9._-]/g,'_').replace(/_+/g,'_').replace(/^[._-]+|[._-]+$/g,'');
+  ext=ext.replace(/[^a-zA-Z0-9]/g,'');
+  if(!base) base='file';
+  return ext?base+'.'+ext:base;
+}
 async function sbStorageUpload(storagePath, file){
   const resp=await fetch(`${SB_URL}/storage/v1/object/${SB_STORAGE_BUCKET}/${storagePath}`,{
     method:'POST',
@@ -4801,7 +4813,7 @@ async function uploadPatientFiles(pid, files){
     if(file.size>MAX_DOC_MB*1048576){ failed.push(file.name+' (גדול מ-'+MAX_DOC_MB+'MB)'); continue; }
     try{
       const ts=Date.now()+'-'+i;
-      const safeName=file.name.replace(/[^א-תa-zA-Z0-9._-]/g,'_');
+      const safeName=safeStorageName(file.name);
       const storagePath=`${pid}/${ts}-${safeName}`;
       const url=await sbStorageUpload(storagePath,file);
       const ins=await sbInsert('patient_files',{patient_id:pid,name:file.name,drive_file_id:storagePath,drive_url:url,created_at:new Date().toISOString()});
@@ -4833,7 +4845,7 @@ async function migrateCloudinaryFiles(){
       if(!resp.ok) throw new Error('HTTP '+resp.status);
       const blob=await resp.blob();
       const ts=Date.now();
-      const safeName=(f.name||'file').replace(/[^א-תa-zA-Z0-9._-]/g,'_');
+      const safeName=safeStorageName(f.name);
       const aptMatch=f.drive_file_id?.match(/\|\|apt:(.+)$/);
       const storagePath=aptMatch?`apt-${aptMatch[1]}/${ts}-${safeName}`:`${f.patient_id}/${ts}-${safeName}`;
       const newUrl=await sbStorageUpload(storagePath,blob);
