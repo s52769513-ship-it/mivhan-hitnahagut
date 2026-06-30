@@ -2387,39 +2387,61 @@ function fileIcon(name){
   return '<i data-lucide="file"></i>';
 }
 
-function openFileViewer(url, name){
+let _fvObjectUrl=null;
+function fvDownloadPanel(url,name,msg){
+  const u=(url||'').replace(/'/g,"\\'"), n=(name||'').replace(/'/g,"\\'");
+  return `<div style="padding:48px 24px;text-align:center;width:100%">
+    <div style="font-size:64px">${fileIcon(name)}</div>
+    <p style="margin:16px 0 8px;font-weight:600">${name}</p>
+    <p style="color:var(--g500);font-size:13px;margin-bottom:20px">${msg}</p>
+    <button class="btn btn-primary" onclick="downloadFile('${u}','${n}')"><i data-lucide="download"></i> הורד קובץ</button>
+  </div>`;
+}
+// תצוגת קובץ ידידותית לסינון: טוענת את הקובץ ישירות (blob) ללא שירותי תצוגה חיצוניים
+async function openFileViewer(url, name){
   const ext=(name.split('.').pop()||'').toLowerCase();
   document.getElementById('fv-title').textContent=name;
+  // כפתור ההורדה — הורדה מיידית (blob), בלי לנווט אל כתובת שהסינון חוסם
   const dl=document.getElementById('fv-download');
-  dl.href=url;
-  dl.download=name;
-  dl.target='_blank';
-  dl.onclick=null;
+  dl.removeAttribute('href'); dl.removeAttribute('target'); dl.style.cursor='pointer';
+  dl.onclick=(e)=>{ e.preventDefault(); downloadFile(url,name); };
   const body=document.getElementById('fv-body');
-  const imgs=['jpg','jpeg','png','gif','webp','svg'];
-  const vids=['mp4','mov','avi','webm','mkv'];
+  const imgs=['jpg','jpeg','png','gif','webp','svg','bmp','heic'];
+  const vids=['mp4','mov','avi','webm','mkv','m4v'];
   const auds=['mp3','wav','ogg','m4a','aac'];
+  const textExts=['txt','csv','rtf','log','json'];
   const officeExts=['doc','docx','xls','xlsx','ppt','pptx','odt','ods','odp'];
-  const googleViewable=['txt','rtf','csv'];
-  if(imgs.includes(ext)){
-    body.innerHTML=`<img src="${url}" style="max-width:100%;max-height:82vh;object-fit:contain;display:block">`;
-  } else if(vids.includes(ext)){
-    body.innerHTML=`<video controls autoplay style="max-width:100%;max-height:82vh;display:block"><source src="${url}"><p style="padding:20px">הדפדפן לא תומך בסרטון זה. <a href="${url}" target="_blank">פתח בטאב חדש</a></p></video>`;
-  } else if(auds.includes(ext)){
-    body.innerHTML=`<div style="padding:40px;width:100%"><audio controls autoplay style="width:100%"><source src="${url}"><p>הדפדפן לא תומך בקובץ שמע זה.</p></audio></div>`;
-  } else if(ext==='pdf'){
-    body.innerHTML=`<iframe src="${url}" style="width:100%;height:82vh;border:none;display:block"></iframe>`;
-  } else if(officeExts.includes(ext)){
-    const encoded=encodeURIComponent(url);
-    body.innerHTML=`<div style="width:100%;background:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--g200);font-size:13px;color:var(--g500)"><i data-lucide="info" style="width:14px;height:14px;flex-shrink:0"></i>הקובץ מוצג דרך Microsoft Office Online</div><iframe src="https://view.officeapps.live.com/op/embed.aspx?src=${encoded}" style="width:100%;height:82vh;border:none;display:block"></iframe>`;
-    if(window.lucide) lucide.createIcons();
-  } else if(googleViewable.includes(ext)){
-    const encoded=encodeURIComponent(url);
-    body.innerHTML=`<iframe src="https://docs.google.com/viewer?url=${encoded}&embedded=true" style="width:100%;height:82vh;border:none;display:block"></iframe>`;
-  } else {
-    body.innerHTML=`<div style="padding:48px;text-align:center"><div style="font-size:64px">${fileIcon(name)}</div><p style="margin:16px 0 8px;font-weight:600">${name}</p><p style="color:var(--g500);font-size:13px;margin-bottom:20px">לא ניתן להציג קובץ זה ישירות</p><a href="${url}" download="${name}" class="btn btn-primary" target="_blank"><i data-lucide="download"></i> הורד קובץ</a></div>`;
-  }
   document.getElementById('modal-file-viewer').style.display='flex';
+  if(_fvObjectUrl){ URL.revokeObjectURL(_fvObjectUrl); _fvObjectUrl=null; }
+  const renderable = imgs.includes(ext)||vids.includes(ext)||auds.includes(ext)||ext==='pdf'||textExts.includes(ext);
+  if(!renderable){
+    // קובצי Office וכו' — אין תצוגה מובנית; הורדה ישירה (לא עוברת דרך שרת חיצוני שהסינון חוסם)
+    body.innerHTML=fvDownloadPanel(url,name, officeExts.includes(ext)?'קובץ Office — הורד לצפייה במחשב (התצוגה לא עוברת דרך שרת חיצוני שהסינון חוסם):':'לא ניתן להציג קובץ מסוג זה בדפדפן. אפשר להורידו:');
+    if(window.lucide) lucide.createIcons();
+    return;
+  }
+  body.innerHTML='<div style="padding:40px;color:var(--g400);font-size:14px">טוען תצוגה...</div>';
+  try{
+    const resp=await fetch(url);
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const blob=await resp.blob();
+    const obj=URL.createObjectURL(blob); _fvObjectUrl=obj;
+    if(imgs.includes(ext)){
+      body.innerHTML=`<img src="${obj}" style="max-width:100%;max-height:82vh;object-fit:contain;display:block">`;
+    } else if(vids.includes(ext)){
+      body.innerHTML=`<video controls autoplay src="${obj}" style="max-width:100%;max-height:82vh;display:block"></video>`;
+    } else if(auds.includes(ext)){
+      body.innerHTML=`<div style="padding:40px;width:100%"><audio controls autoplay src="${obj}" style="width:100%"></audio></div>`;
+    } else if(ext==='pdf'){
+      body.innerHTML=`<iframe src="${obj}" style="width:100%;height:82vh;border:none;display:block"></iframe>`;
+    } else { // טקסט
+      const txt=await blob.text();
+      body.innerHTML=`<pre style="white-space:pre-wrap;word-break:break-word;direction:rtl;text-align:right;padding:20px;margin:0;width:100%;max-height:82vh;overflow:auto;font-size:14px;line-height:1.7;background:#fff">${txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>`;
+    }
+  }catch(e){
+    body.innerHTML=fvDownloadPanel(url,name,'לא ניתן לטעון את הקובץ לתצוגה (ייתכן שהסינון חוסם את הגישה). נסה להוריד אותו:');
+  }
+  if(window.lucide) lucide.createIcons();
 }
 
 function renderPatientEmails(pid){
@@ -4235,14 +4257,27 @@ async function checkStorageBucket(){
 
 // === APP SETTINGS (Supabase-backed) ===
 async function sbAppSettingSet(key, value){
-  // Upsert into app_settings using service role
+  // שמירה אמינה ל-app_settings (service role): עדכון אם קיים, אחרת יצירה.
+  // לא מסתמך על on_conflict כדי שיעבוד בכל מבנה טבלה, ומחזיר אם הצליח.
+  const headers={'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json'};
   try {
-    await fetch(`${SB_URL}/rest/v1/app_settings`,{
+    const up=await fetch(`${SB_URL}/rest/v1/app_settings?key=eq.${encodeURIComponent(key)}`,{
+      method:'PATCH',
+      headers:{...headers,'Prefer':'return=representation'},
+      body:JSON.stringify({value})
+    });
+    if(up.ok){
+      const rows=await up.json().catch(()=>[]);
+      if(Array.isArray(rows)&&rows.length) return true; // עודכן בהצלחה
+    }
+    // אין רשומה קיימת — צור חדשה
+    const ins=await fetch(`${SB_URL}/rest/v1/app_settings`,{
       method:'POST',
-      headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      headers:{...headers,'Prefer':'return=representation'},
       body:JSON.stringify({key,value})
     });
-  } catch(e){}
+    return ins.ok;
+  } catch(e){ return false; }
 }
 async function sbAppSettingGet(key){
   try {
@@ -4251,12 +4286,19 @@ async function sbAppSettingGet(key){
     });
     if(!r.ok) return null;
     const d=await r.json();
-    return d?.[0]?.value||null;
+    if(!Array.isArray(d)) return null;
+    for(const row of d){ if(row && row.value) return row.value; } // הערך הראשון שאינו ריק
+    return null;
   } catch(e){ return null; }
 }
 async function loadAppSettings(){
   const k=await sbAppSettingGet('openai_key');
-  if(k){ openaiKey=k; localStorage.setItem('openai_key',k); }
+  if(k){
+    openaiKey=k; localStorage.setItem('openai_key',k);
+  } else if(openaiKey){
+    // יש מפתח מקומי אך לא בענן — נסנכרן אותו כדי שלא יאבד בעתיד
+    sbAppSettingSet('openai_key',openaiKey);
+  }
 }
 
 // === OPENAI ===
@@ -4265,9 +4307,16 @@ async function saveOpenAISettings(){
   if(!k) return toast('נא להזין OpenAI API Key','error');
   openaiKey=k;
   localStorage.setItem('openai_key',k);
-  await sbAppSettingSet('openai_key',k);
-  document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--green)">✓ OpenAI Key נשמר</span>';
-  toast('מפתח OpenAI נשמר','success');
+  const statusEl=document.getElementById('openai-settings-status');
+  if(statusEl) statusEl.innerHTML='<span style="color:var(--g500)">שומר...</span>';
+  const ok=await sbAppSettingSet('openai_key',k);
+  if(ok){
+    if(statusEl) statusEl.innerHTML='<span style="color:var(--green)">✓ המפתח נשמר לצמיתות ומסונכרן לכל המכשירים</span>';
+    toast('מפתח OpenAI נשמר','success');
+  } else {
+    if(statusEl) statusEl.innerHTML='<span style="color:var(--amber)">⚠ נשמר במכשיר זה בלבד — הסנכרון לענן נכשל. בדוק חיבור ולחץ שמור שוב</span>';
+    toast('המפתח נשמר מקומית, אך הסנכרון לענן נכשל — נסה שוב','error');
+  }
 }
 
 async function testOpenAIConnection(){
@@ -4770,7 +4819,7 @@ function docCardHTML(f,pid){
     </div>
     <div class="dc-actions">
       <span class="btn btn-secondary btn-sm" onclick="openFileViewer('${safeUrl}','${safeName}')"><i data-lucide="eye"></i> צפה</span>
-      <a class="btn btn-secondary btn-sm" href="${f.drive_url}" download="${safeName}" target="_blank" style="text-decoration:none" onclick="event.stopPropagation()"><i data-lucide="download"></i></a>
+      <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();downloadFile('${safeUrl}','${safeName}')"><i data-lucide="download"></i></button>
       <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteFile('${f.id}','${(f.drive_file_id||'').replace(/'/g,"\\'")}','${pid}')"><i data-lucide="trash-2"></i></button>
     </div>
   </div>`;
