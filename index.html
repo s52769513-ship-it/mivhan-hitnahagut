@@ -206,6 +206,31 @@ tr:last-child td{border-bottom:none}
 .file-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--g100)}
 .file-item:last-child{border-bottom:none}
 .file-icon{font-size:22px;width:32px;text-align:center}
+/* אזור העלאת מסמכים */
+.doc-dropzone{border:2px dashed var(--g300);border-radius:12px;padding:22px 18px;text-align:center;cursor:pointer;transition:.15s;background:var(--g50);color:var(--g500);display:flex;flex-direction:column;align-items:center;gap:6px}
+.doc-dropzone:hover,.doc-dropzone.dragover{border-color:var(--blue2);background:var(--blue-light);color:var(--blue2)}
+.doc-dropzone .dz-ic{font-size:30px;line-height:1}
+.doc-dropzone .dz-ic i{width:30px;height:30px}
+.doc-dropzone .dz-main{font-size:14px;font-weight:600;color:var(--g700)}
+.doc-dropzone .dz-sub{font-size:12px;color:var(--g400)}
+.doc-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 4px}
+.doc-search{flex:1;min-width:160px}
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-top:14px}
+.doc-card{border:1px solid var(--g200);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--white);transition:.15s}
+.doc-card:hover{box-shadow:0 4px 14px rgba(12,58,95,.10);border-color:var(--g300);transform:translateY(-1px)}
+.doc-card .dc-top{display:flex;align-items:center;gap:10px;cursor:pointer}
+.doc-card .dc-ic{font-size:26px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--g50);border-radius:10px}
+.doc-card .dc-ic i{width:24px;height:24px}
+.doc-card .dc-meta{min-width:0;flex:1}
+.doc-card .dc-name{font-size:13px;font-weight:600;line-height:1.35;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.doc-card .dc-date{font-size:11px;color:var(--g400);margin-top:3px}
+.doc-card .dc-actions{display:flex;gap:6px;margin-top:auto}
+.doc-card .dc-actions .btn{flex:1;justify-content:center;padding:6px 4px}
+.doc-empty{text-align:center;padding:30px 10px;color:var(--g400)}
+.doc-empty i{width:34px;height:34px;color:var(--g300)}
+.doc-progress{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--g600);background:var(--blue-light);border:1px solid var(--blue2);border-radius:8px;padding:10px 12px;margin-top:12px}
+.doc-progress .spin{width:16px;height:16px;border:2px solid var(--g300);border-top-color:var(--blue2);border-radius:50%;animation:dz-spin .7s linear infinite;flex-shrink:0}
+@keyframes dz-spin{to{transform:rotate(360deg)}}
 
 </style>
 </head>
@@ -734,7 +759,7 @@ tr:last-child td{border-bottom:none}
     <div class="modal-footer">
       <button class="btn btn-danger" onclick="deleteAptFromModal()"><i data-lucide="trash-2"></i> מחק פגישה</button>
       <button class="btn btn-secondary" onclick="closeModal('modal-edit-appointment')">ביטול</button>
-      <button class="btn btn-primary" onclick="saveEditApt()">שמור שינויים</button>
+      <button class="btn btn-primary" id="ea-save-btn" onclick="saveEditApt()">שמור שינויים</button>
     </div>
   </div>
 </div>
@@ -1008,6 +1033,65 @@ let currentQTab = 'parent';
 // === SUPABASE ===
 const SB_SRK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwemFvcHF6YnVsZHVxdmxocHFsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTE4OTY3NSwiZXhwIjoyMDk0NzY1Njc1fQ.SDVqnHM5f2a4HiBmSzgz0mrApEzRzeIxiPj9Nb1RKyk';
 function sbToken(){ return localStorage.getItem('sb_jwt')||SB_KEY; }
+
+// תרגום שגיאות שרת/רשת לעברית
+function hebrewError(raw){
+  if(!raw) return 'שגיאה לא ידועה';
+  let msg='';
+  if(typeof raw==='object') raw=raw.message||raw.error_description||raw.error||raw.msg||JSON.stringify(raw);
+  const s=String(raw);
+  try{ const j=JSON.parse(s); msg=j.message||j.msg||j.error_description||j.error||j.hint||j.details||s; }
+  catch{ msg=s; }
+  const low=(msg||'').toLowerCase();
+  if(low.includes('jwt expired')||low.includes('token is expired')||(low.includes('expired')&&low.includes('token'))) return 'פג תוקף ההתחברות. נסה לשמור שוב — אם זה חוזר, התחבר מחדש למערכת.';
+  if(low.includes('jwt')||low.includes('invalid token')||low.includes('invalid claim')||low.includes('no api key')||low.includes('missing')&&low.includes('token')) return 'בעיית הרשאה. רענן את הדף או התחבר מחדש למערכת.';
+  if(low.includes('failed to fetch')||low.includes('networkerror')||low.includes('load failed')||low.includes('network request failed')) return 'בעיית חיבור לאינטרנט. בדוק את החיבור ונסה שוב.';
+  if(low.includes('duplicate key')||low.includes('already exists')) return 'הרשומה כבר קיימת במערכת.';
+  if(low.includes('not-null')||(low.includes('violates')&&low.includes('null'))) return 'חסר שדה חובה. מלא את כל השדות הנדרשים.';
+  if(low.includes('permission denied')||low.includes('row-level security')||low.includes('rls policy')) return 'אין לך הרשאה לבצע פעולה זו.';
+  if(low.includes('timeout')||low.includes('timed out')) return 'הפעולה ארכה זמן רב מדי. נסה שוב.';
+  return msg||'שגיאה לא ידועה';
+}
+
+// === ניהול אסימון התחברות (רענון אוטומטי כדי שלא יפוג באמצע עבודה) ===
+let _refreshing=null;
+async function refreshSession(){
+  const rt=localStorage.getItem('sb_refresh');
+  if(!rt) return false;
+  if(_refreshing) return _refreshing;
+  _refreshing=(async()=>{
+    try{
+      const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:rt})});
+      const d=await r.json().catch(()=>({}));
+      if(d.access_token){
+        localStorage.setItem('sb_jwt',d.access_token);
+        if(d.refresh_token) localStorage.setItem('sb_refresh',d.refresh_token);
+        localStorage.setItem('sb_jwt_exp',String(Date.now()+((d.expires_in||3600)*1000)));
+        return true;
+      }
+      return false;
+    }catch(e){ return false; }
+  })();
+  const res=await _refreshing; _refreshing=null; return res;
+}
+// מרענן את האסימון מבעוד מועד אם הוא עומד לפוג בדקות הקרובות
+async function ensureFreshToken(){
+  if(!localStorage.getItem('sb_refresh')) return;
+  const exp=parseInt(localStorage.getItem('sb_jwt_exp')||'0',10);
+  if(exp && Date.now() > exp-120000){ await refreshSession(); }
+}
+// עוטף קריאות נתונים: מוודא אסימון תקף ומנסה שוב פעם אחת אם פג התוקף (401)
+async function sbFetch(url, opts={}){
+  await ensureFreshToken();
+  const build=()=>({...opts, headers:{...(opts.headers||{}),'Authorization':'Bearer '+sbToken()}});
+  let r=await fetch(url, build());
+  if((r.status===401||r.status===403) && localStorage.getItem('sb_refresh')){
+    const ok=await refreshSession();
+    if(ok) r=await fetch(url, build());
+  }
+  return r;
+}
+
 async function sbAdmin(table,params=''){
   const r=await fetch(`${SB_URL}/rest/v1/${table}${params}`,{headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json'}});
   if(!r.ok) return {data:[],error:await r.text()};
@@ -1031,34 +1115,34 @@ async function sbAdminDelete(table,id){
 async function sb(table, params=''){
   if(!SB_URL||!SB_KEY) return {data:[],error:'לא מחובר'};
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':'application/json'}});
-    if(!r.ok) return {data:[],error:await r.text()};
+    const r = await sbFetch(`${SB_URL}/rest/v1/${table}${params}`,{headers:{'apikey':SB_KEY,'Content-Type':'application/json'}});
+    if(!r.ok) return {data:[],error:hebrewError(await r.text())};
     return {data: await r.json()};
-  } catch(e){ return {data:[],error:e.message}; }
+  } catch(e){ return {data:[],error:hebrewError(e.message)}; }
 }
 async function sbInsert(table, body){
   if(!SB_URL||!SB_KEY) return {error:'לא מחובר'};
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
-    if(!r.ok) return {error:await r.text()};
+    const r = await sbFetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
+    if(!r.ok) return {error:hebrewError(await r.text())};
     return {data: await r.json()};
-  } catch(e){ return {error:e.message}; }
+  } catch(e){ return {error:hebrewError(e.message)}; }
 }
 async function sbUpdate(table, id, body){
   if(!SB_URL||!SB_KEY) return {error:'לא מחובר'};
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
-    if(!r.ok) return {error:await r.text()};
+    const r = await sbFetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
+    if(!r.ok) return {error:hebrewError(await r.text())};
     return {data: await r.json()};
-  } catch(e){ return {error:e.message}; }
+  } catch(e){ return {error:hebrewError(e.message)}; }
 }
 async function sbDelete(table, id){
   if(!SB_URL||!SB_KEY) return {error:'לא מחובר'};
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken()}});
-    if(!r.ok) return {error:await r.text()};
+    const r = await sbFetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{'apikey':SB_KEY}});
+    if(!r.ok) return {error:hebrewError(await r.text())};
     return {data:true};
-  } catch(e){ return {error:e.message}; }
+  } catch(e){ return {error:hebrewError(e.message)}; }
 }
 
 async function loadAll(){
@@ -1143,6 +1227,8 @@ async function doLogin(){
       return;
     }
     localStorage.setItem('sb_jwt',data.access_token);
+    if(data.refresh_token) localStorage.setItem('sb_refresh',data.refresh_token);
+    localStorage.setItem('sb_jwt_exp',String(Date.now()+((data.expires_in||3600)*1000)));
     await afterLogin(data.user||{id:data.user_id,email});
   }catch(e){
     btn.textContent='כניסה למערכת'; btn.disabled=false;
@@ -1218,6 +1304,8 @@ function setupUIForRole(){
 
 function doLogout(){
   localStorage.removeItem('sb_jwt');
+  localStorage.removeItem('sb_refresh');
+  localStorage.removeItem('sb_jwt_exp');
   currentUser=null; isAdmin=false; userAssignedPatients=[]; userAssignedInstitutions=[];
   document.getElementById('main-app').style.display='none';
   document.getElementById('welcome-screen').style.display='flex';
@@ -1228,9 +1316,13 @@ function doLogout(){
 async function checkStoredSession(){
   const jwt=localStorage.getItem('sb_jwt');
   if(!jwt) return;
-  // Verify token by fetching user
-  const r=await fetch(`${SB_URL}/auth/v1/user`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+jwt}});
-  if(!r.ok){localStorage.removeItem('sb_jwt');return;}
+  // Verify token by fetching user — אם פג, ננסה לרענן לפני שמתנתקים
+  let r=await fetch(`${SB_URL}/auth/v1/user`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+jwt}});
+  if(!r.ok && localStorage.getItem('sb_refresh')){
+    const ok=await refreshSession();
+    if(ok) r=await fetch(`${SB_URL}/auth/v1/user`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken()}});
+  }
+  if(!r.ok){localStorage.removeItem('sb_jwt');localStorage.removeItem('sb_refresh');localStorage.removeItem('sb_jwt_exp');return;}
   const user=await r.json();
   if(user.id) await afterLogin(user);
 }
@@ -2266,23 +2358,21 @@ function renderPatientPayments(pid){
 }
 
 function renderPatientDocuments(pid){
-  const files=allFiles.filter(f=>f.patient_id===pid&&!f.drive_file_id?.includes('||apt:'));
+  const files=allFiles.filter(f=>f.patient_id===pid&&!f.drive_file_id?.includes('||apt:'))
+    .sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
   document.getElementById('dt-documents').innerHTML=`
     <div class="card">
-      <div class="card-header">
-        <h3><i data-lucide="folder"></i> מסמכים</h3>
-        <label class="btn btn-primary btn-sm" style="cursor:pointer">+ העלה קובץ<input type="file" style="display:none" onchange="uploadToSupabase('${pid}',this)"></label>
-      </div>
-      <div id="files-list-${pid}">
-        ${files.length===0?'<div class="empty"><i data-lucide="file"></i><p>אין קבצים</p></div>':''}
-        ${files.map(f=>`<div class="file-item">
-          <div class="file-icon" style="cursor:pointer" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')">${fileIcon(f.name)}</div>
-          <div style="flex:1;cursor:pointer" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')"><div style="font-size:14px;font-weight:500">${f.name}</div><div style="font-size:11px;color:var(--g400)">${fmtDate(f.created_at)}</div></div>
-          <span class="btn btn-secondary btn-sm" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')"><i data-lucide="eye"></i> צפה</span>
-          <button class="btn btn-danger btn-sm" onclick="deleteFile('${f.id}','${f.drive_file_id||''}','${pid}')"><i data-lucide="trash-2"></i></button>
-        </div>`).join('')}
+      <div class="card-header"><h3><i data-lucide="folder"></i> מסמכים <span style="color:var(--g400);font-weight:500;font-size:13px">(${files.length})</span></h3></div>
+      <div class="card-body">
+        ${docZoneHTML(pid)}
+        ${files.length>0?`<div class="doc-toolbar"><input type="text" class="form-control doc-search" placeholder="חיפוש מסמך לפי שם..." oninput="docSearch(this)"></div>`:''}
+        ${files.length===0
+          ?`<div class="doc-empty"><i data-lucide="file"></i><p style="margin-top:8px">אין מסמכים עדיין — גרור או העלה את הראשון</p></div>`
+          :`<div class="doc-grid">${files.map(f=>docCardHTML(f,pid)).join('')}</div>
+            <div class="doc-search-empty doc-empty" style="display:none"><i data-lucide="search-x"></i><p style="margin-top:8px">לא נמצאו מסמכים תואמים</p></div>`}
       </div>
     </div>`;
+  if(window.lucide) lucide.createIcons();
 }
 
 function fileIcon(name){
@@ -3290,21 +3380,18 @@ async function downloadTankPDF(pid){
 }
 
 function renderIntDocs(pid){
-  const files=(allFiles||[]).filter(f=>f.patient_id===pid);
+  const files=(allFiles||[]).filter(f=>f.patient_id===pid&&!f.drive_file_id?.includes('||apt:'))
+    .sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
   document.getElementById('it-docs').innerHTML=`
     <div class="card">
-      <div class="card-header">
-        <h3><i data-lucide="folder"></i> מסמכי התערבות</h3>
-        <label class="btn btn-primary btn-sm" style="cursor:pointer"><i data-lucide="upload"></i> העלה קובץ<input type="file" style="display:none" onchange="uploadToSupabase('${pid}',this)"></label>
-      </div>
-      <div id="int-files-list-${pid}">
-        ${files.length===0?'<div class="empty"><i data-lucide="file"></i><p>אין קבצים</p></div>':''}
-        ${files.map(f=>`<div class="file-item">
-          <div class="file-icon" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')">  ${fileIcon(f.name)}</div>
-          <div style="flex:1;cursor:pointer" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')"><div style="font-size:14px;font-weight:500">${f.name}</div><div style="font-size:11px;color:var(--g400)">${fmtDate(f.created_at)}</div></div>
-          <span class="btn btn-secondary btn-sm" onclick="openFileViewer('${f.drive_url}','${(f.name||'').replace(/'/g,"\\'")}')"><i data-lucide="eye"></i></span>
-          <button class="btn btn-danger btn-sm" onclick="deleteFile('${f.id}','${f.drive_file_id||''}','${pid}')"><i data-lucide="trash-2"></i></button>
-        </div>`).join('')}
+      <div class="card-header"><h3><i data-lucide="folder"></i> מסמכי התערבות <span style="color:var(--g400);font-weight:500;font-size:13px">(${files.length})</span></h3></div>
+      <div class="card-body">
+        ${docZoneHTML(pid)}
+        ${files.length>0?`<div class="doc-toolbar"><input type="text" class="form-control doc-search" placeholder="חיפוש מסמך לפי שם..." oninput="docSearch(this)"></div>`:''}
+        ${files.length===0
+          ?`<div class="doc-empty"><i data-lucide="file"></i><p style="margin-top:8px">אין מסמכים עדיין — גרור או העלה את הראשון</p></div>`
+          :`<div class="doc-grid">${files.map(f=>docCardHTML(f,pid)).join('')}</div>
+            <div class="doc-search-empty doc-empty" style="display:none"><i data-lucide="search-x"></i><p style="margin-top:8px">לא נמצאו מסמכים תואמים</p></div>`}
       </div>
     </div>`;
   if(window.lucide) lucide.createIcons();
@@ -3705,7 +3792,7 @@ async function uploadAptFile(input){
     if(pid){const r=await sb('patient_files',`?patient_id=eq.${pid}&order=created_at.desc`);allFiles=(allFiles.filter(f=>f.patient_id!==pid)).concat(r.data||[]);}
     toast('קובץ הועלה בהצלחה','success');
     renderAptFiles(editAptId);
-  }catch(e){toast('שגיאה בהעלאה: '+e.message,'error');}
+  }catch(e){toast('שגיאה בהעלאה: '+hebrewError(e.message),'error');}
   input.value='';
 }
 function openEditApt(id){
@@ -3732,8 +3819,11 @@ async function saveEditApt(){
   const sup=document.getElementById('ea-supervisor').innerHTML;
   const description=sup?JSON.stringify({notes,sup}):notes;
   const body={name:document.getElementById('ea-name').value,patient_id:document.getElementById('ea-patient').value||null,start_time:localInputToISO(document.getElementById('ea-start').value),end_time:localInputToISO(document.getElementById('ea-end').value),price:parseFloat(document.getElementById('ea-price').value)||0,arrived:document.getElementById('ea-arrived').checked,description};
+  const btn=document.getElementById('ea-save-btn');
+  if(btn){ btn.disabled=true; }
   const r=await sbUpdate('appointments',editAptId,body);
-  if(r.error) return toast('שגיאה: '+r.error,'error');
+  if(btn){ btn.disabled=false; }
+  if(r.error){ toast('שמירת התיעוד נכשלה: '+r.error+' — התיעוד נשמר בטופס, נסה שוב.','error'); return; }
   toast('פגישה עודכנה <i data-lucide="check-circle"></i>','success'); closeModal('modal-edit-appointment');
   await loadAll(); renderDashboard();
   if(currentPatientId) renderPatientAppointments(currentPatientId);
@@ -4195,11 +4285,11 @@ async function testOpenAIConnection(){
     if(r.ok){
       document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--green)">✓ חיבור תקין! OpenAI מוכן</span>';
     } else {
-      const e=await r.json();
-      document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאה: '+(e.error?.message||'מפתח לא תקין')+'</span>';
+      let e={}; try{ e=await r.json(); }catch{}
+      document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--red)">✗ '+openaiHebrewError(r.status,e)+'</span>';
     }
   }catch(e){
-    document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--red)">✗ שגיאת רשת: '+e.message+'</span>';
+    document.getElementById('openai-settings-status').innerHTML='<span style="color:var(--red)">✗ בעיית חיבור לאינטרנט. בדוק את החיבור ונסה שוב.</span>';
   }finally{
     btn.disabled=false;
     lucide.createIcons();
@@ -4451,6 +4541,21 @@ function openSmartAssistant(pid){
   openModal('modal-smart');
 }
 
+// תרגום שגיאות OpenAI לעברית
+function openaiHebrewError(status, e){
+  const err=(e&&e.error)||{};
+  const m=err.message||'';
+  const code=err.code||err.type||'';
+  if(status===401||/invalid_api_key|incorrect api key/i.test(m+code)) return 'מפתח ה-OpenAI אינו תקין או בוטל. עדכן את המפתח במסך ההגדרות.';
+  if(status===429){
+    if(/quota|insufficient_quota|billing/i.test(m+code)) return 'נגמרה המכסה/האשראי בחשבון ה-OpenAI. יש להוסיף אמצעי תשלום או אשראי בחשבון.';
+    return 'יותר מדי בקשות בזמן קצר. המתן כמה שניות ונסה שוב.';
+  }
+  if(status===404||/model_not_found|does not exist/i.test(m+code)) return 'המודל המבוקש אינו זמין בחשבון ה-OpenAI שלך. פנה למנהל לבדיקת ההרשאות.';
+  if(status>=500) return 'שירות ה-OpenAI אינו זמין כרגע. נסה שוב בעוד מספר רגעים.';
+  return m?('שגיאה מ-OpenAI: '+m):('שגיאה מה-API ('+status+')');
+}
+
 async function callGeminiSMART(){
   if(!openaiKey){
     toast('נא להגדיר OpenAI API Key בהגדרות','error');
@@ -4493,14 +4598,22 @@ ${strength?'חוזקות: '+strength:''}
 כתוב בעברית בלבד, בשפה מקצועית וקולחת.`;
 
   try{
-    const r=await fetch('https://api.openai.com/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+openaiKey},
-      body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],max_tokens:800,temperature:0.7})
-    });
-    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'שגיאה מה-API');}
+    let r;
+    try{
+      r=await fetch('https://api.openai.com/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+openaiKey},
+        body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],max_tokens:800,temperature:0.7})
+      });
+    }catch(netErr){
+      throw new Error('בעיית חיבור לאינטרנט. בדוק את החיבור ונסה שוב.');
+    }
+    if(!r.ok){
+      let e={}; try{ e=await r.json(); }catch{}
+      throw new Error(openaiHebrewError(r.status, e));
+    }
     const data=await r.json();
-    const text=data.choices?.[0]?.message?.content||'לא התקבלה תשובה';
+    const text=data.choices?.[0]?.message?.content||'לא התקבלה תשובה מה-AI. נסה שוב.';
     const el=document.getElementById('smart-result-text');
     el.innerHTML=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
       .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
@@ -4600,29 +4713,112 @@ async function sbStorageDelete(storagePath){
 }
 
 async function deleteFile(fileId, storagePath, pid){
-  if(!confirm('למחוק קובץ זה?')) return;
+  if(!confirm('למחוק מסמך זה?')) return;
   await sbStorageDelete(storagePath);
-  await sbDelete('patient_files',fileId);
+  const d=await sbDelete('patient_files',fileId);
+  if(d&&d.error) return toast('שגיאה במחיקה: '+d.error,'error');
   allFiles=allFiles.filter(f=>f.id!==fileId);
-  renderPatientDocuments(pid);
-  toast('קובץ נמחק','success');
+  if(document.getElementById('dt-documents')) renderPatientDocuments(pid);
+  if(document.getElementById('it-docs')) renderIntDocs(pid);
+  toast('המסמך נמחק','success');
 }
 
-async function uploadToSupabase(pid, input){
-  const file=input.files[0]; if(!file) return;
-  toast('מעלה קובץ...','');
-  try{
-    const ts=Date.now();
-    const safeName=file.name.replace(/[^א-תa-zA-Z0-9._-]/g,'_');
-    const storagePath=`${pid}/${ts}-${safeName}`;
-    const url=await sbStorageUpload(storagePath,file);
-    await sbInsert('patient_files',{patient_id:pid,name:file.name,drive_file_id:storagePath,drive_url:url,created_at:new Date().toISOString()});
-    const r=await sb('patient_files',`?patient_id=eq.${pid}&order=created_at.desc`);
-    allFiles=(allFiles.filter(f=>f.patient_id!==pid)).concat(r.data||[]);
-    renderPatientDocuments(pid);
-    toast('הקובץ הועלה <i data-lucide="check-circle"></i>','success');
-  }catch(e){ console.error('upload error:',e); toast('שגיאה בהעלאה: '+e.message,'error'); }
+// === מסמכים: הצגה והעלאה ===
+const MAX_DOC_MB=50;
+function fmtFileSize(bytes){
+  if(!bytes&&bytes!==0) return '';
+  if(bytes<1024) return bytes+' B';
+  if(bytes<1048576) return (bytes/1024).toFixed(0)+' KB';
+  return (bytes/1048576).toFixed(1)+' MB';
+}
+// אזור גרירה/לחיצה להעלאת מסמכים
+function docZoneHTML(pid){
+  return `<label class="doc-dropzone" id="dz-${pid}"
+      ondragover="event.preventDefault();this.classList.add('dragover')"
+      ondragleave="this.classList.remove('dragover')"
+      ondrop="handleDocDrop(event,'${pid}')">
+      <span class="dz-ic"><i data-lucide="upload-cloud"></i></span>
+      <span class="dz-main">גרור קבצים לכאן או לחץ לבחירה</span>
+      <span class="dz-sub">תמונות, PDF, Word, Excel, וידאו ועוד · עד ${MAX_DOC_MB}MB לקובץ</span>
+      <input type="file" multiple style="display:none" onchange="uploadToSupabase('${pid}',this)">
+    </label>
+    <div id="dz-progress-${pid}"></div>`;
+}
+// כרטיס מסמך בודד
+function docCardHTML(f,pid){
+  const safeUrl=(f.drive_url||'').replace(/'/g,"\\'");
+  const safeName=(f.name||'').replace(/'/g,"\\'");
+  return `<div class="doc-card" data-name="${(f.name||'').replace(/"/g,'&quot;')}">
+    <div class="dc-top" onclick="openFileViewer('${safeUrl}','${safeName}')">
+      <div class="dc-ic">${fileIcon(f.name)}</div>
+      <div class="dc-meta">
+        <div class="dc-name">${f.name||'ללא שם'}</div>
+        <div class="dc-date">${f.created_at?fmtDate(f.created_at):''}</div>
+      </div>
+    </div>
+    <div class="dc-actions">
+      <span class="btn btn-secondary btn-sm" onclick="openFileViewer('${safeUrl}','${safeName}')"><i data-lucide="eye"></i> צפה</span>
+      <a class="btn btn-secondary btn-sm" href="${f.drive_url}" download="${safeName}" target="_blank" style="text-decoration:none" onclick="event.stopPropagation()"><i data-lucide="download"></i></a>
+      <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteFile('${f.id}','${(f.drive_file_id||'').replace(/'/g,"\\'")}','${pid}')"><i data-lucide="trash-2"></i></button>
+    </div>
+  </div>`;
+}
+// סינון מסמכים לפי שם (ללא רינדור מחדש)
+function docSearch(inputEl){
+  const term=(inputEl.value||'').trim().toLowerCase();
+  const card=inputEl.closest('.card'); if(!card) return;
+  const grid=card.querySelector('.doc-grid'); if(!grid) return;
+  let visible=0;
+  grid.querySelectorAll('.doc-card').forEach(c=>{
+    const n=(c.getAttribute('data-name')||'').toLowerCase();
+    const show=!term||n.includes(term);
+    c.style.display=show?'':'none'; if(show) visible++;
+  });
+  const empty=card.querySelector('.doc-search-empty');
+  if(empty) empty.style.display=visible?'none':'';
+}
+// העלאה מגרירה
+function handleDocDrop(ev,pid){
+  ev.preventDefault();
+  const zone=document.getElementById('dz-'+pid); if(zone) zone.classList.remove('dragover');
+  const files=[...(ev.dataTransfer?.files||[])];
+  if(files.length) uploadPatientFiles(pid,files);
+}
+// העלאה מבחירת קובץ
+function uploadToSupabase(pid, input){
+  const files=[...(input.files||[])];
   input.value='';
+  if(files.length) uploadPatientFiles(pid,files);
+}
+// ליבת ההעלאה — תומכת בכמה קבצים, מציגה התקדמות ושגיאות בעברית
+async function uploadPatientFiles(pid, files){
+  const prog=document.getElementById('dz-progress-'+pid);
+  const setProg=(html)=>{ if(prog){ prog.innerHTML=html; if(window.lucide) lucide.createIcons(); } };
+  let ok=0; const failed=[];
+  for(let i=0;i<files.length;i++){
+    const file=files[i];
+    setProg(`<div class="doc-progress"><span class="spin"></span> מעלה ${i+1} מתוך ${files.length}: ${file.name}</div>`);
+    if(file.size>MAX_DOC_MB*1048576){ failed.push(file.name+' (גדול מ-'+MAX_DOC_MB+'MB)'); continue; }
+    try{
+      const ts=Date.now()+'-'+i;
+      const safeName=file.name.replace(/[^א-תa-zA-Z0-9._-]/g,'_');
+      const storagePath=`${pid}/${ts}-${safeName}`;
+      const url=await sbStorageUpload(storagePath,file);
+      const ins=await sbInsert('patient_files',{patient_id:pid,name:file.name,drive_file_id:storagePath,drive_url:url,created_at:new Date().toISOString()});
+      if(ins.error) throw new Error(ins.error);
+      ok++;
+    }catch(e){ console.error('upload error:',e); failed.push(file.name+' ('+hebrewError(e.message)+')'); }
+  }
+  // רענון רשימת הקבצים מהשרת
+  const r=await sb('patient_files',`?patient_id=eq.${pid}&order=created_at.desc`);
+  if(!r.error) allFiles=(allFiles.filter(f=>f.patient_id!==pid)).concat(r.data||[]);
+  if(document.getElementById('dt-documents')) renderPatientDocuments(pid);
+  if(document.getElementById('it-docs')) renderIntDocs(pid);
+  if(ok) toast(`${ok} ${ok===1?'קובץ הועלה':'קבצים הועלו'} בהצלחה <i data-lucide="check-circle"></i>`,'success');
+  if(failed.length){
+    toast(`${failed.length} ${failed.length===1?'קובץ נכשל':'קבצים נכשלו'} בהעלאה`,'error');
+    setTimeout(()=>alert('קבצים שלא הועלו:\n\n'+failed.join('\n')),300);
+  }
 }
 
 async function migrateCloudinaryFiles(){
