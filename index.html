@@ -669,7 +669,9 @@ tr:last-child td{border-bottom:none}
         <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-observations" checked style="width:16px;height:16px"> תצפיות ABC</label>
         <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-questionnaires" checked style="width:16px;height:16px"> שאלונים (מפורט)</label>
         <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-goals" checked style="width:16px;height:16px"> מטרות טיפוליות</label>
-        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-appendix" style="width:16px;height:16px"> נספח - מסמכים והערות</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-appendix" style="width:16px;height:16px"> נספח א – מסמכים</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-notes-append" style="width:16px;height:16px"> נספח ב – עדכונים</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-tasks-append" style="width:16px;height:16px"> נספח ג – משימות</label>
       </div>
     </div>
     <div class="modal-footer">
@@ -3030,7 +3032,7 @@ function repPageHeader(){
 }
 
 function repBuildSection(title,html){
-  return `<div style="break-before:page;page-break-before:always;padding-top:4px;">
+  return `<div style="break-before:page;page-break-before:always;padding-top:30px;">
     ${repPageHeader()}
     <div style="font-size:19px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:7px;margin-bottom:18px;">${title}</div>
     <div>${html}</div>
@@ -3054,6 +3056,8 @@ function _repReadIncludes(){
     questionnaires:document.getElementById('rep-questionnaires')?.checked,
     goals:document.getElementById('rep-goals')?.checked,
     appendix:document.getElementById('rep-appendix')?.checked,
+    notesAppend:document.getElementById('rep-notes-append')?.checked,
+    tasksAppend:document.getElementById('rep-tasks-append')?.checked,
   };
 }
 
@@ -3225,19 +3229,35 @@ function _repBuildSections(include,pid){
 
   if(include.appendix){
     const patientFiles=(allFiles||[]).filter(f=>f.patient_id===pid&&!f.drive_file_id?.includes('||apt:'));
-    const appointmentNotes=(allAppointments||[]).filter(a=>a.patient_id===pid&&a.description).map(a=>{
-      const d=new Date(a.start_time);
-      return{date:d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}),time:d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}),name:a.name,desc:a.description};
-    });
-    const appendixHtml=[];
     if(patientFiles.length>0){
-      appendixHtml.push('<div style="margin-bottom:18px;"><div style="font-size:15px;font-weight:700;margin-bottom:12px;color:#1e3a5f;">מסמכים:</div>'+patientFiles.map(f=>`<div style="margin-bottom:8px;padding:8px 12px;background:#f8fafc;border-radius:5px;border-left:3px solid #1e3a5f;"><div style="font-size:14px;color:#1e293b;word-break:break-word;">${f.name||'(ללא שם)'}</div>${f.created_at?'<div style="font-size:12px;color:#94a3b8;margin-top:4px;">'+new Date(f.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})+'</div>':''}</div>`).join('')+'</div>');
+      const filesHtml=patientFiles.map(f=>`<div style="margin-bottom:14px;padding:12px;background:#f8fafc;border-radius:6px;border-right:4px solid #1e3a5f;page-break-inside:avoid;">
+        <div style="font-size:14px;font-weight:600;color:#1e293b;word-break:break-word;margin-bottom:6px;">${f.name||'(ללא שם)'}</div>
+        ${f.created_at?'<div style="font-size:12px;color:#94a3b8;">'+new Date(f.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})+'</div>':''}
+      </div>`).join('');
+      sections.push(repBuildSection('נספח א – מסמכים',filesHtml));
     }
-    if(appointmentNotes.length>0){
-      appendixHtml.push('<div style="margin-bottom:0;"><div style="font-size:15px;font-weight:700;margin-bottom:12px;color:#1e3a5f;">הערות מפגישות:</div>'+appointmentNotes.map((n,i)=>`<div style="margin-bottom:10px;padding:10px 12px;background:#f8fafc;border-radius:5px;border-right:3px solid #1e3a5f;page-break-inside:avoid;"><div style="font-size:13px;color:#64748b;margin-bottom:4px;"><strong>${n.date}</strong> | ${n.time}${n.name?' — '+n.name:''}</div><div style="font-size:14px;color:#1e293b;line-height:1.6;white-space:pre-wrap;">${n.desc}</div></div>`).join('')+'</div>');
+  }
+
+  if(include.notesAppend){
+    const patientNotes=(allNotes||[]).filter(n=>n.patient_id===pid).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    if(patientNotes.length>0){
+      const notesHtml=patientNotes.map((n,i)=>`<div style="margin-bottom:14px;padding:12px;background:#f8fafc;border-radius:6px;border-right:4px solid #1d9e75;page-break-inside:avoid;">
+        <div style="font-size:12px;color:#64748b;margin-bottom:6px;"><strong>${new Date(n.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</strong></div>
+        <div style="font-size:14px;color:#1e293b;line-height:1.6;white-space:pre-wrap;">${n.content||n.text||'(ללא תוכן)'}</div>
+      </div>`).join('');
+      sections.push(repBuildSection('נספח ב – עדכונים',notesHtml));
     }
-    if(appendixHtml.length>0){
-      sections.push(repBuildSection('נספח',appendixHtml.join('')));
+  }
+
+  if(include.tasksAppend){
+    const patientTasks=(allTasks||[]).filter(t=>t.patient_id===pid).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    if(patientTasks.length>0){
+      const tasksHtml=patientTasks.map((t,i)=>`<div style="margin-bottom:14px;padding:12px;background:#f8fafc;border-radius:6px;border-right:4px solid #185fa5;page-break-inside:avoid;">
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;"><strong>${new Date(t.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</strong> | ${t.done?'✓ הושלמה':'⏳ פתוחה'}</div>
+        <div style="font-size:14px;font-weight:600;color:#1e293b;margin-bottom:4px;">${t.title||'(ללא כותרת)'}</div>
+        ${t.description?'<div style="font-size:13px;color:#64748b;line-height:1.5;white-space:pre-wrap;">'+t.description+'</div>':''}
+      </div>`).join('');
+      sections.push(repBuildSection('נספח ג – משימות',tasksHtml));
     }
   }
 
