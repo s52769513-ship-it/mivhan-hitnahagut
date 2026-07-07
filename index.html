@@ -669,6 +669,7 @@ tr:last-child td{border-bottom:none}
         <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-observations" checked style="width:16px;height:16px"> תצפיות ABC</label>
         <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-questionnaires" checked style="width:16px;height:16px"> שאלונים (מפורט)</label>
         <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-goals" checked style="width:16px;height:16px"> מטרות טיפוליות</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-appendix" style="width:16px;height:16px"> נספח - מסמכים והערות</label>
       </div>
     </div>
     <div class="modal-footer">
@@ -3052,6 +3053,7 @@ function _repReadIncludes(){
     observations:document.getElementById('rep-observations')?.checked,
     questionnaires:document.getElementById('rep-questionnaires')?.checked,
     goals:document.getElementById('rep-goals')?.checked,
+    appendix:document.getElementById('rep-appendix')?.checked,
   };
 }
 
@@ -3095,28 +3097,35 @@ function _repBuildSections(include,pid){
 
   if(include.appointments){
     const apts=allAppointments.filter(a=>a.patient_id===pid).sort((a,b)=>new Date(a.start_time)-new Date(b.start_time));
-    const rows=apts.map(a=>{
+    const groupedByDate={};
+    apts.forEach(a=>{
       const d=new Date(a.start_time);
-      return`<tr>
-        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</td>
-        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</td>
-        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${a.name||''}</td>
-        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;text-align:center;">${a.arrived?'✓':''}</td>
-        <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${a.description||''}</td>
-        ${isAdmin&&include.payments?`<td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">₪${(a.price||0).toLocaleString()}</td>`:''}
-      </tr>`;
-    }).join('');
-    sections.push(repBuildSection('פגישות',apts.length===0?'<p style="color:#94a3b8;font-size:15px;">אין פגישות</p>':`
-      <table style="width:100%;border-collapse:collapse;">
-        <thead><tr style="background:#f0f4f8;">
-          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">תאריך</th>
-          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">שעה</th>
-          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">שם פגישה</th>
-          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-size:14px;">הגיע</th>
-          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">סיכום פגישה</th>
-          ${isAdmin&&include.payments?'<th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">מחיר</th>':''}
-        </tr></thead><tbody>${rows}</tbody>
-      </table>`));
+      const dateKey=d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'});
+      if(!groupedByDate[dateKey])groupedByDate[dateKey]=[];
+      groupedByDate[dateKey].push(a);
+    });
+    const appointmentsHtml=Object.entries(groupedByDate).map(([dateStr,dateApts])=>`
+      <div style="margin-bottom:18px;page-break-inside:avoid;">
+        <div style="display:flex;gap:14px;margin-bottom:10px;font-size:14px;font-weight:600;color:#1e3a5f;padding:8px 10px;background:#f0f4f8;border-radius:5px;">
+          <span>${dateStr}</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+          <tbody>
+            ${dateApts.map(a=>{
+              const d=new Date(a.start_time);
+              return`<tr style="page-break-inside:avoid;">
+                <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;min-width:50px;">${d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</td>
+                <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;">${a.name||''}</td>
+                <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;text-align:center;">${a.arrived?'✓':''}</td>
+                <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;">${a.description||''}</td>
+                ${isAdmin&&include.payments?`<td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;">₪${(a.price||0).toLocaleString()}</td>`:''}
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `).join('');
+    sections.push(repBuildSection('פגישות',apts.length===0?'<p style="color:#94a3b8;font-size:15px;">אין פגישות</p>':appointmentsHtml));
   }
 
   if(include.payments){
@@ -3201,10 +3210,35 @@ function _repBuildSections(include,pid){
   if(include.goals){
     const goals=allGoals.filter(g=>g.patient_id===pid);
     sections.push(repBuildSection('מטרות טיפוליות',goals.length===0?'<p style="color:#94a3b8;font-size:15px;">אין מטרות</p>':goals.map((g,i)=>`
-      <div style="margin-bottom:16px;padding:14px;border:1px solid #e2e8f0;border-radius:7px;background:#f8fafc;">
-        <div style="font-size:15px;font-weight:700;margin-bottom:10px;color:#1e3a5f;">מטרה #${i+1}</div>
-        ${repRow('תיאור',g.description)}${repRow('ניתוח פונקציונלי',g.functional_analysis)}${repRow('השערה',g.hypothesis)}${repRow('מטרה',g.target)}${repRow('מטרה התנהגותית',g.behavioral_goal)}${repRow('מסלול',g.path)}
+      <div style="margin-bottom:18px;padding:14px;border:1px solid #e2e8f0;border-radius:7px;background:#f8fafc;page-break-inside:avoid;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:#1e3a5f;">מטרה #${i+1}</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          ${repRow('תיאור',g.description)}
+          ${repRow('ניתוח פונקציונלי',g.functional_analysis)}
+          ${repRow('השערה',g.hypothesis)}
+          ${repRow('מטרה',g.target)}
+          ${repRow('מטרה התנהגותית',g.behavioral_goal)}
+          ${repRow('מסלול',g.path)}
+        </div>
       </div>`).join('')));
+  }
+
+  if(include.appendix){
+    const patientFiles=(allFiles||[]).filter(f=>f.patient_id===pid&&!f.drive_file_id?.includes('||apt:'));
+    const appointmentNotes=(allAppointments||[]).filter(a=>a.patient_id===pid&&a.description).map(a=>{
+      const d=new Date(a.start_time);
+      return{date:d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}),time:d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}),name:a.name,desc:a.description};
+    });
+    const appendixHtml=[];
+    if(patientFiles.length>0){
+      appendixHtml.push('<div style="margin-bottom:18px;"><div style="font-size:15px;font-weight:700;margin-bottom:12px;color:#1e3a5f;">מסמכים:</div>'+patientFiles.map(f=>`<div style="margin-bottom:8px;padding:8px 12px;background:#f8fafc;border-radius:5px;border-left:3px solid #1e3a5f;"><div style="font-size:14px;color:#1e293b;word-break:break-word;">${f.name||'(ללא שם)'}</div>${f.created_at?'<div style="font-size:12px;color:#94a3b8;margin-top:4px;">'+new Date(f.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})+'</div>':''}</div>`).join('')+'</div>');
+    }
+    if(appointmentNotes.length>0){
+      appendixHtml.push('<div style="margin-bottom:0;"><div style="font-size:15px;font-weight:700;margin-bottom:12px;color:#1e3a5f;">הערות מפגישות:</div>'+appointmentNotes.map((n,i)=>`<div style="margin-bottom:10px;padding:10px 12px;background:#f8fafc;border-radius:5px;border-right:3px solid #1e3a5f;page-break-inside:avoid;"><div style="font-size:13px;color:#64748b;margin-bottom:4px;"><strong>${n.date}</strong> | ${n.time}${n.name?' — '+n.name:''}</div><div style="font-size:14px;color:#1e293b;line-height:1.6;white-space:pre-wrap;">${n.desc}</div></div>`).join('')+'</div>');
+    }
+    if(appendixHtml.length>0){
+      sections.push(repBuildSection('נספח',appendixHtml.join('')));
+    }
   }
 
   return sections;
@@ -3275,9 +3309,16 @@ function repPrintHtml(bodyHtml,title){
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
       *{box-sizing:border-box;margin:0;padding:0;}
-      body{font-family:'Rubik',Arial,sans-serif;font-size:15px;color:#1e293b;direction:rtl;background:white;}
+      body{font-family:'Rubik',Arial,sans-serif;font-size:15px;color:#1e293b;direction:rtl;background:white;orphans:2;widows:2;}
       @page{margin:15mm 18mm;}
-      @media print{.no-print{display:none!important;}}
+      @media print{
+        .no-print{display:none!important;}
+        body,div,p{orphans:2;widows:2;}
+        table{border-collapse:collapse;page-break-inside:avoid;}
+        tr{page-break-inside:avoid;}
+        thead{display:table-header-group;}
+        tfoot{display:table-footer-group;}
+      }
     </style>
   </head><body>
     <div class="no-print" style="position:fixed;bottom:16px;left:16px;z-index:999;">
