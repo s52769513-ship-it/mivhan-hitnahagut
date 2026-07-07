@@ -3230,10 +3230,21 @@ function _repBuildSections(include,pid){
   if(include.appendix){
     const patientFiles=(allFiles||[]).filter(f=>f.patient_id===pid&&!f.drive_file_id?.includes('||apt:'));
     if(patientFiles.length>0){
-      const filesHtml=patientFiles.map(f=>`<div style="margin-bottom:14px;padding:12px;background:#f8fafc;border-radius:6px;border-right:4px solid #1e3a5f;page-break-inside:avoid;">
-        <div style="font-size:14px;font-weight:600;color:#1e293b;word-break:break-word;margin-bottom:6px;">${f.name||'(ללא שם)'}</div>
-        ${f.created_at?'<div style="font-size:12px;color:#94a3b8;">'+new Date(f.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})+'</div>':''}
-      </div>`).join('');
+      const filesHtml=patientFiles.map(f=>{
+        const isImage=/\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f.name||'');
+        const isPdf=/\.pdf$/i.test(f.name||'');
+        let fileContent='';
+        if(isImage&&f.drive_url){
+          fileContent=`<img src="${f.drive_url}" style="max-width:100%;max-height:400px;border-radius:5px;margin-top:8px;" />`;
+        } else if(f.drive_url){
+          fileContent=`<div style="margin-top:8px;padding:10px;background:white;border:1px solid #e2e8f0;border-radius:5px;"><a href="${f.drive_url}" target="_blank" style="color:#185fa5;text-decoration:none;font-weight:600;">🔗 פתח קובץ</a></div>`;
+        }
+        return`<div style="margin-bottom:18px;padding:12px;background:#f8fafc;border-radius:6px;border-right:4px solid #1e3a5f;page-break-inside:avoid;">
+          <div style="font-size:14px;font-weight:600;color:#1e293b;word-break:break-word;margin-bottom:6px;">${f.name||'(ללא שם)'}</div>
+          ${f.created_at?'<div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">'+new Date(f.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})+'</div>':''}
+          ${fileContent}
+        </div>`;
+      }).join('');
       sections.push(repBuildSection('נספח א – מסמכים',filesHtml));
     }
   }
