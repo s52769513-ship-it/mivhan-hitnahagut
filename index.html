@@ -3237,8 +3237,12 @@ function _repBuildSections(include,pid){
         if(isImage&&f.drive_url){
           fileContent=`<img src="${f.drive_url}" style="max-width:100%;max-height:500px;border-radius:5px;margin-top:8px;" />`;
         } else if(isPdf&&f.drive_url){
-          const previewUrl=f.drive_url.includes('drive.google.com')?f.drive_url.replace('/view?usp=sharing',''):f.drive_url;
-          fileContent=`<iframe src="${previewUrl}?embedded=true" style="width:100%;height:600px;border:1px solid #e2e8f0;border-radius:5px;margin-top:8px;" frameborder="0"></iframe>`;
+          let previewUrl=f.drive_url;
+          if(f.drive_url.includes('drive.google.com')){
+            const fileId=f.drive_url.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1];
+            if(fileId) previewUrl=`https://drive.google.com/file/d/${fileId}/preview`;
+          }
+          fileContent=`<iframe src="${previewUrl}" style="width:100%;height:600px;border:1px solid #e2e8f0;border-radius:5px;margin-top:8px;" frameborder="0" allow="autoplay"></iframe>`;
         } else if(f.drive_url){
           fileContent=`<div style="margin-top:8px;padding:12px;background:white;border:2px solid #e2e8f0;border-radius:5px;text-align:center;">
             <div style="font-size:12px;color:#64748b;margin-bottom:8px;">קובץ: ${f.name||'(ללא שם)'}</div>
