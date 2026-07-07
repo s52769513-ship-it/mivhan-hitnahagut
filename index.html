@@ -1148,7 +1148,14 @@ async function sbDelete(table, id){
   } catch(e){ return {error:hebrewError(e.message)}; }
 }
 
+let lastLoadTime=0;
+const CACHE_DURATION=30000;
+
 async function loadAll(){
+  const now=Date.now();
+  if(now-lastLoadTime<CACHE_DURATION)return;
+  lastLoadTime=now;
+
   const [p,a,t,pay,inst,cls,n,obs,g,q,files,emails,profiles] = await Promise.all([
     sb('patients','?order=name'),
     sb('appointments','?order=start_time.asc'),
