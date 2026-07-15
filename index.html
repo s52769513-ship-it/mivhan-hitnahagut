@@ -1034,7 +1034,9 @@ let currentIntTab = 'it-treatment';
 let currentQTab = 'parent';
 
 // === SUPABASE ===
-const SB_SRK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwemFvcHF6YnVsZHVxdmxocHFsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTE4OTY3NSwiZXhwIjoyMDk0NzY1Njc1fQ.SDVqnHM5f2a4HiBmSzgz0mrApEzRzeIxiPj9Nb1RKyk';
+// אבטחה: מפתח service_role הוסר מצד הלקוח. אין להחזיר אותו לקובץ זה —
+// הוא עוקף לחלוטין את מדיניות ה-RLS וחושף את כל הנתונים. כל הגישה מתבצעת
+// כעת עם מפתח anon ציבורי + אסימון JWT של המשתמש המחובר, בכפוף ל-RLS.
 function sbToken(){ return localStorage.getItem('sb_jwt')||SB_KEY; }
 
 // תרגום שגיאות שרת/רשת לעברית
@@ -1095,26 +1097,12 @@ async function sbFetch(url, opts={}){
   return r;
 }
 
-async function sbAdmin(table,params=''){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}${params}`,{headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json'}});
-  if(!r.ok) return {data:[],error:await r.text()};
-  return {data:await r.json()};
-}
-async function sbAdminInsert(table,body){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
-  if(!r.ok) return {error:await r.text()};
-  return {data:await r.json()};
-}
-async function sbAdminUpdate(table,id,body){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
-  if(!r.ok) return {error:await r.text()};
-  return {data:await r.json()};
-}
-async function sbAdminDelete(table,id){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK}});
-  if(!r.ok) return {error:await r.text()};
-  return {data:true};
-}
+// אבטחה: פונקציות אלו נשמרות לתאימות לאחור בלבד. הן אינן משתמשות עוד
+// ב-service_role — הן מפנות לפעולות המאומתות (anon key + JWT) הכפופות ל-RLS.
+async function sbAdmin(table,params=''){ return sb(table,params); }
+async function sbAdminInsert(table,body){ return sbInsert(table,body); }
+async function sbAdminUpdate(table,id,body){ return sbUpdate(table,id,body); }
+async function sbAdminDelete(table,id){ return sbDelete(table,id); }
 async function sb(table, params=''){
   if(!SB_URL||!SB_KEY) return {data:[],error:'לא מחובר'};
   try {
@@ -4327,19 +4315,16 @@ async function checkStorageBucket(){
   const cs=document.getElementById('cloud-settings-status');
   if(cs) cs.innerHTML='<span style="color:var(--g400)">בודק חיבור...</span>';
   try{
-    const r=await fetch(`${SB_URL}/storage/v1/bucket/${SB_STORAGE_BUCKET}`,{headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK}});
+    // בדיקת מוכנות ללא service_role: ניסיון רשימת אובייקטים עם ה-JWT של המשתמש (כפוף ל-RLS)
+    const r=await fetch(`${SB_URL}/storage/v1/object/list/${SB_STORAGE_BUCKET}`,{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':'application/json'},
+      body:JSON.stringify({prefix:'',limit:1})
+    });
     if(r.ok){
       if(cs) cs.innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> Supabase Storage מוכן (bucket: patient-files)</span>';
-    } else if(r.status===400||r.status===404){
-      if(cs) cs.innerHTML='<span style="color:var(--g400)">יוצר bucket...</span>';
-      const cr=await fetch(`${SB_URL}/storage/v1/bucket`,{method:'POST',headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json'},body:JSON.stringify({id:SB_STORAGE_BUCKET,name:SB_STORAGE_BUCKET,public:true})});
-      if(cr.ok||cr.status===409){
-        if(cs) cs.innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> Supabase Storage מוכן</span>';
-      } else {
-        if(cs) cs.innerHTML='<span style="color:var(--red)">שגיאה ביצירת bucket</span>';
-      }
     } else {
-      if(cs) cs.innerHTML='<span style="color:var(--red)">שגיאת חיבור ('+r.status+')</span>';
+      if(cs) cs.innerHTML='<span style="color:#d97706">אין הרשאת אחסון — יש להפעיל את מדיניות ה-Storage (ראה SECURITY.md)</span>';
     }
   }catch(e){
     if(cs) cs.innerHTML='<span style="color:var(--red)">שגיאת רשת</span>';
@@ -4351,7 +4336,7 @@ async function checkStorageBucket(){
 async function sbAppSettingSet(key, value){
   // שמירה אמינה ל-app_settings (service role): עדכון אם קיים, אחרת יצירה.
   // לא מסתמך על on_conflict כדי שיעבוד בכל מבנה טבלה, ומחזיר אם הצליח.
-  const headers={'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':'application/json'};
+  const headers={'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':'application/json'};
   try {
     const up=await fetch(`${SB_URL}/rest/v1/app_settings?key=eq.${encodeURIComponent(key)}`,{
       method:'PATCH',
@@ -4374,7 +4359,7 @@ async function sbAppSettingSet(key, value){
 async function sbAppSettingGet(key){
   try {
     const r=await fetch(`${SB_URL}/rest/v1/app_settings?key=eq.${encodeURIComponent(key)}&select=value`,{
-      headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK}
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken()}
     });
     if(!r.ok) return null;
     const d=await r.json();
@@ -4849,7 +4834,7 @@ function safeStorageName(name){
 async function sbStorageUpload(storagePath, file){
   const resp=await fetch(`${SB_URL}/storage/v1/object/${SB_STORAGE_BUCKET}/${storagePath}`,{
     method:'POST',
-    headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK,'Content-Type':file.type||'application/octet-stream','x-upsert':'true'},
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken(),'Content-Type':file.type||'application/octet-stream','x-upsert':'true'},
     body:file
   });
   if(!resp.ok){ const e=await resp.json().catch(()=>{}); throw new Error(e?.message||'שגיאת אחסון ('+resp.status+')'); }
@@ -4861,7 +4846,7 @@ async function sbStorageDelete(storagePath){
   const cleanPath=storagePath.split('||')[0];
   await fetch(`${SB_URL}/storage/v1/object/${SB_STORAGE_BUCKET}/${cleanPath}`,{
     method:'DELETE',
-    headers:{'apikey':SB_SRK,'Authorization':'Bearer '+SB_SRK}
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sbToken()}
   }).catch(()=>{});
 }
 
