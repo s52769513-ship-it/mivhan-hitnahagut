@@ -651,6 +651,7 @@ tr:last-child td{border-bottom:none}
       <div class="form-group"><label class="form-label">שיוך ל:</label><select class="form-control" id="np-affiliation" onchange="updateNpClassOptions()"><option value="">-- ללא --</option><option value="clinic">קליניקה</option><option value="vizhnitz">ויזניץ</option><option value="education">משרד החינוך</option><option value="ponivez">פוניבז</option></select></div>
       <div class="form-group"><label class="form-label">מוסד</label><input type="text" class="form-control" id="np-institution" placeholder="שם המוסד..."></div>
       <div class="form-group" id="np-class-group"><label class="form-label">כיתה</label><select class="form-control" id="np-class"><option value="">-- ללא --</option></select></div>
+      <div class="form-group"><label class="form-label">סוג תיקייה</label><select class="form-control" id="np-folder-type"><option value="">-- בלי סיווג --</option><option value="consultation">ייעוץ</option><option value="full_process">תהליך שלם</option><option value="inactive">לא פעיל</option></select></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-patient')">ביטול</button><button class="btn btn-primary" onclick="createPatient()">צור מטופל</button></div>
   </div>
@@ -2016,6 +2017,18 @@ function setAllPatientsFilter(f, btn){
   renderPatientsTable(patientListData);
   lucide.createIcons();
 }
+
+function setFolderTypeFilter(ftype, btn){
+  allFolderTypeFilter=ftype;
+  const filtered=patientListData.filter(p=>{
+    if(ftype==='all') return true;
+    return p.folder_type===ftype;
+  });
+  document.querySelectorAll('#folder-type-pills .pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  renderPatientsTable(filtered);
+  lucide.createIcons();
+}
 let patientView = 'main'; // 'main' | 'vizhnitz-classes' | 'education-institutions' | 'patients-list'
 let patientListTitle = '';
 let patientListBackFn = 'backToMain';
@@ -2024,6 +2037,7 @@ let currentContextType = null; // 'clinic' | 'vizhnitz' | 'education' | 'ponivez
 let currentContextInstitutionId = null;
 let currentContextClassId = null;
 let allPatientsFilter = 'all'; // filter within 'all' view
+let allFolderTypeFilter = 'all'; // filter by folder type
 
 function renderInstitutionFilter(){
   const srch=document.getElementById('patient-search');
@@ -2107,6 +2121,12 @@ if(patientView==='patients-list'){
       cf.style.display='block';
       cf.innerHTML=`<div id="all-patients-pills" style="display:flex;gap:8px;flex-wrap:wrap;padding:0 0 8px">
         ${pills.map(p=>`<button class="pill${allPatientsFilter===p.v?' active':''}" onclick="setAllPatientsFilter('${p.v}',this)" style="padding:5px 14px;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allPatientsFilter===p.v?'var(--blue2)':'white'};color:${allPatientsFilter===p.v?'white':'var(--g700)'};font-family:'Rubik',sans-serif">${p.l}</button>`).join('')}
+      </div>
+      <div id="folder-type-pills" style="display:flex;gap:8px;flex-wrap:wrap;padding:8px 0">
+        <button class="pill${allFolderTypeFilter==='all'?' active':''}" onclick="setFolderTypeFilter('all',this)" style="padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allFolderTypeFilter==='all'?'var(--blue2)':'white'};color:${allFolderTypeFilter==='all'?'white':'var(--g700)'};font-family:'Rubik',sans-serif">כל התיקיות</button>
+        <button class="pill${allFolderTypeFilter==='consultation'?' active':''}" onclick="setFolderTypeFilter('consultation',this)" style="padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allFolderTypeFilter==='consultation'?'var(--blue2)':'white'};color:${allFolderTypeFilter==='consultation'?'white':'var(--g700)'};font-family:'Rubik',sans-serif">ייעוץ</button>
+        <button class="pill${allFolderTypeFilter==='full_process'?' active':''}" onclick="setFolderTypeFilter('full_process',this)" style="padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allFolderTypeFilter==='full_process'?'var(--blue2)':'white'};color:${allFolderTypeFilter==='full_process'?'white':'var(--g700)'};font-family:'Rubik',sans-serif">תהליך שלם</button>
+        <button class="pill${allFolderTypeFilter==='inactive'?' active':''}" onclick="setFolderTypeFilter('inactive',this)" style="padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allFolderTypeFilter==='inactive'?'var(--blue2)':'white'};color:${allFolderTypeFilter==='inactive'?'white':'var(--g700)'};font-family:'Rubik',sans-serif">לא פעיל</button>
       </div>`;
     } else {
       document.getElementById('class-filter').style.display='none';
@@ -2189,12 +2209,18 @@ function renderPatientsTable(patients){
   const tb=document.getElementById('patients-tbody');
   if(patients.length===0){tb.innerHTML=`<tr><td colspan="1"><div class="empty"><i data-lucide="users"></i><p>אין מטופלים</p></div></td></tr>`;return;}
   tb.innerHTML=`<tr><td style="padding:16px;border:none"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
-    ${patients.map(p=>`<div class="cat-btn" onclick="openPatient('${p.id}')" style="padding:16px 10px;position:relative;cursor:pointer">
+    ${patients.map(p=>{
+      const folderLabels={consultation:'ייעוץ',full_process:'תהליך שלם',inactive:'לא פעיל'};
+      const folderColors={consultation:'var(--blue-light)',full_process:'var(--green-light)',inactive:'var(--red-light)'};
+      const folderTextColors={consultation:'var(--blue)',full_process:'var(--green)',inactive:'var(--red)'};
+      return `<div class="cat-btn" onclick="openPatient('${p.id}')" style="padding:16px 10px;position:relative;cursor:pointer">
       <div class="avatar" style="background:${avatarColor(p.name)};width:44px;height:44px;font-size:16px;border-radius:50%">${initials(p.name)}</div>
       <span style="font-size:13px;font-weight:600;text-align:center;line-height:1.3">${p.name||''}</span>
       ${p.phone?`<span style="font-size:11px;color:var(--g400)">${p.phone}</span>`:''}
+      ${p.folder_type?`<span style="display:inline-block;margin-top:6px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;background:${folderColors[p.folder_type]||'var(--g50)'};color:${folderTextColors[p.folder_type]||'var(--g500)'}">${folderLabels[p.folder_type]||p.folder_type}</span>`:''}
       ${isAdmin?`<button class="btn btn-danger" onclick="event.stopPropagation();deletePatient('${p.id}')" style="position:absolute;top:6px;left:6px;padding:2px 6px;font-size:11px;border-radius:6px"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>`:''}
-    </div>`).join('')}
+    </div>`;
+    }).join('')}
   </div></td></tr>`;
   if(window.lucide) lucide.createIcons();
 }
@@ -2211,7 +2237,8 @@ async function createPatient(){
   const ctxDefaults={education:'משרד החינוך',clinic:'קליניקה',ponivez:'פוניבז',vizhnitz:'ויזניץ'};
   const instName=document.getElementById('np-institution').value||ctxDefaults[affiliation]||'';
   const institution_id=await findOrCreateInstitution(instName,affiliation);
-  const body={name,phone:document.getElementById('np-phone').value,identity_number:document.getElementById('np-id').value,address:document.getElementById('np-address').value,parents:document.getElementById('np-parents').value,institution_id,class_id:document.getElementById('np-class').value||null,debt:0,paid:0,remaining:0};
+  const folderType=document.getElementById('np-folder-type').value||null;
+  const body={name,phone:document.getElementById('np-phone').value,identity_number:document.getElementById('np-id').value,address:document.getElementById('np-address').value,parents:document.getElementById('np-parents').value,institution_id,class_id:document.getElementById('np-class').value||null,folder_type:folderType,debt:0,paid:0,remaining:0};
   const r=await sbInsert('patients',body);
   if(r.error) return toast('שגיאה: '+r.error,'error');
   toast('מטופל נוצר <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-patient');
