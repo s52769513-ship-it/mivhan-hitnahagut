@@ -308,6 +308,15 @@ tr:last-child td{border-bottom:none}
       <!-- DASHBOARD -->
       <div class="view active" id="view-dashboard">
         <div id="setup-area"></div>
+        <div id="shared-updates-notification" style="display:none;margin-bottom:20px;background:var(--blue-light);border:1px solid var(--blue);border-radius:12px;padding:14px;cursor:pointer" onclick="showView('all-notes')">
+          <div style="display:flex;align-items:center;gap:12px">
+            <i data-lucide="bell" style="width:20px;height:20px;color:var(--blue);flex-shrink:0"></i>
+            <div>
+              <div style="font-weight:600;color:var(--blue);font-size:14px">עדכונים משותפים חדשים</div>
+              <div id="shared-updates-text" style="font-size:13px;color:var(--g600);margin-top:2px"></div>
+            </div>
+          </div>
+        </div>
         <div id="queue-widget" style="display:none"></div>
         <div class="stats-grid" id="stats-grid"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
@@ -1076,6 +1085,7 @@ let SB_KEY = 'sb_publishable_CP9QNqlhXq8UM9FMycZQeg_BOLZ_06n';
 let allPatients=[], allAppointments=[], allTasks=[], allPayments=[], allInstitutions=[], allClasses=[];
 let allNotes=[], allObservations=[], allGoals=[], allQuestionnaires=[];
 let allFiles=[], allEmails=[];
+let allActivityLog=[], allPatientCollaborators=[];
 let ejsPublicKey=localStorage.getItem('ejs_key')||'M0QHmDxKQG3XJgnTQ';
 let ejsServiceId=localStorage.getItem('ejs_service')||'service_dh62bba';
 let ejsTemplateId=localStorage.getItem('ejs_template')||'template_72ogmc7';
@@ -1213,7 +1223,7 @@ async function loadAll(){
   if(now-lastLoadTime<CACHE_DURATION)return;
   lastLoadTime=now;
 
-  const [p,a,t,pay,inst,cls,n,obs,g,q,files,emails,profiles] = await Promise.all([
+  const [p,a,t,pay,inst,cls,n,obs,g,q,files,emails,profiles,actLog,collabs] = await Promise.all([
     sb('patients','?order=name'),
     sb('appointments','?order=start_time.asc'),
     sb('tasks','?order=due_date'),
@@ -1226,7 +1236,9 @@ async function loadAll(){
     sb('questionnaires','?order=created_at'),
     sb('patient_files','?order=created_at.desc'),
     sb('patient_emails','?order=sent_at.desc'),
-    sbAdmin('user_profiles','?select=*')
+    sbAdmin('user_profiles','?select=*'),
+    sb('activity_log','?order=created_at.desc&limit=200'),
+    sb('patient_collaborators','?select=*')
   ]);
   allPatients=p.data||[]; allAppointments=a.data||[];
   allTasks=t.data||[]; allPayments=pay.data||[];
@@ -1234,6 +1246,7 @@ async function loadAll(){
   allNotes=n.data||[]; allObservations=obs.data||[];
   allGoals=g.data||[]; allQuestionnaires=q.data||[];
   allFiles=files.data||[]; allEmails=emails.data||[];
+  allActivityLog=actLog.data||[]; allPatientCollaborators=collabs.data||[];
   if(profiles.data?.length) allUserProfiles=profiles.data;
   // Filter for non-admin users or view-as mode
   if(viewAsPermissions){
@@ -1817,6 +1830,22 @@ setInterval(checkAptReminders,30000);
 async function renderDashboard(){
   document.getElementById('setup-area').innerHTML='';
   await loadAll();
+
+  // Show shared updates notification
+  if(currentUser){
+    const userCollabs=allPatientCollaborators.filter(c=>c.user_id===currentUser.id||c.therapist_id===currentUser.id);
+    if(userCollabs.length>0){
+      const collabPatientIds=new Set(userCollabs.map(c=>c.patient_id));
+      const recentActivity=allActivityLog.filter(a=>collabPatientIds.has(a.patient_id)&&a.created_by!==currentUser.id).slice(0,5);
+      if(recentActivity.length>0){
+        const notifEl=document.getElementById('shared-updates-notification');
+        notifEl.style.display='block';
+        const txt=recentActivity.length===1?`עדכון 1 בתיקייה משותפת`:`${recentActivity.length} עדכונים בתיקיות משותפות`;
+        document.getElementById('shared-updates-text').textContent=txt;
+      }
+    }
+  }
+
   const today=new Date(); today.setHours(0,0,0,0);
   const todayApts=allAppointments.filter(a=>{if(!a.start_time)return false;const d=new Date(a.start_time);d.setHours(0,0,0,0);return d.getTime()===today.getTime();});
   const todayTasks=allTasks.filter(t=>{if(!t.due_date)return false;const d=new Date(t.due_date);d.setHours(0,0,0,0);return d.getTime()===today.getTime();});
@@ -3832,12 +3861,30 @@ async function createAppointment(){
     } else {
       const created=Array.isArray(r.data)?r.data.length:0;
       toast(`סדרה נוצרה! ${created} פגישות נרשמו ✓`,'success');
+      // Log activity for series appointments
+      if(currentUser && patId){
+        await sbInsert('activity_log',{
+          patient_id:patId,
+          action_type:'appointment',
+          created_by:currentUser.id,
+          description:`יצר סדרה של ${created} פגישות`
+        }).catch(e=>console.warn('Failed to log activity',e));
+      }
       closeModal('modal-new-appointment'); resetForm();
     }
   } else {
     const body={name,patient_id:patId||null,start_time:localInputToISO(startVal),end_time:localInputToISO(endVal),price,arrived:document.getElementById('na-arrived').checked,description:desc};
     const r=await sbInsert('appointments',body);
     if(r.error) return toast('שגיאה: '+r.error,'error');
+    // Log activity for single appointment
+    if(currentUser && patId){
+      await sbInsert('activity_log',{
+        patient_id:patId,
+        action_type:'appointment',
+        created_by:currentUser.id,
+        description:`יצר פגישה: ${name||'פגישה'}`
+      }).catch(e=>console.warn('Failed to log activity',e));
+    }
     toast('פגישה נוצרה ✓','success'); closeModal('modal-new-appointment'); resetForm();
   }
   await loadAll();
@@ -3940,6 +3987,15 @@ async function createTask(){
   toast('משימה נוצרה <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-task');
   ['nt-name','nt-detail','nt-date','nt-time'].forEach(id=>document.getElementById(id).value='');
   const taskPid=currentTaskPatientId;
+  // Log activity if task is for a patient
+  if(currentUser && taskPid){
+    await sbInsert('activity_log',{
+      patient_id:taskPid,
+      action_type:'task',
+      created_by:currentUser.id,
+      description:`יצר משימה: ${name.substring(0,50)}`
+    }).catch(e=>console.warn('Failed to log activity',e));
+  }
   currentTaskPatientId=null;
   await loadAll();
   if(taskPid) renderPatientTasks(taskPid);
@@ -3984,6 +4040,15 @@ async function uploadAptFile(input){
     const url=await sbStorageUpload(storagePath,file);
     const fileIdWithApt=`${storagePath}||apt:${editAptId}`;
     await sbInsert('patient_files',{patient_id:pid,name:file.name,drive_file_id:fileIdWithApt,drive_url:url,created_at:new Date().toISOString()});
+    // Log activity
+    if(currentUser && pid){
+      await sbInsert('activity_log',{
+        patient_id:pid,
+        action_type:'file',
+        created_by:currentUser.id,
+        description:`העלה קובץ לפגישה: ${file.name.substring(0,50)}`
+      }).catch(e=>console.warn('Failed to log activity',e));
+    }
     if(pid){const r=await sb('patient_files',`?patient_id=eq.${pid}&order=created_at.desc`);allFiles=(allFiles.filter(f=>f.patient_id!==pid)).concat(r.data||[]);}
     toast('קובץ הועלה בהצלחה','success');
     renderAptFiles(editAptId);
@@ -4013,12 +4078,23 @@ async function saveEditApt(){
   const notes=document.getElementById('ea-desc').innerHTML;
   const sup=document.getElementById('ea-supervisor').innerHTML;
   const description=sup?JSON.stringify({notes,sup}):notes;
-  const body={name:document.getElementById('ea-name').value,patient_id:document.getElementById('ea-patient').value||null,start_time:localInputToISO(document.getElementById('ea-start').value),end_time:localInputToISO(document.getElementById('ea-end').value),price:parseFloat(document.getElementById('ea-price').value)||0,arrived:document.getElementById('ea-arrived').checked,description};
+  const aptName=document.getElementById('ea-name').value;
+  const patId=document.getElementById('ea-patient').value||null;
+  const body={name:aptName,patient_id:patId,start_time:localInputToISO(document.getElementById('ea-start').value),end_time:localInputToISO(document.getElementById('ea-end').value),price:parseFloat(document.getElementById('ea-price').value)||0,arrived:document.getElementById('ea-arrived').checked,description};
   const btn=document.getElementById('ea-save-btn');
   if(btn){ btn.disabled=true; }
   const r=await sbUpdate('appointments',editAptId,body);
   if(btn){ btn.disabled=false; }
   if(r.error){ toast('שמירת התיעוד נכשלה: '+r.error+' — התיעוד נשמר בטופס, נסה שוב.','error'); return; }
+  // Log activity
+  if(currentUser && patId){
+    await sbInsert('activity_log',{
+      patient_id:patId,
+      action_type:'appointment',
+      created_by:currentUser.id,
+      description:`עדכן פגישה: ${aptName||'פגישה'}`
+    }).catch(e=>console.warn('Failed to log activity',e));
+  }
   toast('פגישה עודכנה <i data-lucide="check-circle"></i>','success'); closeModal('modal-edit-appointment');
   await loadAll(); renderDashboard();
   if(currentPatientId) renderPatientAppointments(currentPatientId);
@@ -4063,10 +4139,20 @@ async function saveEditTask(){
   if(!editTaskId) return;
   const time=document.getElementById('et-time').value||'';
   const detail=encodeTaskDetail(document.getElementById('et-detail').value, time);
-  const body={name:document.getElementById('et-name').value,detail,due_date:document.getElementById('et-date').value||null,done:document.getElementById('et-done').checked};
+  const taskName=document.getElementById('et-name').value;
+  const body={name:taskName,detail,due_date:document.getElementById('et-date').value||null,done:document.getElementById('et-done').checked};
   const r=await sbUpdate('tasks',editTaskId,body);
   if(r.error) return toast('שגיאה: '+r.error,'error');
   toast('משימה עודכנה <i data-lucide="check-circle"></i>','success'); closeModal('modal-edit-task');
+  // Log activity if task is for a patient
+  if(currentUser && editTaskPatientId){
+    await sbInsert('activity_log',{
+      patient_id:editTaskPatientId,
+      action_type:'task',
+      created_by:currentUser.id,
+      description:`עדכן משימה: ${taskName.substring(0,50)}`
+    }).catch(e=>console.warn('Failed to log activity',e));
+  }
   await loadAll();
   if(editTaskPatientId){ renderPatientTasks(editTaskPatientId); }
   else { renderDashboard(); renderTasksTable(); }
@@ -4122,8 +4208,18 @@ function openPayment(pid){
 async function createPayment(){
   const amount=parseFloat(document.getElementById('npy-amount').value)||0;
   if(!amount) return toast('נא להכניס סכום','error');
-  const r=await sbAdminInsert('payments',{patient_id:currentPayPatientId,amount,method:document.getElementById('npy-method').value,notes:document.getElementById('npy-notes').value});
+  const method=document.getElementById('npy-method').value;
+  const r=await sbAdminInsert('payments',{patient_id:currentPayPatientId,amount,method,notes:document.getElementById('npy-notes').value});
   if(r.error) return toast('שגיאה','error');
+  // Log activity
+  if(currentUser && currentPayPatientId){
+    await sbInsert('activity_log',{
+      patient_id:currentPayPatientId,
+      action_type:'payment',
+      created_by:currentUser.id,
+      description:`קיבל תשלום: ₪${amount} (${method||'לא ציין'})`
+    }).catch(e=>console.warn('Failed to log activity',e));
+  }
   toast('תשלום נוסף <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-payment');
   ['npy-amount','npy-notes'].forEach(id=>document.getElementById(id).value='');
   await loadAll();
@@ -4186,6 +4282,17 @@ async function saveNoteModal(){
     if(r.error) r=await sbAdminInsert('notes',base);
     if(r.error) return toast('שגיאה: '+r.error,'error');
     toast('עדכון נוצר <i data-lucide="check-circle"></i>','success');
+
+    // Log activity
+    if(currentUser && currentPayPatientId){
+      await sbInsert('activity_log',{
+        patient_id:currentPayPatientId,
+        action_type:'note',
+        created_by:currentUser.id,
+        description:`הוסיף הערה: ${content.substring(0,50)}...`
+      }).catch(e=>console.warn('Failed to log activity',e));
+    }
+
     await loadAll();
   }
   closeModal('modal-new-note');
@@ -5037,6 +5144,15 @@ async function uploadPatientFiles(pid, files){
       const url=await sbStorageUpload(storagePath,file);
       const ins=await sbInsert('patient_files',{patient_id:pid,name:file.name,drive_file_id:storagePath,drive_url:url,created_at:new Date().toISOString()});
       if(ins.error) throw new Error(ins.error);
+      // Log activity
+      if(currentUser && pid){
+        await sbInsert('activity_log',{
+          patient_id:pid,
+          action_type:'file',
+          created_by:currentUser.id,
+          description:`העלה קובץ: ${file.name.substring(0,50)}`
+        }).catch(e=>console.warn('Failed to log activity',e));
+      }
       ok++;
     }catch(e){ console.error('upload error:',e); failed.push(file.name+' ('+hebrewError(e.message)+')'); }
   }

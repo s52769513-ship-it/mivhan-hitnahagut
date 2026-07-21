@@ -15,6 +15,40 @@
 -- אם משהו משתבש אפשר לכבות RLS זמנית: alter table public.<שם> disable row level security;
 -- ============================================================================
 
+-- ============================================================================
+-- טבלות חדשות לשיתוף פעילויות
+-- ============================================================================
+
+-- טבלת patient_collaborators - עבור שיתוף בין מדריך וטיפול
+CREATE TABLE IF NOT EXISTS public.patient_collaborators (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  therapist_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(patient_id, user_id)
+);
+
+-- טבלת activity_log - עבור מעקב פעילויות
+CREATE TABLE IF NOT EXISTS public.activity_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+  action_type VARCHAR(50) NOT NULL, -- 'note', 'file', 'update', etc.
+  created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  description TEXT
+);
+
+-- טבלת saved_graphs - לשמירת הגדרות גרפים
+CREATE TABLE IF NOT EXISTS public.saved_graphs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  graph_type VARCHAR(50) NOT NULL, -- 'revenue', 'attendance', 'distribution', etc.
+  filters JSONB, -- filters like process_stage, date_range, etc.
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- 1 + 2: RLS + מדיניות "מחובר בלבד" לכל הטבלאות
 do $$
 declare
@@ -22,7 +56,8 @@ declare
   tables text[] := array[
     'patients','appointments','tasks','payments','institutions','classes',
     'notes','observations','treatment_goals','questionnaires','patient_files',
-    'patient_emails','user_profiles','user_patients','user_institutions','app_settings'
+    'patient_emails','user_profiles','user_patients','user_institutions','app_settings',
+    'patient_collaborators','activity_log','saved_graphs'
   ];
 begin
   foreach t in array tables loop
