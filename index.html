@@ -2359,7 +2359,12 @@ async function createPatient(){
   const institution_id=await findOrCreateInstitution(instName,affiliation);
   const folderType=document.getElementById('np-folder-type').value||null;
   const body={name,phone:document.getElementById('np-phone').value,identity_number:document.getElementById('np-id').value,address:document.getElementById('np-address').value,parents:document.getElementById('np-parents').value,institution_id,class_id:document.getElementById('np-class').value||null,folder_type:folderType,debt:0,paid:0,remaining:0};
-  const r=await sbInsert('patients',body);
+  let r=await sbInsert('patients',body);
+  // Fallback: if the folder_type column doesn't exist yet, retry without it
+  if(r.error && /folder_type/.test(r.error)){
+    const {folder_type,...rest}=body;
+    r=await sbInsert('patients',rest);
+  }
   if(r.error) return toast('שגיאה: '+r.error,'error');
   toast('מטופל נוצר <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-patient');
   ['np-name','np-phone','np-id','np-address','np-parents'].forEach(id=>document.getElementById(id).value='');
@@ -2494,8 +2499,14 @@ async function savePersonal(id){
   const pfInstName=document.getElementById('pf-inst')?.value||ctxDef[pfAff]||'';
   const institution_id=await findOrCreateInstitution(pfInstName,pfAff);
   const body={name:document.getElementById('pf-name').value,identity_number:document.getElementById('pf-id').value,phone:document.getElementById('pf-phone').value,address:document.getElementById('pf-address').value,email:document.getElementById('pf-email').value,parents:document.getElementById('pf-parents').value,institution_id,class_id:document.getElementById('pf-class').value||null,folder_type:document.getElementById('pf-folder-type')?.value||null,debt,paid,remaining:Math.max(0,debt-paid)};
-  const r=await sbUpdate('patients',id,body);
-  if(r.error) return toast('שגיאה','error');
+  let r=await sbUpdate('patients',id,body);
+  // Fallback: if the folder_type column doesn't exist yet in the DB, retry without it
+  if(r.error && /folder_type/.test(r.error)){
+    const {folder_type,...rest}=body;
+    r=await sbUpdate('patients',id,rest);
+    if(!r.error) toast('נשמר (סוג התיקייה לא נשמר — יש להוסיף עמודה folder_type במסד)','info');
+  }
+  if(r.error) return toast('שגיאה בשמירה: '+r.error,'error');
   toast('נשמר <i data-lucide="check-circle"></i>','success'); await loadAll();
 }
 
@@ -5605,23 +5616,37 @@ async function transferFunivezPatients(){
   statusEl.innerHTML='<span style="color:var(--blue)">מעביר...</span>';
 
   try{
-    // Update all patients from Funivez to General
+    // 1. Move all patients from Funivez to General
     for(const pat of funivezPatients){
-      await sbUpdate('patients',pat.id,{institution_id:generalInstId});
+      const r=await sbUpdate('patients',pat.id,{institution_id:generalInstId,class_id:null});
+      if(r.error) throw new Error(`העברת ${pat.name}: ${r.error}`);
     }
 
-    // Delete Funivez institution
-    await sbAdminDelete('institutions',funivezInst.id);
+    // 2. Delete classes that belong to Funivez (otherwise the institution can't be deleted)
+    const funivezClasses=allClasses.filter(c=>c.institution_id===funivezInst.id);
+    for(const cls of funivezClasses){
+      await sbDelete('classes',cls.id); // best-effort; ignore if blocked
+    }
 
-    statusEl.innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> הוצא בהצלחה</span>';
-    toast(`${funivezPatients.length} תיקיות הועברו לכללי, פוניבז נמחק`,'success');
+    // 3. Delete the Funivez institution — check the result (delete does not throw)
+    const delRes=await sbAdminDelete('institutions',funivezInst.id);
+    if(delRes&&delRes.error){
+      // Patients already moved; report that the category couldn't be removed
+      statusEl.innerHTML='<span style="color:var(--amber)">המטופלים הועברו, אך מחיקת פוניבז נכשלה</span>';
+      toast(`${funivezPatients.length} מטופלים הועברו לכללי. מחיקת פוניבז נכשלה: ${delRes.error}`,'error');
+      await loadAll();
+      return;
+    }
+
+    statusEl.innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> בוצע בהצלחה</span>';
+    toast(`${funivezPatients.length} מטופלים הועברו לכללי, פוניבז נמחק`,'success');
 
     await loadAll();
-    renderInstitutionFilter();
+    if(typeof renderInstitutionFilter==='function') renderInstitutionFilter();
     closeModal('modal-transfer-funivez');
   } catch(e){
     statusEl.innerHTML='<span style="color:var(--red)">שגיאה בהעברה</span>';
-    toast('שגיאה בהעברה: '+e.message,'error');
+    toast('שגיאה בהעברה: '+(e.message||e),'error');
   }
 }
 
