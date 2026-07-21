@@ -3711,38 +3711,38 @@ function renderIntProgress(pid){
     <div class="card">
       <div class="card-header"><h3>התקדמות ונתונים</h3></div>
       <div class="card-body">
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
-          <div class="stat-card" style="margin:0">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+          <div class="stat-card" style="margin:0;padding:10px">
             <div class="stat-label">סה"כ פגישות</div>
             <div class="stat-value blue">${apts.length}</div>
           </div>
-          <div class="stat-card" style="margin:0">
+          <div class="stat-card" style="margin:0;padding:10px">
             <div class="stat-label">הגיע</div>
             <div class="stat-value green">${apts.filter(a=>a.arrived).length}</div>
           </div>
-          <div class="stat-card" style="margin:0">
+          <div class="stat-card" style="margin:0;padding:10px">
             <div class="stat-label">הערות</div>
             <div class="stat-value purple">${notes.length}</div>
           </div>
-          <div class="stat-card" style="margin:0">
+          <div class="stat-card" style="margin:0;padding:10px">
             <div class="stat-label">משימות סגורות</div>
             <div class="stat-value green">${tasks.filter(t=>t.done).length}</div>
           </div>
         </div>
 
-        <div style="margin-bottom:24px">
-          <div style="font-weight:600;margin-bottom:12px;color:var(--blue)">גרף נוכחות</div>
-          <canvas id="patient-attendance-chart-${pid}"></canvas>
-        </div>
-
-        <div style="margin-bottom:24px">
-          <div style="font-weight:600;margin-bottom:12px;color:var(--blue)">גרף פגישות לפי חודש</div>
-          <canvas id="patient-monthly-chart-${pid}"></canvas>
-        </div>
-
-        <div>
-          <div style="font-weight:600;margin-bottom:12px;color:var(--blue)">סטטוס משימות</div>
-          <canvas id="patient-tasks-chart-${pid}"></canvas>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div style="border:1px solid var(--g200);border-radius:8px;padding:10px">
+            <div style="font-weight:600;margin-bottom:6px;color:var(--blue);font-size:13px;text-align:center">נוכחות</div>
+            <div style="height:170px;position:relative"><canvas id="patient-attendance-chart-${pid}"></canvas></div>
+          </div>
+          <div style="border:1px solid var(--g200);border-radius:8px;padding:10px">
+            <div style="font-weight:600;margin-bottom:6px;color:var(--blue);font-size:13px;text-align:center">פגישות לפי חודש</div>
+            <div style="height:170px;position:relative"><canvas id="patient-monthly-chart-${pid}"></canvas></div>
+          </div>
+          <div style="border:1px solid var(--g200);border-radius:8px;padding:10px">
+            <div style="font-weight:600;margin-bottom:6px;color:var(--blue);font-size:13px;text-align:center">סטטוס משימות</div>
+            <div style="height:170px;position:relative"><canvas id="patient-tasks-chart-${pid}"></canvas></div>
+          </div>
         </div>
       </div>
     </div>
@@ -3753,7 +3753,7 @@ function renderIntProgress(pid){
     const attended=apts.filter(a=>a.arrived).length;
     const notAttended=apts.length-attended;
     const ctx=document.getElementById('patient-attendance-chart-'+pid)?.getContext('2d');
-    if(ctx) new Chart(ctx,{type:'doughnut',data:{labels:['הגיע','לא הגיע'],datasets:[{data:[attended,notAttended],backgroundColor:['rgba(34,197,94,0.6)','rgba(239,68,68,0.6)'],borderColor:['rgba(34,197,94,1)','rgba(239,68,68,1)'],borderWidth:2}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
+    if(ctx) new Chart(ctx,{type:'doughnut',data:{labels:['הגיע','לא הגיע'],datasets:[{data:[attended,notAttended],backgroundColor:['rgba(34,197,94,0.6)','rgba(239,68,68,0.6)'],borderColor:['rgba(34,197,94,1)','rgba(239,68,68,1)'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}}}});
   },100);
 
   // Draw monthly appointments chart
@@ -3765,7 +3765,7 @@ function renderIntProgress(pid){
       byMonth[m]=(byMonth[m]||0)+1;
     });
     const ctx=document.getElementById('patient-monthly-chart-'+pid)?.getContext('2d');
-    if(ctx&&Object.keys(byMonth).length>0) new Chart(ctx,{type:'line',data:{labels:Object.keys(byMonth),datasets:[{label:'מספר פגישות',data:Object.values(byMonth),borderColor:'rgba(24,95,165,1)',backgroundColor:'rgba(12,58,95,0.1)',borderWidth:2,fill:true}]},options:{responsive:true,scales:{y:{beginAtZero:true}},plugins:{legend:{position:'bottom'}}}});
+    if(ctx&&Object.keys(byMonth).length>0) new Chart(ctx,{type:'line',data:{labels:Object.keys(byMonth),datasets:[{label:'מספר פגישות',data:Object.values(byMonth),borderColor:'rgba(24,95,165,1)',backgroundColor:'rgba(12,58,95,0.1)',borderWidth:2,fill:true}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}},plugins:{legend:{display:false}}}});
   },100);
 
   // Draw tasks chart
@@ -3773,7 +3773,7 @@ function renderIntProgress(pid){
     const done=tasks.filter(t=>t.done).length;
     const open=tasks.length-done;
     const ctx=document.getElementById('patient-tasks-chart-'+pid)?.getContext('2d');
-    if(ctx) new Chart(ctx,{type:'bar',data:{labels:['סגור','פתוח'],datasets:[{label:'משימות',data:[done,open],backgroundColor:['rgba(34,197,94,0.6)','rgba(59,130,246,0.6)'],borderColor:['rgba(34,197,94,1)','rgba(59,130,246,1)'],borderWidth:2}]},options:{responsive:true,indexAxis:'y',scales:{x:{beginAtZero:true}},plugins:{legend:{display:false}}}});
+    if(ctx) new Chart(ctx,{type:'bar',data:{labels:['סגור','פתוח'],datasets:[{label:'משימות',data:[done,open],backgroundColor:['rgba(34,197,94,0.6)','rgba(59,130,246,0.6)'],borderColor:['rgba(34,197,94,1)','rgba(59,130,246,1)'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{beginAtZero:true,ticks:{font:{size:10}}},y:{ticks:{font:{size:11}}}},plugins:{legend:{display:false}}}});
   },100);
 }
 
