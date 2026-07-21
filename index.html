@@ -615,7 +615,7 @@ tr:last-child td{border-bottom:none}
             <div style="margin-bottom:20px;padding:14px;background:var(--g50);border-radius:8px;border:1px solid var(--g200)">
               <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="move"></i> העברת פוניבז</div>
               <p style="font-size:13px;color:var(--g600);margin-bottom:12px">העבר את כל התיקיות מפוניבז לקטגוריה כללית ומחק את פוניבז.</p>
-              <button class="btn btn-primary" onclick="openModal('modal-transfer-funivez')"><i data-lucide="move"></i> העבר הכל מפוניבז</button>
+              <button class="btn btn-primary" onclick="openTransferFunivezModal()"><i data-lucide="move"></i> העבר הכל מפוניבז</button>
               <div id="funivez-transfer-status" style="margin-top:10px;font-size:13px"></div>
             </div>
 
@@ -623,7 +623,7 @@ tr:last-child td{border-bottom:none}
             <div style="margin-bottom:20px;padding:14px;background:var(--g50);border-radius:8px;border:1px solid var(--g200)">
               <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="arrow-up"></i> שדרוג כיתה בויזניץ</div>
               <p style="font-size:13px;color:var(--g600);margin-bottom:12px">עדכן את כיתות כל התלמידים בויזניץ (א→ב, ב→ג וכו').</p>
-              <button class="btn btn-primary" onclick="openModal('modal-upgrade-class')"><i data-lucide="arrow-up"></i> שדרוג כיתות</button>
+              <button class="btn btn-primary" onclick="openUpgradeClassModal()"><i data-lucide="arrow-up"></i> שדרוג כיתות</button>
               <div id="class-upgrade-status" style="margin-top:10px;font-size:13px"></div>
             </div>
 
@@ -1905,18 +1905,25 @@ async function renderDashboard(){
   await loadAll();
 
   // Show shared updates notification
+  // תיק "משותף" = תיק שמשויך ליותר ממשתמש אחד (מדריך + מטפל). מזהים שיתוף לפי user_patients.
+  const notifEl=document.getElementById('shared-updates-notification');
+  if(notifEl) notifEl.style.display='none';
   if(currentUser){
-    const userCollabs=allPatientCollaborators.filter(c=>c.user_id===currentUser.id||c.therapist_id===currentUser.id);
-    if(userCollabs.length>0){
-      const collabPatientIds=new Set(userCollabs.map(c=>c.patient_id));
-      const recentActivity=allActivityLog.filter(a=>collabPatientIds.has(a.patient_id)&&a.created_by!==currentUser.id).slice(0,5);
-      if(recentActivity.length>0){
-        const notifEl=document.getElementById('shared-updates-notification');
+    try{
+      const upRef=await sbAdmin('user_patients','?select=user_id,patient_id');
+      const allAssignments=upRef.data||[];
+      // התיקים המשויכים למשתמש הנוכחי
+      const myPatientIds=new Set(allAssignments.filter(a=>a.user_id===currentUser.id).map(a=>a.patient_id));
+      // מתוכם — התיקים שמשויך אליהם גם משתמש אחר (משותפים)
+      const sharedPatientIds=new Set(allAssignments.filter(a=>myPatientIds.has(a.patient_id)&&a.user_id!==currentUser.id).map(a=>a.patient_id));
+      // פעילות אחרונה בתיקים המשותפים, ע"י משתמשים אחרים בלבד
+      const recentActivity=allActivityLog.filter(a=>sharedPatientIds.has(a.patient_id)&&a.created_by!==currentUser.id);
+      if(recentActivity.length>0&&notifEl){
         notifEl.style.display='block';
-        const txt=recentActivity.length===1?`עדכון 1 בתיקייה משותפת`:`${recentActivity.length} עדכונים בתיקיות משותפות`;
+        const txt=recentActivity.length===1?`עדכון 1 בתיק משותף שלך`:`${recentActivity.length} עדכונים בתיקים משותפים שלך`;
         document.getElementById('shared-updates-text').textContent=txt;
       }
-    }
+    }catch(e){ console.warn('shared notification check failed',e); }
   }
 
   // Show create graph button
@@ -2448,6 +2455,7 @@ function renderPersonalTab(p){
           <div class="detail-row"><div class="detail-label">שיוך ל:</div><div class="detail-value"><select id="pf-affiliation" onchange="updatePfClassOptions()"><option value="">-- ללא --</option><option value="clinic" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='clinic'?'selected':''}>קליניקה</option><option value="vizhnitz" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='vizhnitz'?'selected':''}>ויזניץ</option><option value="education" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='education'?'selected':''}>משרד החינוך</option><option value="ponivez" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='ponivez'?'selected':''}>פוניבז</option></select></div></div>
           <div class="detail-row"><div class="detail-label">מוסד</div><div class="detail-value"><input type="text" id="pf-inst" value="${allInstitutions.find(i=>i.id===p.institution_id)?.name||''}"></div></div>
           <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${[...allClasses].filter(c=>p.institution_id?c.institution_id===p.institution_id:true).sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);}).map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
+          <div class="detail-row"><div class="detail-label">סוג תיקייה</div><div class="detail-value"><select id="pf-folder-type"><option value="">-- בלי סיווג --</option><option value="consultation" ${p.folder_type==='consultation'?'selected':''}>ייעוץ</option><option value="full_process" ${p.folder_type==='full_process'?'selected':''}>תהליך שלם</option><option value="inactive" ${p.folder_type==='inactive'?'selected':''}>לא פעיל</option></select></div></div>
         </div>
       </div>
     </div>
@@ -2485,7 +2493,7 @@ async function savePersonal(id){
   const ctxDef={education:'משרד החינוך',clinic:'קליניקה',ponivez:'פוניבז',vizhnitz:'ויזניץ'};
   const pfInstName=document.getElementById('pf-inst')?.value||ctxDef[pfAff]||'';
   const institution_id=await findOrCreateInstitution(pfInstName,pfAff);
-  const body={name:document.getElementById('pf-name').value,identity_number:document.getElementById('pf-id').value,phone:document.getElementById('pf-phone').value,address:document.getElementById('pf-address').value,email:document.getElementById('pf-email').value,parents:document.getElementById('pf-parents').value,institution_id,class_id:document.getElementById('pf-class').value||null,debt,paid,remaining:Math.max(0,debt-paid)};
+  const body={name:document.getElementById('pf-name').value,identity_number:document.getElementById('pf-id').value,phone:document.getElementById('pf-phone').value,address:document.getElementById('pf-address').value,email:document.getElementById('pf-email').value,parents:document.getElementById('pf-parents').value,institution_id,class_id:document.getElementById('pf-class').value||null,folder_type:document.getElementById('pf-folder-type')?.value||null,debt,paid,remaining:Math.max(0,debt-paid)};
   const r=await sbUpdate('patients',id,body);
   if(r.error) return toast('שגיאה','error');
   toast('נשמר <i data-lucide="check-circle"></i>','success'); await loadAll();
@@ -2761,12 +2769,13 @@ async function renderPatientNotes(pid){
   const panel=document.getElementById('patient-notes-panel');
   if(!panel) return;
   const [nr, pr] = await Promise.all([
-    sbAdmin('notes',`?patient_id=eq.${pid}&order=created_at.desc`),
+    sbAdmin('notes',`?patient_id=eq.${pid}&order=created_at.asc`),
     sbAdmin('user_profiles','?select=id,display_name,role')
   ]);
   if(nr.data) allNotes=[...allNotes.filter(n=>n.patient_id!==pid), ...nr.data];
   if(pr.data?.length) allUserProfiles=pr.data;
-  const notes=(nr.data||allNotes.filter(n=>n.patient_id===pid)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  // מיון עולה: הישן למעלה, החדש למטה (כמו במשימות)
+  const notes=(nr.data||allNotes.filter(n=>n.patient_id===pid)).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   panel.innerHTML=`
     <div class="card" style="padding:0;overflow:hidden">
       <div class="card-header" style="padding:12px 14px">
@@ -2794,6 +2803,8 @@ async function renderPatientNotes(pid){
   const tabNotes=document.getElementById('tab-notes');
   if(tabNotes) tabNotes.innerHTML=panel.innerHTML;
   if(window.lucide) lucide.createIcons();
+  // גלילה להערה האחרונה (החדשה ביותר נמצאת למטה)
+  [panel,tabNotes].forEach(el=>{const sc=el?.querySelector('[style*="overflow-y"]');if(sc)sc.scrollTop=sc.scrollHeight;});
 }
 
 async function deleteNote(id,pid){
@@ -3742,7 +3753,7 @@ function renderIntProgress(pid){
     const attended=apts.filter(a=>a.arrived).length;
     const notAttended=apts.length-attended;
     const ctx=document.getElementById('patient-attendance-chart-'+pid)?.getContext('2d');
-    if(ctx) new Chart(ctx,{type:'doughnut',data:{labels:['הגיע','לא הגיע'],datasets:[{data:[attended,notAttended],backgroundColor:['rgba(34,197,94,0.6)','rgba(239,68,68,0.6)'],borderColor:['var(--green)','var(--red)'],borderWidth:2}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
+    if(ctx) new Chart(ctx,{type:'doughnut',data:{labels:['הגיע','לא הגיע'],datasets:[{data:[attended,notAttended],backgroundColor:['rgba(34,197,94,0.6)','rgba(239,68,68,0.6)'],borderColor:['rgba(34,197,94,1)','rgba(239,68,68,1)'],borderWidth:2}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
   },100);
 
   // Draw monthly appointments chart
@@ -3754,7 +3765,7 @@ function renderIntProgress(pid){
       byMonth[m]=(byMonth[m]||0)+1;
     });
     const ctx=document.getElementById('patient-monthly-chart-'+pid)?.getContext('2d');
-    if(ctx&&Object.keys(byMonth).length>0) new Chart(ctx,{type:'line',data:{labels:Object.keys(byMonth),datasets:[{label:'מספר פגישות',data:Object.values(byMonth),borderColor:'var(--blue)',backgroundColor:'rgba(12,58,95,0.1)',borderWidth:2,fill:true}]},options:{responsive:true,scales:{y:{beginAtZero:true}},plugins:{legend:{position:'bottom'}}}});
+    if(ctx&&Object.keys(byMonth).length>0) new Chart(ctx,{type:'line',data:{labels:Object.keys(byMonth),datasets:[{label:'מספר פגישות',data:Object.values(byMonth),borderColor:'rgba(24,95,165,1)',backgroundColor:'rgba(12,58,95,0.1)',borderWidth:2,fill:true}]},options:{responsive:true,scales:{y:{beginAtZero:true}},plugins:{legend:{position:'bottom'}}}});
   },100);
 
   // Draw tasks chart
@@ -3762,7 +3773,7 @@ function renderIntProgress(pid){
     const done=tasks.filter(t=>t.done).length;
     const open=tasks.length-done;
     const ctx=document.getElementById('patient-tasks-chart-'+pid)?.getContext('2d');
-    if(ctx) new Chart(ctx,{type:'bar',data:{labels:['סגור','פתוח'],datasets:[{label:'משימות',data:[done,open],backgroundColor:['rgba(34,197,94,0.6)','rgba(59,130,246,0.6)'],borderColor:['var(--green)','var(--blue)'],borderWidth:2}]},options:{responsive:true,indexAxis:'y',scales:{x:{beginAtZero:true}},plugins:{legend:{display:false}}}});
+    if(ctx) new Chart(ctx,{type:'bar',data:{labels:['סגור','פתוח'],datasets:[{label:'משימות',data:[done,open],backgroundColor:['rgba(34,197,94,0.6)','rgba(59,130,246,0.6)'],borderColor:['rgba(34,197,94,1)','rgba(59,130,246,1)'],borderWidth:2}]},options:{responsive:true,indexAxis:'y',scales:{x:{beginAtZero:true}},plugins:{legend:{display:false}}}});
   },100);
 }
 
@@ -5156,23 +5167,36 @@ async function generateGraph(){
     canvas.height=250;
 
     const chartData=await buildChartData(graphType, stage, range);
-    const chart=new Chart(canvas, chartData);
 
-    // Save graph configuration
+    // Wrap canvas in a titled card so the result is clearly presented
+    chartContainer.innerHTML='';
+    const wrap=document.createElement('div');
+    wrap.className='card';
+    wrap.style.padding='16px';
+    const title=document.createElement('div');
+    title.style.cssText='font-weight:600;color:var(--blue);margin-bottom:12px;font-size:15px';
+    title.textContent=name;
+    wrap.appendChild(title);
+    wrap.appendChild(canvas);
+    chartContainer.appendChild(wrap);
+    new Chart(canvas, chartData);
+
+    // Save graph configuration for reuse
     if(currentUser){
-      await sbInsert('saved_graphs',{
+      const r=await sbInsert('saved_graphs',{
         user_id:currentUser.id,
         name,
         graph_type:graphType,
         filters:JSON.stringify({stage,range,timestamp:new Date().toISOString()})
-      }).catch(e=>console.warn('Failed to save graph',e));
+      }).catch(e=>({error:e.message}));
+      if(r&&!r.error&&r.data){ allSavedGraphs.unshift(r.data[0]||r.data); }
     }
 
-    chartContainer.innerHTML='';
-    chartContainer.appendChild(canvas);
     toast('גרף נוצר בהצלחה','success');
     closeModal('modal-create-graph');
     ['graph-name','graph-stage','graph-type','graph-range'].forEach(id=>document.getElementById(id).value='');
+    renderSavedGraphsList();
+    showView('graphs');
   }catch(e){
     toast('שגיאה ביצירת הגרף: '+e.message,'error');
   }finally{
@@ -5192,33 +5216,33 @@ async function buildChartData(graphType, stage, range){
       byMonth[m]=(byMonth[m]||0)+(a.price||0);
     });
     data.labels=Object.keys(byMonth);
-    data.datasets=[{label:'הכנסות (₪)',data:Object.values(byMonth),borderColor:'var(--green)',backgroundColor:'rgba(74,222,128,0.1)',borderWidth:2}];
+    data.datasets=[{label:'הכנסות (₪)',data:Object.values(byMonth),borderColor:'rgba(29,158,117,1)',backgroundColor:'rgba(74,222,128,0.1)',borderWidth:2,fill:true}];
   }
   else if(graphType==='attendance'){
     const filtered=filterByStageAndRange(allAppointments, stage, range);
     const attended=filtered.filter(a=>a.arrived).length;
     const notAttended=filtered.filter(a=>!a.arrived).length;
     data.labels=['הגיע','לא הגיע'];
-    data.datasets=[{label:'מספר פגישות',data:[attended,notAttended],backgroundColor:['rgba(34,197,94,0.5)','rgba(239,68,68,0.5)'],borderColor:['var(--green)','var(--red)'],borderWidth:1}];
+    data.datasets=[{label:'מספר פגישות',data:[attended,notAttended],backgroundColor:['rgba(34,197,94,0.5)','rgba(239,68,68,0.5)'],borderColor:['rgba(34,197,94,1)','rgba(239,68,68,1)'],borderWidth:1}];
   }
   else if(graphType==='progress'){
     const filtered=allPatients.filter(p=>{if(!stage||stage==='all')return true;return p.folder_type===stage;});
     const statuses={consultation:0,full_process:0,inactive:0};
     filtered.forEach(p=>{if(p.folder_type)statuses[p.folder_type]++;});
     data.labels=['ייעוץ','תהליך שלם','לא פעיל'];
-    data.datasets=[{label:'התפלגות',data:[statuses.consultation,statuses.full_process,statuses.inactive],backgroundColor:['rgba(59,130,246,0.5)','rgba(34,197,94,0.5)','rgba(239,68,68,0.5)'],borderColor:['var(--blue)','var(--green)','var(--red)'],borderWidth:1}];
+    data.datasets=[{label:'התפלגות',data:[statuses.consultation,statuses.full_process,statuses.inactive],backgroundColor:['rgba(59,130,246,0.5)','rgba(34,197,94,0.5)','rgba(239,68,68,0.5)'],borderColor:['rgba(59,130,246,1)','rgba(34,197,94,1)','rgba(239,68,68,1)'],borderWidth:1}];
   }
   else if(graphType==='debt'){
     const filtered=allPatients.filter(p=>(p.remaining||0)>0);
     const sorted=filtered.sort((a,b)=>(b.remaining||0)-(a.remaining||0)).slice(0,10);
     data.labels=sorted.map(p=>p.name||'לא ידוע');
-    data.datasets=[{label:'יתרת חוב (₪)',data:sorted.map(p=>p.remaining||0),backgroundColor:'rgba(239,68,68,0.5)',borderColor:'var(--red)',borderWidth:1}];
+    data.datasets=[{label:'יתרת חוב (₪)',data:sorted.map(p=>p.remaining||0),backgroundColor:'rgba(239,68,68,0.5)',borderColor:'rgba(239,68,68,1)',borderWidth:1}];
   }
   else if(graphType==='distribution'){
     const byInst={};
     allPatients.forEach(p=>{const inst=allInstitutions.find(i=>i.id===p.institution_id);const name=inst?.name||'ללא מוסד';byInst[name]=(byInst[name]||0)+1;});
     data.labels=Object.keys(byInst);
-    data.datasets=[{label:'מספר מטופלים',data:Object.values(byInst),backgroundColor:['rgba(59,130,246,0.5)','rgba(34,197,94,0.5)','rgba(168,85,247,0.5)','rgba(249,115,22,0.5)'],borderColor:['var(--blue)','var(--green)','var(--purple)','var(--orange)'],borderWidth:1}];
+    data.datasets=[{label:'מספר מטופלים',data:Object.values(byInst),backgroundColor:['rgba(59,130,246,0.5)','rgba(34,197,94,0.5)','rgba(168,85,247,0.5)','rgba(249,115,22,0.5)'],borderColor:['rgba(59,130,246,1)','rgba(34,197,94,1)','rgba(168,85,247,1)','rgba(249,115,22,1)'],borderWidth:1}];
   }
 
   return{type:['revenue','attendance'].includes(graphType)?'line':'bar',data,options:{responsive:true,plugins:{legend:{labels:{font:{size:13}}}},scales:{y:{beginAtZero:true,font:{size:12}}}}};
@@ -5252,41 +5276,71 @@ function filterByStageAndRange(items, stage, range){
   });
 }
 
+const graphTypes={revenue:'הכנסות',attendance:'נוכחות',progress:'התקדמות',debt:'חוב',distribution:'התפלגות'};
+
+// נקרא מהתפריט — מנקה את הקנבס הפעיל ומציג את רשימת הגרפים השמורים
 async function renderGraphsView(){
-  document.getElementById('graphs-container').innerHTML='';
-  const listEl=document.getElementById('graphs-list');
-  listEl.innerHTML='';
-
-  if(!currentUser){
-    listEl.innerHTML='<div class="empty"><i data-lucide="lock"></i><p>התחבר כדי לראות גרפים שמורים</p></div>';
-    return;
-  }
-
-  const saved=allSavedGraphs.filter(g=>g.user_id===currentUser.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-  if(saved.length===0){
-    listEl.innerHTML='<div class="card"><div class="empty"><i data-lucide="bar-chart-2"></i><p>אין גרפים שמורים עדיין</p></div></div>';
-    return;
-  }
-
-  const items=saved.map(g=>`<div class="card">
-    <div class="card-header"><h3>${g.name}</h3>
-      <button class="btn btn-danger btn-sm" onclick="deleteGraph('${g.id}')"><i data-lucide="trash-2"></i></button>
-    </div>
-    <div class="card-body">
-      <p style="font-size:13px;color:var(--g500);margin-bottom:8px">סוג: ${graphTypes[g.graph_type]||g.graph_type}</p>
-      <p style="font-size:13px;color:var(--g500)">שנוצר: ${fmtDate(g.created_at)}</p>
-    </div>
-  </div>`).join('');
-  listEl.innerHTML=items;
+  const cont=document.getElementById('graphs-container');
+  if(cont) cont.innerHTML='';
+  renderSavedGraphsList();
 }
 
-const graphTypes={revenue:'הכנסות',attendance:'נוכחות',progress:'התקדמות',debt:'חוב',distribution:'התפלגות'};
+// מציג רק את רשימת הגרפים השמורים (בלי לנקות קנבס פעיל)
+function renderSavedGraphsList(){
+  const listEl=document.getElementById('graphs-list');
+  if(!listEl) return;
+  if(!currentUser){
+    listEl.innerHTML='<div class="empty"><i data-lucide="lock"></i><p>התחבר כדי לראות גרפים שמורים</p></div>';
+    if(window.lucide) lucide.createIcons();
+    return;
+  }
+  const saved=allSavedGraphs.filter(g=>g.user_id===currentUser.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  if(saved.length===0){
+    listEl.innerHTML='<div class="card"><div class="empty"><i data-lucide="bar-chart-2"></i><p>אין גרפים שמורים עדיין — לחץ "גרף חדש" כדי ליצור</p></div></div>';
+    if(window.lucide) lucide.createIcons();
+    return;
+  }
+  listEl.innerHTML='<div style="font-weight:600;margin-bottom:4px;color:var(--g700)">גרפים שמורים</div>'+saved.map(g=>`<div class="card">
+    <div class="card-header"><h3>${g.name}</h3>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-primary btn-sm" onclick="showSavedGraph('${g.id}')"><i data-lucide="eye"></i> הצג</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteGraph('${g.id}')"><i data-lucide="trash-2"></i></button>
+      </div>
+    </div>
+    <div class="card-body">
+      <p style="font-size:13px;color:var(--g500)">סוג: ${graphTypes[g.graph_type]||g.graph_type} · שנוצר: ${fmtDate(g.created_at)}</p>
+    </div>
+  </div>`).join('');
+  if(window.lucide) lucide.createIcons();
+}
+
+// יוצר מחדש גרף שמור לפי ההגדרות שנשמרו
+async function showSavedGraph(graphId){
+  const g=allSavedGraphs.find(x=>x.id===graphId);
+  if(!g) return;
+  let filters={}; try{ filters=JSON.parse(g.filters||'{}'); }catch{}
+  const cont=document.getElementById('graphs-container');
+  cont.innerHTML='';
+  const canvas=document.createElement('canvas');
+  canvas.width=400; canvas.height=250;
+  const wrap=document.createElement('div');
+  wrap.className='card'; wrap.style.padding='16px';
+  const title=document.createElement('div');
+  title.style.cssText='font-weight:600;color:var(--blue);margin-bottom:12px;font-size:15px';
+  title.textContent=g.name;
+  wrap.appendChild(title); wrap.appendChild(canvas);
+  cont.appendChild(wrap);
+  const chartData=await buildChartData(g.graph_type, filters.stage||'all', filters.range||'month');
+  new Chart(canvas, chartData);
+  showView('graphs');
+  cont.scrollIntoView({behavior:'smooth',block:'start'});
+}
 
 async function deleteGraph(graphId){
   if(!confirm('למחוק גרף זה?')) return;
   await sbDelete('saved_graphs',graphId);
   allSavedGraphs=allSavedGraphs.filter(g=>g.id!==graphId);
-  renderGraphsView();
+  renderSavedGraphsList();
   toast('גרף נמחק','success');
 }
 
@@ -5540,8 +5594,9 @@ async function transferFunivezPatients(){
   const funivezInst=allInstitutions.find(i=>i.type==='ponivez');
   if(!funivezInst) return toast('לא נמצאה קטגוריית פוניבז','error');
 
-  const generalInst=allInstitutions.find(i=>i.type==='general')||allInstitutions.find(i=>i.name==='כללי');
-  if(!generalInst) return toast('לא נמצאה קטגוריית כללי','error');
+  // Find or create the "כללי" (general) institution as the transfer target
+  const generalInstId=await findOrCreateInstitution('כללי','general');
+  if(!generalInstId) return toast('לא ניתן ליצור קטגוריית כללי','error');
 
   const funivezPatients=allPatients.filter(p=>p.institution_id===funivezInst.id);
   if(funivezPatients.length===0) return toast('אין תיקיות בפוניבז','info');
@@ -5552,7 +5607,7 @@ async function transferFunivezPatients(){
   try{
     // Update all patients from Funivez to General
     for(const pat of funivezPatients){
-      await sbUpdate('patients',pat.id,{institution_id:generalInst.id});
+      await sbUpdate('patients',pat.id,{institution_id:generalInstId});
     }
 
     // Delete Funivez institution
