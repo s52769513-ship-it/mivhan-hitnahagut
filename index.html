@@ -5171,46 +5171,20 @@ async function generateGraph(){
   document.getElementById('graph-loading').style.display='block';
 
   try{
-    const chartContainer=document.getElementById('graphs-container');
-    const canvas=document.createElement('canvas');
-    canvas.id='chart-'+Date.now();
-    canvas.width=400;
-    canvas.height=250;
-
-    const chartData=await buildChartData(graphType, stage, range);
-
-    // Wrap canvas in a titled card with a fixed height so it isn't oversized
-    chartContainer.innerHTML='';
-    const wrap=document.createElement('div');
-    wrap.className='card';
-    wrap.style.cssText='padding:16px;max-width:620px;margin:0 auto';
-    const title=document.createElement('div');
-    title.style.cssText='font-weight:600;color:var(--blue);margin-bottom:12px;font-size:15px';
-    title.textContent=name;
-    const canvasBox=document.createElement('div');
-    canvasBox.style.cssText='height:340px;position:relative';
-    canvasBox.appendChild(canvas);
-    wrap.appendChild(title);
-    wrap.appendChild(canvasBox);
-    chartContainer.appendChild(wrap);
-    new Chart(canvas, chartData);
-
-    // Save graph configuration for reuse
+    // בונה אובייקט גרף. אם השמירה במסד מצליחה — משתמשים בשורה שחזרה; אחרת נשמר בזיכרון לסשן הנוכחי
+    let saved={id:'tmp-'+Date.now(),user_id:currentUser?.id||null,name,graph_type:graphType,filters:JSON.stringify({stage,range}),created_at:new Date().toISOString()};
     if(currentUser){
-      const r=await sbInsert('saved_graphs',{
-        user_id:currentUser.id,
-        name,
-        graph_type:graphType,
-        filters:JSON.stringify({stage,range,timestamp:new Date().toISOString()})
-      }).catch(e=>({error:e.message}));
-      if(r&&!r.error&&r.data){ allSavedGraphs.unshift(r.data[0]||r.data); }
+      const r=await sbInsert('saved_graphs',{user_id:currentUser.id,name,graph_type:graphType,filters:JSON.stringify({stage,range})}).catch(e=>({error:e.message}));
+      if(r&&!r.error&&r.data){ saved=Array.isArray(r.data)?r.data[0]:r.data; }
+      else if(r&&r.error){ toast('הגרף מוצג אך לא נשמר במסד: '+r.error,'info'); }
     }
+    allSavedGraphs.push(saved);
 
     toast('גרף נוצר בהצלחה','success');
     closeModal('modal-create-graph');
     ['graph-name','graph-stage','graph-type','graph-range'].forEach(id=>document.getElementById(id).value='');
-    renderSavedGraphsList();
     showView('graphs');
+    await renderGraphsDashboard();
   }catch(e){
     toast('שגיאה ביצירת הגרף: '+e.message,'error');
   }finally{
@@ -5292,71 +5266,55 @@ function filterByStageAndRange(items, stage, range){
 
 const graphTypes={revenue:'הכנסות',attendance:'נוכחות',progress:'התקדמות',debt:'חוב',distribution:'התפלגות'};
 
-// נקרא מהתפריט — מנקה את הקנבס הפעיל ומציג את רשימת הגרפים השמורים
+// נקרא מהתפריט — מציג את דשבורד כל הגרפים
 async function renderGraphsView(){
-  const cont=document.getElementById('graphs-container');
-  if(cont) cont.innerHTML='';
-  renderSavedGraphsList();
+  return renderGraphsDashboard();
 }
 
-// מציג רק את רשימת הגרפים השמורים (בלי לנקות קנבס פעיל)
-function renderSavedGraphsList(){
+// דשבורד: כל הגרפים השמורים מוצגים יחד כתרשימים חיים, כל אחד עם כפתור מחיקה
+async function renderGraphsDashboard(){
+  const cont=document.getElementById('graphs-container');
   const listEl=document.getElementById('graphs-list');
-  if(!listEl) return;
+  if(listEl) listEl.innerHTML='';
+  if(!cont) return;
   if(!currentUser){
-    listEl.innerHTML='<div class="empty"><i data-lucide="lock"></i><p>התחבר כדי לראות גרפים שמורים</p></div>';
+    cont.innerHTML='<div class="empty"><i data-lucide="lock"></i><p>התחבר כדי לראות גרפים</p></div>';
     if(window.lucide) lucide.createIcons();
     return;
   }
-  const saved=allSavedGraphs.filter(g=>g.user_id===currentUser.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const saved=allSavedGraphs.filter(g=>g.user_id===currentUser.id).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   if(saved.length===0){
-    listEl.innerHTML='<div class="card"><div class="empty"><i data-lucide="bar-chart-2"></i><p>אין גרפים שמורים עדיין — לחץ "גרף חדש" כדי ליצור</p></div></div>';
+    cont.innerHTML='<div class="card" style="grid-column:1/-1"><div class="empty"><i data-lucide="bar-chart-2"></i><p>אין גרפים עדיין — לחץ "גרף חדש" כדי ליצור</p></div></div>';
     if(window.lucide) lucide.createIcons();
     return;
   }
-  listEl.innerHTML='<div style="font-weight:600;margin-bottom:4px;color:var(--g700)">גרפים שמורים</div>'+saved.map(g=>`<div class="card">
-    <div class="card-header"><h3>${g.name}</h3>
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-primary btn-sm" onclick="showSavedGraph('${g.id}')"><i data-lucide="eye"></i> הצג</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteGraph('${g.id}')"><i data-lucide="trash-2"></i></button>
+  // בונים את הכרטיסים עם קנבס לכל גרף
+  cont.innerHTML=saved.map(g=>`<div class="card" style="padding:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px">
+      <div>
+        <div style="font-weight:600;color:var(--blue);font-size:15px">${g.name}</div>
+        <div style="font-size:11px;color:var(--g500)">${graphTypes[g.graph_type]||g.graph_type} · ${fmtDate(g.created_at)}</div>
       </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteGraph('${g.id}')" title="מחק גרף"><i data-lucide="trash-2"></i></button>
     </div>
-    <div class="card-body">
-      <p style="font-size:13px;color:var(--g500)">סוג: ${graphTypes[g.graph_type]||g.graph_type} · שנוצר: ${fmtDate(g.created_at)}</p>
-    </div>
+    <div style="height:260px;position:relative"><canvas id="dash-chart-${g.id}"></canvas></div>
   </div>`).join('');
   if(window.lucide) lucide.createIcons();
-}
-
-// יוצר מחדש גרף שמור לפי ההגדרות שנשמרו
-async function showSavedGraph(graphId){
-  const g=allSavedGraphs.find(x=>x.id===graphId);
-  if(!g) return;
-  let filters={}; try{ filters=JSON.parse(g.filters||'{}'); }catch{}
-  const cont=document.getElementById('graphs-container');
-  cont.innerHTML='';
-  const canvas=document.createElement('canvas');
-  const wrap=document.createElement('div');
-  wrap.className='card'; wrap.style.cssText='padding:16px;max-width:620px;margin:0 auto';
-  const title=document.createElement('div');
-  title.style.cssText='font-weight:600;color:var(--blue);margin-bottom:12px;font-size:15px';
-  title.textContent=g.name;
-  const canvasBox=document.createElement('div');
-  canvasBox.style.cssText='height:340px;position:relative';
-  canvasBox.appendChild(canvas);
-  wrap.appendChild(title); wrap.appendChild(canvasBox);
-  cont.appendChild(wrap);
-  const chartData=await buildChartData(g.graph_type, filters.stage||'all', filters.range||'month');
-  new Chart(canvas, chartData);
-  showView('graphs');
-  cont.scrollIntoView({behavior:'smooth',block:'start'});
+  // מציירים כל גרף לתוך הקנבס שלו
+  for(const g of saved){
+    const canvas=document.getElementById('dash-chart-'+g.id);
+    if(!canvas) continue;
+    let filters={}; try{ filters=JSON.parse(g.filters||'{}'); }catch{}
+    const chartData=await buildChartData(g.graph_type, filters.stage||'all', filters.range||'month');
+    try{ new Chart(canvas, chartData); }catch(e){ console.warn('chart draw failed',e); }
+  }
 }
 
 async function deleteGraph(graphId){
   if(!confirm('למחוק גרף זה?')) return;
-  await sbDelete('saved_graphs',graphId);
+  if(!String(graphId).startsWith('tmp-')) await sbDelete('saved_graphs',graphId);
   allSavedGraphs=allSavedGraphs.filter(g=>g.id!==graphId);
-  renderSavedGraphsList();
+  renderGraphsDashboard();
   toast('גרף נמחק','success');
 }
 
