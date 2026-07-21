@@ -5179,16 +5179,19 @@ async function generateGraph(){
 
     const chartData=await buildChartData(graphType, stage, range);
 
-    // Wrap canvas in a titled card so the result is clearly presented
+    // Wrap canvas in a titled card with a fixed height so it isn't oversized
     chartContainer.innerHTML='';
     const wrap=document.createElement('div');
     wrap.className='card';
-    wrap.style.padding='16px';
+    wrap.style.cssText='padding:16px;max-width:620px;margin:0 auto';
     const title=document.createElement('div');
     title.style.cssText='font-weight:600;color:var(--blue);margin-bottom:12px;font-size:15px';
     title.textContent=name;
+    const canvasBox=document.createElement('div');
+    canvasBox.style.cssText='height:340px;position:relative';
+    canvasBox.appendChild(canvas);
     wrap.appendChild(title);
-    wrap.appendChild(canvas);
+    wrap.appendChild(canvasBox);
     chartContainer.appendChild(wrap);
     new Chart(canvas, chartData);
 
@@ -5256,7 +5259,7 @@ async function buildChartData(graphType, stage, range){
     data.datasets=[{label:'מספר מטופלים',data:Object.values(byInst),backgroundColor:['rgba(59,130,246,0.5)','rgba(34,197,94,0.5)','rgba(168,85,247,0.5)','rgba(249,115,22,0.5)'],borderColor:['rgba(59,130,246,1)','rgba(34,197,94,1)','rgba(168,85,247,1)','rgba(249,115,22,1)'],borderWidth:1}];
   }
 
-  return{type:['revenue','attendance'].includes(graphType)?'line':'bar',data,options:{responsive:true,plugins:{legend:{labels:{font:{size:13}}}},scales:{y:{beginAtZero:true,font:{size:12}}}}};
+  return{type:['revenue','attendance'].includes(graphType)?'line':'bar',data,options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:12},boxWidth:12}}},scales:{y:{beginAtZero:true,ticks:{font:{size:11}}},x:{ticks:{font:{size:11}}}}}};
 }
 
 function filterByStageAndRange(items, stage, range){
@@ -5333,13 +5336,15 @@ async function showSavedGraph(graphId){
   const cont=document.getElementById('graphs-container');
   cont.innerHTML='';
   const canvas=document.createElement('canvas');
-  canvas.width=400; canvas.height=250;
   const wrap=document.createElement('div');
-  wrap.className='card'; wrap.style.padding='16px';
+  wrap.className='card'; wrap.style.cssText='padding:16px;max-width:620px;margin:0 auto';
   const title=document.createElement('div');
   title.style.cssText='font-weight:600;color:var(--blue);margin-bottom:12px;font-size:15px';
   title.textContent=g.name;
-  wrap.appendChild(title); wrap.appendChild(canvas);
+  const canvasBox=document.createElement('div');
+  canvasBox.style.cssText='height:340px;position:relative';
+  canvasBox.appendChild(canvas);
+  wrap.appendChild(title); wrap.appendChild(canvasBox);
   cont.appendChild(wrap);
   const chartData=await buildChartData(g.graph_type, filters.stage||'all', filters.range||'month');
   new Chart(canvas, chartData);
