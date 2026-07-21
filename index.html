@@ -584,6 +584,37 @@ tr:last-child td{border-bottom:none}
             <div id="sound-settings-status" style="margin-top:8px;font-size:13px"></div>
           </div>
         </div>
+
+        <!-- Folder Management (Admin Only) -->
+        <div class="card" style="max-width:560px;margin-bottom:20px" id="folder-management-card">
+          <div class="card-header"><h3><i data-lucide="folder"></i> ניהול תיקיות ופי"נים</h3></div>
+          <div class="card-body">
+            <p style="font-size:14px;color:var(--g500);margin-bottom:16px">כלים לניהול תיקיות ופי"נים.</p>
+
+            <!-- Funivez Transfer -->
+            <div style="margin-bottom:20px;padding:14px;background:var(--g50);border-radius:8px;border:1px solid var(--g200)">
+              <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="move"></i> העברת פוניבז</div>
+              <p style="font-size:13px;color:var(--g600);margin-bottom:12px">העבר את כל התיקיות מפוניבז לקטגוריה כללית ומחק את פוניבז.</p>
+              <button class="btn btn-primary" onclick="openModal('modal-transfer-funivez')"><i data-lucide="move"></i> העבר הכל מפוניבז</button>
+              <div id="funivez-transfer-status" style="margin-top:10px;font-size:13px"></div>
+            </div>
+
+            <!-- Class Upgrade (Vizhnitz) -->
+            <div style="margin-bottom:20px;padding:14px;background:var(--g50);border-radius:8px;border:1px solid var(--g200)">
+              <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="arrow-up"></i> שדרוג כיתה בויזניץ</div>
+              <p style="font-size:13px;color:var(--g600);margin-bottom:12px">עדכן את כיתות כל התלמידים בויזניץ (א→ב, ב→ג וכו').</p>
+              <button class="btn btn-primary" onclick="openModal('modal-upgrade-class')"><i data-lucide="arrow-up"></i> שדרוג כיתות</button>
+              <div id="class-upgrade-status" style="margin-top:10px;font-size:13px"></div>
+            </div>
+
+            <!-- Patient Folder Type -->
+            <div style="margin-bottom:20px;padding:14px;background:var(--g50);border-radius:8px;border:1px solid var(--g200)">
+              <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="tag"></i> סיווג תיקים</div>
+              <p style="font-size:13px;color:var(--g600);margin-bottom:12px">כל תיקייה יכולה להיות מסווגת לאחד מ: ייעוץ, תהליך שלם, או לא פעיל.</p>
+              <button class="btn btn-secondary" onclick="toast('סיווג התיקים זמין בעמוד כל התיקיות - בחר תיקייה לשינוי הסיווג','info')"><i data-lucide="tag"></i> עדכן סיווג תיקה</button>
+            </div>
+          </div>
+        </div>
       </div>
 
 
@@ -999,6 +1030,41 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<!-- Transfer Funivez Modal -->
+<div class="modal-backdrop" id="modal-transfer-funivez" style="display:none" onclick="closeModal('modal-transfer-funivez')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><h2><i data-lucide="move"></i> העברת פוניבז</h2><button class="btn btn-icon" onclick="closeModal('modal-transfer-funivez')"><i data-lucide="x"></i></button></div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--g600);margin-bottom:14px">פעולה זו תעביר את כל התיקיות מ<strong>פוניבז</strong> לקטגוריית <strong>כללי</strong>, ואחרי זה תמחק את קטגוריית פוניבז.</p>
+      <div id="funivez-patient-list" style="background:var(--g50);border:1px solid var(--g200);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;margin-bottom:16px;font-size:13px"></div>
+      <p style="font-size:12px;color:var(--g500);margin-bottom:16px">אתה בטוח? הפעולה הזו היא בלתי הפיכה.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-transfer-funivez')">ביטול</button>
+      <button class="btn btn-danger" onclick="transferFunivezPatients()"><i data-lucide="move"></i> בצע העברה</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upgrade Class Modal -->
+<div class="modal-backdrop" id="modal-upgrade-class" style="display:none" onclick="closeModal('modal-upgrade-class')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><h2><i data-lucide="arrow-up"></i> שדרוג כיתות בויזניץ</h2><button class="btn btn-icon" onclick="closeModal('modal-upgrade-class')"><i data-lucide="x"></i></button></div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--g600);margin-bottom:14px">בחר שדרוג אוטומטי או התאם ידנית:</p>
+      <div style="background:var(--g50);border:1px solid var(--g200);border-radius:8px;padding:14px;margin-bottom:16px">
+        <div style="font-weight:600;color:var(--blue);margin-bottom:12px">שדרוג אוטומטי:</div>
+        <div id="class-upgrade-preview" style="display:flex;flex-direction:column;gap:8px;font-size:13px"></div>
+      </div>
+      <p style="font-size:12px;color:var(--g500)">אתה בטוח? לא תוכל לבטל פעולה זו.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-upgrade-class')">ביטול</button>
+      <button class="btn btn-primary" onclick="performClassUpgrade()"><i data-lucide="arrow-up"></i> בצע שדרוג</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toast-container"></div>
 
 <script>
@@ -1153,7 +1219,7 @@ async function loadAll(){
     sb('payments','?order=created_at.desc'),
     sb('institutions','?order=name'),
     sb('classes','?order=name'),
-    sb('notes','?order=created_at.desc'),
+    sb('notes','?order=created_at.asc'),
     sb('observations','?order=obs_date.desc'),
     sb('treatment_goals','?order=created_at'),
     sb('questionnaires','?order=created_at'),
@@ -4987,6 +5053,122 @@ async function migrateCloudinaryFiles(){
     setTimeout(()=>alert('קבצים שנכשלו — יש להעלות אותם מחדש ידנית:\n\n'+failed.join('\n')),500);
   } else {
     toast(`כל ${ok} הקבצים הועברו בהצלחה`,'success');
+  }
+}
+
+// === FUNIVEZ & CLASS MANAGEMENT ===
+
+// Show Funivez transfer preview
+async function openTransferFunivezModal(){
+  const funivezInst=allInstitutions.find(i=>i.type==='ponivez');
+  if(!funivezInst){
+    toast('לא נמצאה קטגוריית פוניבז','info');
+    return;
+  }
+  const funivezPatients=allPatients.filter(p=>p.institution_id===funivezInst.id);
+  const listEl=document.getElementById('funivez-patient-list');
+  if(funivezPatients.length===0){
+    listEl.innerHTML='<span style="color:var(--g500)">אין תיקיות בפוניבז</span>';
+  } else {
+    listEl.innerHTML=`<strong>${funivezPatients.length} תיקיות:</strong><br>`+funivezPatients.map(p=>`• ${p.name}`).join('<br>');
+  }
+  openModal('modal-transfer-funivez');
+}
+
+// Transfer Funivez patients to General
+async function transferFunivezPatients(){
+  const funivezInst=allInstitutions.find(i=>i.type==='ponivez');
+  if(!funivezInst) return toast('לא נמצאה קטגוריית פוניבז','error');
+
+  const generalInst=allInstitutions.find(i=>i.type==='general')||allInstitutions.find(i=>i.name==='כללי');
+  if(!generalInst) return toast('לא נמצאה קטגוריית כללי','error');
+
+  const funivezPatients=allPatients.filter(p=>p.institution_id===funivezInst.id);
+  if(funivezPatients.length===0) return toast('אין תיקיות בפוניבז','info');
+
+  const statusEl=document.getElementById('funivez-transfer-status');
+  statusEl.innerHTML='<span style="color:var(--blue)">מעביר...</span>';
+
+  try{
+    // Update all patients from Funivez to General
+    for(const pat of funivezPatients){
+      await sbUpdate('patients',pat.id,{institution_id:generalInst.id});
+    }
+
+    // Delete Funivez institution
+    await sbAdminDelete('institutions',funivezInst.id);
+
+    statusEl.innerHTML='<span style="color:var(--green)"><i data-lucide="check-circle"></i> הוצא בהצלחה</span>';
+    toast(`${funivezPatients.length} תיקיות הועברו לכללי, פוניבז נמחק`,'success');
+
+    await loadAll();
+    renderInstitutionFilter();
+    closeModal('modal-transfer-funivez');
+  } catch(e){
+    statusEl.innerHTML='<span style="color:var(--red)">שגיאה בהעברה</span>';
+    toast('שגיאה בהעברה: '+e.message,'error');
+  }
+}
+
+// Show class upgrade preview for Vizhnitz
+async function openUpgradeClassModal(){
+  const vizhnitzInst=allInstitutions.find(i=>i.type==='vizhnitz');
+  if(!vizhnitzInst){
+    toast('לא נמצאה קטגוריית ויזניץ','info');
+    return;
+  }
+
+  const vizhnitzClasses=allClasses.filter(c=>c.institution_id===vizhnitzInst.id);
+  const upgrades=[
+    {from:'א',to:'ב'},{from:'ב',to:'ג'},{from:'ג',to:'ד'},{from:'ד',to:'ה'},
+    {from:'ה',to:'ו'},{from:'ו',to:'ז'},{from:'ז',to:'ח'},{from:'ח',to:'ט'}
+  ];
+
+  const previewEl=document.getElementById('class-upgrade-preview');
+  previewEl.innerHTML=upgrades.map(u=>{
+    const fromCls=vizhnitzClasses.find(c=>c.name===u.from);
+    const toCls=vizhnitzClasses.find(c=>c.name===u.to);
+    const count=fromCls?allPatients.filter(p=>p.class_id===fromCls.id).length:0;
+    return `<div style="padding:6px;background:white;border-radius:4px;border-left:3px solid var(--blue)">
+      כיתה <strong>${u.from}</strong> → <strong>${u.to}</strong> (${count} תלמידים)
+    </div>`;
+  }).join('');
+
+  openModal('modal-upgrade-class');
+}
+
+// Perform class upgrade for Vizhnitz
+async function performClassUpgrade(){
+  const vizhnitzInst=allInstitutions.find(i=>i.type==='vizhnitz');
+  if(!vizhnitzInst) return toast('לא נמצאה קטגוריית ויזניץ','error');
+
+  const vizhnitzClasses=allClasses.filter(c=>c.institution_id===vizhnitzInst.id);
+  const upgrades=[
+    {from:'א',to:'ב'},{from:'ב',to:'ג'},{from:'ג',to:'ד'},{from:'ד',to:'ה'},
+    {from:'ה',to:'ו'},{from:'ו',to:'ז'},{from:'ז',to:'ח'},{from:'ח',to:'ט'}
+  ];
+
+  let totalUpdated=0;
+  toast('משדרג כיתות...','');
+
+  try{
+    for(const upg of upgrades){
+      const fromCls=vizhnitzClasses.find(c=>c.name===upg.from);
+      const toCls=vizhnitzClasses.find(c=>c.name===upg.to);
+      if(!fromCls || !toCls) continue;
+
+      const patsToUpdate=allPatients.filter(p=>p.class_id===fromCls.id);
+      for(const pat of patsToUpdate){
+        await sbUpdate('patients',pat.id,{class_id:toCls.id});
+        totalUpdated++;
+      }
+    }
+
+    toast(`${totalUpdated} תלמידים שודרגו בהצלחה`,'success');
+    await loadAll();
+    closeModal('modal-upgrade-class');
+  } catch(e){
+    toast('שגיאה בשדרוג: '+e.message,'error');
   }
 }
 
