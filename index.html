@@ -1228,6 +1228,19 @@ tr:last-child td{border-bottom:none}
 .bg-example b{color:var(--blue)}
 </style>
 
+<!-- BEHAVIOR GRAPH: AI SUGGESTIONS -->
+<div class="modal-backdrop" id="modal-bg-suggest" style="display:none" onclick="closeModal('modal-bg-suggest')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:640px">
+    <div class="modal-header"><h2><i data-lucide="sparkles"></i> הצעות גרפים מה-AI</h2><button class="btn btn-icon" onclick="closeModal('modal-bg-suggest')"><i data-lucide="x"></i></button></div>
+    <div class="modal-body" style="max-height:74vh;overflow-y:auto">
+      <div id="bg-suggest-body"><div class="empty"><p>טוען הצעות...</p></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-bg-suggest')">סגור</button>
+    </div>
+  </div>
+</div>
+
 <!-- BEHAVIOR GRAPH: HELP / EXAMPLES -->
 <div class="modal-backdrop" id="modal-bg-help" style="display:none" onclick="closeModal('modal-bg-help')">
   <div class="modal" onclick="event.stopPropagation()" style="max-width:640px">
@@ -5593,7 +5606,7 @@ function renderPatientBehaviorGraphs(pid){
   const graphs=allBehaviorGraphs.filter(g=>g.patient_id===pid).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   el.innerHTML=`
     <div class="card">
-      <div class="card-header"><h3><i data-lucide="line-chart"></i> גרפים התנהגותיים</h3><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" onclick="openBgHelp()"><i data-lucide="help-circle"></i> הסבר ודוגמאות</button><button class="btn btn-secondary btn-sm" onclick="openBgDemo()"><i data-lucide="play"></i> דוגמה חיה</button><button class="btn btn-primary btn-sm" onclick="openNewBehaviorGraph('${pid}')">+ גרף חדש</button></div></div>
+      <div class="card-header"><h3><i data-lucide="line-chart"></i> גרפים התנהגותיים</h3><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" onclick="openBgHelp()"><i data-lucide="help-circle"></i> הסבר ודוגמאות</button><button class="btn btn-secondary btn-sm" onclick="openBgDemo()"><i data-lucide="play"></i> דוגמה חיה</button><button class="btn btn-secondary btn-sm" onclick="aiSuggestGraphs('${pid}')"><i data-lucide="sparkles"></i> AI מציע גרפים</button><button class="btn btn-primary btn-sm" onclick="openNewBehaviorGraph('${pid}')">+ גרף חדש</button></div></div>
       <div class="card-body">
         ${graphs.length===0?'<div class="empty"><i data-lucide="line-chart"></i><p>אין גרפים עדיין — לחץ "+ גרף חדש" כדי ליצור</p></div>':
         `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px">${graphs.map(g=>behaviorGraphCardHTML(g)).join('')}</div>`}
@@ -5660,20 +5673,24 @@ function addBgPhaseRow(x='',label=''){
 }
 
 function openNewBehaviorGraph(pid, prefill){
+  prefill=prefill||{};
   bgCurrentPid=pid;
+  const gv=(k,d)=>(prefill[k]!=null&&prefill[k]!=='')?prefill[k]:d;
   document.getElementById('bg-edit-id').value='';
-  document.getElementById('bg-goal-id').value=(prefill&&prefill.goal_id)||'';
-  document.getElementById('bg-name').value=(prefill&&prefill.name)||'';
-  document.getElementById('bg-target-behavior').value=(prefill&&prefill.target_behavior)||'';
-  document.getElementById('bg-data-type').value='intervention';
-  document.getElementById('bg-graph-type').value='line';
-  document.getElementById('bg-x-axis').value='מספר מפגש';
-  document.getElementById('bg-y-axis').value='מספר פעמים';
-  document.getElementById('bg-direction').value='decrease';
-  document.getElementById('bg-target-value').value='';
+  document.getElementById('bg-goal-id').value=prefill.goal_id||'';
+  document.getElementById('bg-name').value=prefill.name||'';
+  document.getElementById('bg-target-behavior').value=prefill.target_behavior||'';
+  document.getElementById('bg-data-type').value=gv('data_type','intervention');
+  document.getElementById('bg-graph-type').value=gv('chart_type', gv('graph_type','line'));
+  document.getElementById('bg-x-axis').value=gv('x_axis','מספר מפגש');
+  document.getElementById('bg-y-axis').value=gv('y_axis','מספר פעמים');
+  document.getElementById('bg-direction').value=gv('goal_direction','decrease');
+  document.getElementById('bg-target-value').value=(prefill.target_value==null?'':prefill.target_value);
   document.getElementById('bg-data-rows').innerHTML='';
   document.getElementById('bg-phase-rows').innerHTML='';
-  addBgDataRow(); addBgDataRow(); addBgDataRow();
+  const pts=Array.isArray(prefill.data_points)?prefill.data_points:[];
+  if(pts.length) pts.forEach(p=>addBgDataRow(p.x, p.y, p.note||'')); else { addBgDataRow(); addBgDataRow(); addBgDataRow(); }
+  (Array.isArray(prefill.phase_markers)?prefill.phase_markers:[]).forEach(m=>addBgPhaseRow(m.x, m.label||''));
   openModal('modal-behavior-graph');
   if(window.lucide) lucide.createIcons();
 }
@@ -5943,6 +5960,99 @@ ${digest}`;
     if(e.message==='NO_KEY') return bgRequireOpenAI();
     toast('שגיאה: '+e.message,'error');
   }finally{ bgSetBtnLoading('bg-ai-extract', false, '<i data-lucide="wand-2"></i> משוך נתונים מהתצפיות'); }
+}
+
+// יכולת 3 — AI מנתח את התיק ומציע גרפים מתאימים
+let bgSuggestions=[];
+async function aiSuggestGraphs(pid){
+  if(!openaiKey){
+    toast('נא להגדיר מפתח OpenAI בהגדרות','error');
+    showView('settings');
+    setTimeout(()=>{const el=document.getElementById('settings-openai-key');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}},300);
+    return;
+  }
+  bgCurrentPid=pid;
+  bgSuggestions=[];
+  document.getElementById('bg-suggest-body').innerHTML='<div class="empty"><span class="spin" style="display:inline-block;width:22px;height:22px;border:2px solid var(--g200);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite"></span><p style="margin-top:8px">ה-AI מנתח את התיק...</p></div>';
+  openModal('modal-bg-suggest');
+  if(window.lucide) lucide.createIcons();
+
+  // דייג'סט של התיק
+  const goals=allGoals.filter(g=>g.patient_id===pid).map(g=>[g.target,g.behavioral_goal,g.description].filter(Boolean).join(' | ')).filter(Boolean);
+  const obs=allObservations.filter(o=>o.patient_id===pid).map(o=>{
+    if(o.circumstance&&o.circumstance.trim().startsWith('{')){ try{const j=JSON.parse(o.circumstance);return [(j.rows||[]).map(r=>r.b).filter(Boolean).join('; '),j.summary].filter(Boolean).join(' ');}catch{return '';} }
+    return [o.behavior,o.notes].filter(Boolean).join(' ');
+  }).filter(Boolean);
+  const noteTxt=allNotes.filter(n=>n.patient_id===pid).map(n=>n.content).filter(Boolean);
+  const taskTxt=allTasks.filter(t=>t.patient_id===pid).map(t=>t.name).filter(Boolean);
+  const apts=allAppointments.filter(a=>a.patient_id===pid);
+  const attended=apts.filter(a=>a.arrived).length;
+
+  const digest=[
+    goals.length?'מטרות טיפול:\n- '+goals.slice(0,8).join('\n- '):'',
+    obs.length?'תצפיות:\n- '+obs.slice(0,10).map(s=>s.slice(0,150)).join('\n- '):'',
+    noteTxt.length?'הערות:\n- '+noteTxt.slice(0,8).map(s=>s.slice(0,150)).join('\n- '):'',
+    taskTxt.length?'משימות: '+taskTxt.slice(0,10).join(', '):'',
+    apts.length?`נוכחות: הגיע ל-${attended} מתוך ${apts.length} מפגשים`:''
+  ].filter(Boolean).join('\n\n');
+
+  const suggestions=[];
+  // הצעת נוכחות עם נתונים אמיתיים (תמיד, אם יש מפגשים)
+  if(apts.length){
+    const sorted=[...apts].sort((a,b)=>new Date(a.start_time||0)-new Date(b.start_time||0));
+    let cum=0;
+    const dp=sorted.map((a,i)=>{ cum+=a.arrived?1:0; return {x:'מפגש '+(i+1), y:cum, note:a.arrived?'הגיע':'לא הגיע'}; });
+    suggestions.push({name:'נוכחות מצטברת במפגשים', target_behavior:'הגעה למפגשים', data_type:'intervention',
+      chart_type:'cumulative', x_axis:'מספר מפגש', y_axis:'מפגשים שהגיע', goal_direction:'increase', target_value:null,
+      data_points:dp, rationale:'נתוני הגעה אמיתיים מהמערכת — מוכן לצפייה מיד', real:true});
+  }
+
+  // הצעות AI (מבנה בלבד)
+  if(digest.trim()){
+    const prompt=`אתה מומחה ABA. לפניך תקציר מתיק של מטופל. הצע 2-4 גרפים התנהגותיים שכדאי לעקוב אחריהם עבור הילד הזה.
+החזר אך ורק JSON חוקי:
+{ "suggestions": [ {"name":"שם בעברית","target_behavior":"ההתנהגות הנמדדת","data_type":"baseline|intervention|followup|generalization","chart_type":"line|bar|percent|cumulative|pie","x_axis":"תווית בעברית","y_axis":"תווית בעברית","goal_direction":"increase|decrease","target_value":מספר או null,"rationale":"נימוק קצר בעברית למה הגרף הזה מתאים"} ] }
+בסס את ההצעות על התוכן. אל תמציא נתונים — רק הגדרות גרף.
+
+תקציר התיק:
+${digest}`;
+    try{
+      const j=await openaiJSON(prompt, 900);
+      (Array.isArray(j.suggestions)?j.suggestions:[]).forEach(s=>{ if(s&&s.name) suggestions.push(s); });
+    }catch(e){
+      if(suggestions.length===0){
+        document.getElementById('bg-suggest-body').innerHTML='<div class="empty"><p>שגיאה: '+(e.message||e)+'</p></div>';
+        return;
+      }
+    }
+  }
+
+  if(suggestions.length===0){
+    document.getElementById('bg-suggest-body').innerHTML='<div class="empty"><i data-lucide="info"></i><p>אין מספיק מידע בתיק כדי להציע גרפים. הוסף מטרות/תצפיות או צור גרף ידני.</p></div>';
+    if(window.lucide) lucide.createIcons();
+    return;
+  }
+
+  bgSuggestions=suggestions;
+  const dtLabels={baseline:'בסיס',intervention:'התערבות',followup:'מעקב',generalization:'הכללה'};
+  const ctLabels={line:'קווי',bar:'עמודות',percent:'אחוזים',cumulative:'מצטבר',pie:'עוגה'};
+  document.getElementById('bg-suggest-body').innerHTML=suggestions.map((s,i)=>`
+    <div style="border:1px solid var(--g200);border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="font-weight:600;color:var(--blue)">${s.name||''}${s.real?' <span class="badge badge-green" style="font-size:10px">נתונים אמיתיים</span>':''}</div>
+        <button class="btn btn-primary btn-sm" style="flex-shrink:0" onclick="applyBehaviorSuggestion(${i})"><i data-lucide="plus"></i> צור גרף</button>
+      </div>
+      <div style="font-size:12px;color:var(--g600);margin-top:4px">${s.rationale||''}</div>
+      <div style="font-size:11px;color:var(--g400);margin-top:6px">${dtLabels[s.data_type]||''} · ${ctLabels[s.chart_type]||s.chart_type||''} · ${s.x_axis||''} / ${s.y_axis||''}</div>
+    </div>`).join('');
+  if(window.lucide) lucide.createIcons();
+}
+
+function applyBehaviorSuggestion(i){
+  const s=bgSuggestions[i]; if(!s) return;
+  const pid=bgCurrentPid||currentPatientId;
+  closeModal('modal-bg-suggest');
+  openNewBehaviorGraph(pid, s);
 }
 
 // === BEHAVIOR GRAPH: HELP / SQL / LIVE DEMO ===
