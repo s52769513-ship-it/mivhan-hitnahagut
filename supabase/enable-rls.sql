@@ -55,6 +55,25 @@ CREATE TABLE IF NOT EXISTS public.saved_graphs (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- טבלת behavior_graphs - גרפים התנהגותיים (ABA) לכל מטופל
+CREATE TABLE IF NOT EXISTS public.behavior_graphs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,          -- שם התוכנית
+  target_behavior TEXT,                -- התנהגות המטרה
+  data_type VARCHAR(30),               -- baseline | intervention | followup | generalization
+  graph_type VARCHAR(20),              -- line | bar | percent | cumulative | pie
+  x_axis VARCHAR(60),                  -- תווית ציר X
+  y_axis VARCHAR(60),                  -- תווית ציר Y
+  goal_direction VARCHAR(10),          -- increase | decrease
+  target_value NUMERIC,                -- ערך יעד (סף הצלחה)
+  data_points JSONB,                   -- [{x,y,note}]
+  phase_markers JSONB,                 -- [{x,label}]
+  goal_id UUID REFERENCES public.treatment_goals(id) ON DELETE SET NULL,
+  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- 1 + 2: RLS + מדיניות "מחובר בלבד" לכל הטבלאות
 do $$
 declare
@@ -63,7 +82,7 @@ declare
     'patients','appointments','tasks','payments','institutions','classes',
     'notes','observations','treatment_goals','questionnaires','patient_files',
     'patient_emails','user_profiles','user_patients','user_institutions','app_settings',
-    'patient_collaborators','activity_log','saved_graphs'
+    'patient_collaborators','activity_log','saved_graphs','behavior_graphs'
   ];
 begin
   foreach t in array tables loop

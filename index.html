@@ -402,11 +402,13 @@ tr:last-child td{border-bottom:none}
             <button class="tab-btn active" onclick="showIntTab('it-treatment')">תוכנית טיפול</button>
             <button class="tab-btn" onclick="showIntTab('it-tank')">טנ"ק</button>
             <button class="tab-btn" onclick="showIntTab('it-progress')">התקדמות</button>
+            <button class="tab-btn" onclick="showIntTab('it-graphs')">גרפים</button>
             <button class="tab-btn" onclick="showIntTab('it-docs')">מסמכים</button>
           </div>
           <div id="it-treatment" class="tab-content active"></div>
           <div id="it-tank" class="tab-content"></div>
           <div id="it-progress" class="tab-content"></div>
+          <div id="it-graphs" class="tab-content"></div>
           <div id="it-docs" class="tab-content"></div>
         </div>
         <div id="main-tab-reports" style="display:none"></div>
@@ -1146,6 +1148,68 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<!-- BEHAVIOR GRAPH MODAL (ABA) -->
+<div class="modal-backdrop" id="modal-behavior-graph" style="display:none" onclick="closeModal('modal-behavior-graph')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:640px">
+    <div class="modal-header"><h2><i data-lucide="line-chart"></i> גרף התנהגותי</h2><button class="btn btn-icon" onclick="closeModal('modal-behavior-graph')"><i data-lucide="x"></i></button></div>
+    <div class="modal-body" style="max-height:72vh;overflow-y:auto">
+      <input type="hidden" id="bg-edit-id">
+      <input type="hidden" id="bg-goal-id">
+
+      <div style="font-weight:600;color:var(--blue);margin-bottom:8px">פרטי התוכנית</div>
+      <div class="form-group"><label class="form-label">שם התוכנית</label><input type="text" class="form-control" id="bg-name" placeholder="למשל: הפחתת התפרצויות"></div>
+      <div class="form-group"><label class="form-label">התנהגות המטרה</label><input type="text" class="form-control" id="bg-target-behavior" placeholder="ההתנהגות שנמדדת"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">
+        <div class="form-group"><label class="form-label">סוג הנתונים</label>
+          <select class="form-control" id="bg-data-type">
+            <option value="baseline">איסוף נתוני בסיס (Baseline)</option>
+            <option value="intervention" selected>תוכנית התערבות</option>
+            <option value="followup">מעקב</option>
+            <option value="generalization">הכללה (Generalization)</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">סוג הגרף</label>
+          <select class="form-control" id="bg-graph-type">
+            <option value="line" selected>גרף קווי</option>
+            <option value="bar">גרף עמודות</option>
+            <option value="percent">גרף אחוזים</option>
+            <option value="cumulative">גרף מצטבר</option>
+            <option value="pie">גרף עוגה</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">ציר X (אופקי)</label>
+          <input type="text" class="form-control" id="bg-x-axis" list="bg-x-list" placeholder="בחר או הקלד">
+          <datalist id="bg-x-list"><option value="ימים"><option value="שעות"><option value="תאריכים"><option value="שבועות"><option value="חודשים"><option value="מספר מפגש"><option value="מספר שיעור"><option value="מספר ניסיון"></datalist>
+        </div>
+        <div class="form-group"><label class="form-label">ציר Y (נמדד)</label>
+          <input type="text" class="form-control" id="bg-y-axis" list="bg-y-list" placeholder="בחר או הקלד">
+          <datalist id="bg-y-list"><option value="מספר פעמים"><option value="אחוז הצלחה"><option value="דקות"><option value="שעות"><option value="תדירות"><option value="משך"><option value="עוצמה"><option value="רמת עצמאות"><option value="מספר תגובות נכונות"><option value="מספר רמזים"></datalist>
+        </div>
+        <div class="form-group"><label class="form-label">כיוון המטרה</label>
+          <select class="form-control" id="bg-direction">
+            <option value="increase">הגברה (רוצים יותר)</option>
+            <option value="decrease">הפחתה (רוצים פחות)</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">ערך יעד (סף הצלחה, רשות)</label><input type="number" class="form-control" id="bg-target-value" placeholder="למשל 80"></div>
+      </div>
+
+      <div style="font-weight:600;color:var(--blue);margin:12px 0 8px">נקודות נתונים</div>
+      <div id="bg-data-rows"></div>
+      <button class="btn btn-secondary btn-sm" onclick="addBgDataRow()"><i data-lucide="plus"></i> הוסף שורה</button>
+
+      <div style="font-weight:600;color:var(--blue);margin:16px 0 8px">קווי שלב (קו אנכי עם כותרת)</div>
+      <div id="bg-phase-rows"></div>
+      <button class="btn btn-secondary btn-sm" onclick="addBgPhaseRow()"><i data-lucide="plus"></i> הוסף קו שלב</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-behavior-graph')">ביטול</button>
+      <button class="btn btn-primary" onclick="saveBehaviorGraph()"><i data-lucide="save"></i> שמור גרף</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toast-container"></div>
 
 <script>
@@ -1156,7 +1220,7 @@ let SB_KEY = 'sb_publishable_CP9QNqlhXq8UM9FMycZQeg_BOLZ_06n';
 let allPatients=[], allAppointments=[], allTasks=[], allPayments=[], allInstitutions=[], allClasses=[];
 let allNotes=[], allObservations=[], allGoals=[], allQuestionnaires=[];
 let allFiles=[], allEmails=[];
-let allActivityLog=[], allPatientCollaborators=[], allSavedGraphs=[];
+let allActivityLog=[], allPatientCollaborators=[], allSavedGraphs=[], allBehaviorGraphs=[];
 let ejsPublicKey=localStorage.getItem('ejs_key')||'M0QHmDxKQG3XJgnTQ';
 let ejsServiceId=localStorage.getItem('ejs_service')||'service_dh62bba';
 let ejsTemplateId=localStorage.getItem('ejs_template')||'template_72ogmc7';
@@ -1294,7 +1358,7 @@ async function loadAll(){
   if(now-lastLoadTime<CACHE_DURATION)return;
   lastLoadTime=now;
 
-  const [p,a,t,pay,inst,cls,n,obs,g,q,files,emails,profiles,actLog,collabs,graphs] = await Promise.all([
+  const [p,a,t,pay,inst,cls,n,obs,g,q,files,emails,profiles,actLog,collabs,graphs,behGraphs] = await Promise.all([
     sb('patients','?order=name'),
     sb('appointments','?order=start_time.asc'),
     sb('tasks','?order=due_date'),
@@ -1310,7 +1374,8 @@ async function loadAll(){
     sbAdmin('user_profiles','?select=*'),
     sb('activity_log','?order=created_at.desc&limit=200'),
     sb('patient_collaborators','?select=*'),
-    sb('saved_graphs','?order=created_at.desc')
+    sb('saved_graphs','?order=created_at.desc'),
+    sb('behavior_graphs','?order=created_at.asc')
   ]);
   allPatients=p.data||[]; allAppointments=a.data||[];
   allTasks=t.data||[]; allPayments=pay.data||[];
@@ -1319,7 +1384,7 @@ async function loadAll(){
   allGoals=g.data||[]; allQuestionnaires=q.data||[];
   allFiles=files.data||[]; allEmails=emails.data||[];
   allActivityLog=actLog.data||[]; allPatientCollaborators=collabs.data||[];
-  allSavedGraphs=graphs.data||[];
+  allSavedGraphs=graphs.data||[]; allBehaviorGraphs=behGraphs.data||[];
   if(profiles.data?.length) allUserProfiles=profiles.data;
   // Filter for non-admin users or view-as mode
   if(viewAsPermissions){
@@ -2439,6 +2504,7 @@ function showIntTab(id){
   document.getElementById(id)?.classList.add('active');
   currentIntTab=id;
   if(id==='it-progress'&&currentPatientId) renderIntProgress(currentPatientId);
+  if(id==='it-graphs'&&currentPatientId) renderPatientBehaviorGraphs(currentPatientId);
 }
 
 function renderPersonalTab(p){
@@ -3815,7 +3881,7 @@ function renderGoals(pid){
     </div>
     ${goals.length===0?'<div class="empty"><i data-lucide="target"></i><p>אין מטרות טיפוליות עדיין</p></div>':goals.map((g,i)=>`
     <div class="goal-card">
-      <div class="goal-header"><span style="font-weight:600">מטרה #${i+1}</span><div style="display:flex;gap:6px"><button class="btn btn-secondary btn-sm" onclick="openEditGoal('${g.id}','${pid}')"><i data-lucide="pencil"></i></button><button class="btn btn-danger btn-sm" onclick="deleteGoal('${g.id}','${pid}')"><i data-lucide="trash-2"></i></button></div></div>
+      <div class="goal-header"><span style="font-weight:600">מטרה #${i+1}</span><div style="display:flex;gap:6px"><button class="btn btn-secondary btn-sm" onclick="createGraphFromGoal('${g.id}','${pid}')" title="צור גרף מהמטרה"><i data-lucide="line-chart"></i></button><button class="btn btn-secondary btn-sm" onclick="openEditGoal('${g.id}','${pid}')"><i data-lucide="pencil"></i></button><button class="btn btn-danger btn-sm" onclick="deleteGoal('${g.id}','${pid}')"><i data-lucide="trash-2"></i></button></div></div>
       <div class="goal-body">
         ${g.description?`<div class="obs-field" style="grid-column:1/-1"><label>תיאור</label><p>${g.description}</p></div>`:''}
         ${g.functional_analysis?`<div class="obs-field"><label>ניתוח פונקציונלי</label><p>${g.functional_analysis}</p></div>`:''}
@@ -5316,6 +5382,313 @@ async function deleteGraph(graphId){
   allSavedGraphs=allSavedGraphs.filter(g=>g.id!==graphId);
   renderGraphsDashboard();
   toast('גרף נמחק','success');
+}
+
+// === BEHAVIOR GRAPHS (ABA) ===
+let bgCurrentPid=null;
+
+// גשר מ-SMART: פותח מודאל גרף עם פרטי המטרה ממולאים מראש
+function createGraphFromGoal(goalId, pid){
+  const g=allGoals.find(x=>x.id===goalId); if(!g) return;
+  const behavior=g.behavioral_goal||g.description||'';
+  const nm=g.target||(behavior?behavior.slice(0,40):'')||'תוכנית';
+  openNewBehaviorGraph(pid, {name:nm, target_behavior:behavior, goal_id:g.id});
+  toast('מלא את נקודות הנתונים ושמור','info');
+}
+
+// Chart.js inline plugin — קווים אנכיים לשלבי התוכנית (בלי תלות ב-CDN חיצוני)
+const phaseLinesPlugin={
+  id:'phaseLines',
+  afterDraw(chart, args, opts){
+    const markers=(opts&&opts.markers)||[];
+    if(!markers.length) return;
+    const xScale=chart.scales.x; if(!xScale) return;
+    const labels=(chart.data.labels||[]).map(String);
+    const {top,bottom}=chart.chartArea; const ctx=chart.ctx;
+    markers.forEach(m=>{
+      const idx=labels.indexOf(String(m.x));
+      if(idx<0) return;
+      let px; try{ px=xScale.getPixelForValue(m.x, idx); }catch(e){}
+      if(px==null||isNaN(px)){ try{ px=xScale.getPixelForTick(idx); }catch(e){} }
+      if(px==null||isNaN(px)) return;
+      ctx.save();
+      ctx.strokeStyle='rgba(163,45,45,0.85)'; ctx.lineWidth=1.5; ctx.setLineDash([5,4]);
+      ctx.beginPath(); ctx.moveTo(px,top); ctx.lineTo(px,bottom); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='rgba(163,45,45,1)'; ctx.font='11px Rubik, sans-serif'; ctx.textAlign='right';
+      ctx.fillText(m.label||'', px-4, top+12);
+      ctx.restore();
+    });
+  }
+};
+
+function buildBehaviorChart(graph){
+  let pts=[]; try{ pts=JSON.parse(graph.data_points||'[]'); }catch{}
+  let markers=[]; try{ markers=JSON.parse(graph.phase_markers||'[]'); }catch{}
+  const labels=pts.map(p=>String(p.x??''));
+  let values=pts.map(p=>Number(p.y)||0);
+  const gt=graph.graph_type||'line';
+  if(gt==='cumulative'){ let s=0; values=values.map(v=>{s+=v; return s;}); }
+  const yLabel=graph.y_axis||'ערך';
+  const color='rgba(24,95,165,1)';
+  if(gt==='pie'){
+    return {type:'pie', data:{labels, datasets:[{data:values, backgroundColor:['rgba(59,130,246,0.6)','rgba(34,197,94,0.6)','rgba(239,68,68,0.6)','rgba(168,85,247,0.6)','rgba(249,115,22,0.6)','rgba(20,184,166,0.6)']}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}}}};
+  }
+  const isBar=(gt==='bar');
+  const suggestedMax=(gt==='percent')?100:undefined;
+  return {
+    type:isBar?'bar':'line',
+    data:{labels, datasets:[{label:yLabel, data:values, borderColor:color, backgroundColor:isBar?'rgba(24,95,165,0.5)':'rgba(24,95,165,0.12)', borderWidth:2, fill:!isBar, tension:0.2, pointRadius:3}]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, phaseLines:{markers} },
+      scales:{
+        y:{beginAtZero:true, suggestedMax, title:{display:!!yLabel,text:yLabel,font:{size:11}}, ticks:{font:{size:10}}},
+        x:{title:{display:!!graph.x_axis,text:graph.x_axis||'',font:{size:11}}, ticks:{font:{size:10}}}
+      }
+    },
+    plugins:[phaseLinesPlugin]
+  };
+}
+
+// חישובים אוטומטיים מנקודות הנתונים
+function behaviorCalcs(graph){
+  let pts=[]; try{ pts=JSON.parse(graph.data_points||'[]'); }catch{}
+  let markers=[]; try{ markers=JSON.parse(graph.phase_markers||'[]'); }catch{}
+  const vals=pts.map(p=>Number(p.y)||0);
+  if(vals.length===0) return null;
+  // בסיס = ממוצע הנקודות שלפני קו השלב הראשון (או הנקודה הראשונה אם אין קו)
+  let baselineCount=1;
+  if(markers.length){
+    const idx=pts.findIndex(p=>String(p.x)===String(markers[0].x));
+    baselineCount = idx>0?idx:1;
+  }
+  const baselineVals=vals.slice(0,baselineCount);
+  const baseline=baselineVals.reduce((s,v)=>s+v,0)/baselineVals.length;
+  const current=vals[vals.length-1];
+  const change=current-baseline;
+  const pctImprove=baseline!==0? Math.round((change/Math.abs(baseline))*100) : (current>0?100:0);
+  // מגמה לפי סימן שיפוע רגרסיה
+  const n=vals.length, xs=vals.map((_,i)=>i);
+  const mx=xs.reduce((s,v)=>s+v,0)/n, my=vals.reduce((s,v)=>s+v,0)/n;
+  let num=0,den=0; for(let i=0;i<n;i++){num+=(xs[i]-mx)*(vals[i]-my);den+=(xs[i]-mx)*(xs[i]-mx);}
+  const slope= den!==0? num/den : 0;
+  const trend= Math.abs(slope)<0.05?'יציב':(slope>0?'עולה':'יורד');
+  // ימי הצלחה/כישלון לפי ערך יעד
+  let success=null, failure=null;
+  const tv=graph.target_value;
+  if(tv!==null&&tv!==undefined&&tv!==''){
+    const t=Number(tv), dir=graph.goal_direction||'increase';
+    success=vals.filter(v=> dir==='increase'? v>=t : v<=t).length;
+    failure=vals.length-success;
+  }
+  return {baseline:Math.round(baseline*10)/10, current, change:Math.round(change*10)/10, pctImprove, trend, success, failure};
+}
+
+function renderPatientBehaviorGraphs(pid){
+  const el=document.getElementById('it-graphs'); if(!el) return;
+  const graphs=allBehaviorGraphs.filter(g=>g.patient_id===pid).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  el.innerHTML=`
+    <div class="card">
+      <div class="card-header"><h3><i data-lucide="line-chart"></i> גרפים התנהגותיים</h3><button class="btn btn-primary btn-sm" onclick="openNewBehaviorGraph('${pid}')">+ גרף חדש</button></div>
+      <div class="card-body">
+        ${graphs.length===0?'<div class="empty"><i data-lucide="line-chart"></i><p>אין גרפים עדיין — לחץ "+ גרף חדש" כדי ליצור</p></div>':
+        `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px">${graphs.map(g=>behaviorGraphCardHTML(g)).join('')}</div>`}
+      </div>
+    </div>`;
+  if(window.lucide) lucide.createIcons();
+  graphs.forEach(g=>{
+    const canvas=document.getElementById('beh-chart-'+g.id);
+    if(!canvas) return;
+    try{ new Chart(canvas, buildBehaviorChart(g)); }catch(e){ console.warn('behavior chart failed',e); }
+  });
+}
+
+function behaviorGraphCardHTML(g){
+  const c=behaviorCalcs(g);
+  const dtLabels={baseline:'בסיס',intervention:'התערבות',followup:'מעקב',generalization:'הכללה'};
+  const calcHtml=c?`<div style="display:flex;flex-wrap:wrap;gap:5px;font-size:11px;margin-bottom:8px">
+    <span class="badge" style="background:var(--blue-light);color:var(--blue)">בסיס: ${c.baseline}</span>
+    <span class="badge ${c.change>=0?'badge-green':'badge-red'}">שינוי: ${c.change>=0?'+':''}${c.change}</span>
+    <span class="badge badge-amber">שיפור: ${c.pctImprove}%</span>
+    <span class="badge" style="background:var(--g100);color:var(--g600)">מגמה: ${c.trend}</span>
+    ${c.success!=null?`<span class="badge badge-green">הצלחה: ${c.success}</span><span class="badge badge-red">כישלון: ${c.failure}</span>`:''}
+  </div>`:'<div style="font-size:12px;color:var(--g400);margin-bottom:8px">אין נתונים עדיין</div>';
+  return `<div class="card" style="padding:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:6px">
+      <div><div style="font-weight:600;color:var(--blue)">${g.name||''}</div>
+        <div style="font-size:11px;color:var(--g500)">${dtLabels[g.data_type]||''}${g.target_behavior?' · '+g.target_behavior:''}</div></div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn btn-secondary btn-sm" onclick="editBehaviorGraph('${g.id}','${g.patient_id}')" title="ערוך נתונים"><i data-lucide="pencil"></i></button>
+        <button class="btn btn-secondary btn-sm" onclick="exportBehaviorGraphPDF('${g.id}')" title="ייצוא PDF"><i data-lucide="download"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteBehaviorGraph('${g.id}','${g.patient_id}')" title="מחק"><i data-lucide="trash-2"></i></button>
+      </div>
+    </div>
+    ${calcHtml}
+    <div style="height:240px;position:relative"><canvas id="beh-chart-${g.id}"></canvas></div>
+  </div>`;
+}
+
+// שורות הזנת נתונים דינמיות
+function bgDataRowHTML(x='',y='',note=''){
+  const esc=s=>String(s).replace(/"/g,'&quot;');
+  return `<div class="bg-data-row" style="display:grid;grid-template-columns:1fr 1fr 1.4fr auto;gap:6px;margin-bottom:6px">
+    <input type="text" class="form-control bg-dx" placeholder="X (למשל מפגש 1)" value="${esc(x)}">
+    <input type="number" class="form-control bg-dy" placeholder="ערך" value="${y===''?'':y}">
+    <input type="text" class="form-control bg-dn" placeholder="הערה (רשות)" value="${esc(note)}">
+    <button class="btn btn-danger btn-sm" onclick="this.parentNode.remove()"><i data-lucide="x"></i></button>
+  </div>`;
+}
+function addBgDataRow(x='',y='',note=''){
+  document.getElementById('bg-data-rows').insertAdjacentHTML('beforeend', bgDataRowHTML(x,y,note));
+  if(window.lucide) lucide.createIcons();
+}
+function bgPhaseRowHTML(x='',label=''){
+  const esc=s=>String(s).replace(/"/g,'&quot;');
+  return `<div class="bg-phase-row" style="display:grid;grid-template-columns:1fr 1.6fr auto;gap:6px;margin-bottom:6px">
+    <input type="text" class="form-control bg-px" placeholder="ערך X מהטבלה" value="${esc(x)}">
+    <input type="text" class="form-control bg-pl" placeholder="כותרת (למשל: תחילת התערבות)" value="${esc(label)}">
+    <button class="btn btn-danger btn-sm" onclick="this.parentNode.remove()"><i data-lucide="x"></i></button>
+  </div>`;
+}
+function addBgPhaseRow(x='',label=''){
+  document.getElementById('bg-phase-rows').insertAdjacentHTML('beforeend', bgPhaseRowHTML(x,label));
+  if(window.lucide) lucide.createIcons();
+}
+
+function openNewBehaviorGraph(pid, prefill){
+  bgCurrentPid=pid;
+  document.getElementById('bg-edit-id').value='';
+  document.getElementById('bg-goal-id').value=(prefill&&prefill.goal_id)||'';
+  document.getElementById('bg-name').value=(prefill&&prefill.name)||'';
+  document.getElementById('bg-target-behavior').value=(prefill&&prefill.target_behavior)||'';
+  document.getElementById('bg-data-type').value='intervention';
+  document.getElementById('bg-graph-type').value='line';
+  document.getElementById('bg-x-axis').value='מספר מפגש';
+  document.getElementById('bg-y-axis').value='מספר פעמים';
+  document.getElementById('bg-direction').value='decrease';
+  document.getElementById('bg-target-value').value='';
+  document.getElementById('bg-data-rows').innerHTML='';
+  document.getElementById('bg-phase-rows').innerHTML='';
+  addBgDataRow(); addBgDataRow(); addBgDataRow();
+  openModal('modal-behavior-graph');
+  if(window.lucide) lucide.createIcons();
+}
+
+function editBehaviorGraph(id, pid){
+  const g=allBehaviorGraphs.find(x=>x.id===id); if(!g) return;
+  bgCurrentPid=pid;
+  document.getElementById('bg-edit-id').value=g.id;
+  document.getElementById('bg-goal-id').value=g.goal_id||'';
+  document.getElementById('bg-name').value=g.name||'';
+  document.getElementById('bg-target-behavior').value=g.target_behavior||'';
+  document.getElementById('bg-data-type').value=g.data_type||'intervention';
+  document.getElementById('bg-graph-type').value=g.graph_type||'line';
+  document.getElementById('bg-x-axis').value=g.x_axis||'';
+  document.getElementById('bg-y-axis').value=g.y_axis||'';
+  document.getElementById('bg-direction').value=g.goal_direction||'increase';
+  document.getElementById('bg-target-value').value=(g.target_value==null?'':g.target_value);
+  document.getElementById('bg-data-rows').innerHTML='';
+  document.getElementById('bg-phase-rows').innerHTML='';
+  let pts=[]; try{pts=JSON.parse(g.data_points||'[]');}catch{}
+  let mk=[]; try{mk=JSON.parse(g.phase_markers||'[]');}catch{}
+  if(pts.length) pts.forEach(p=>addBgDataRow(p.x,p.y,p.note)); else addBgDataRow();
+  mk.forEach(m=>addBgPhaseRow(m.x,m.label));
+  openModal('modal-behavior-graph');
+  if(window.lucide) lucide.createIcons();
+}
+
+async function saveBehaviorGraph(){
+  const pid=bgCurrentPid; if(!pid) return;
+  const name=document.getElementById('bg-name').value.trim();
+  if(!name) return toast('נא להזין שם לתוכנית','error');
+  const dataPoints=[...document.querySelectorAll('#bg-data-rows .bg-data-row')].map(r=>({
+    x:r.querySelector('.bg-dx').value.trim(),
+    y:parseFloat(r.querySelector('.bg-dy').value)||0,
+    note:r.querySelector('.bg-dn').value.trim()
+  })).filter(p=>p.x!=='');
+  const phaseMarkers=[...document.querySelectorAll('#bg-phase-rows .bg-phase-row')].map(r=>({
+    x:r.querySelector('.bg-px').value.trim(),
+    label:r.querySelector('.bg-pl').value.trim()
+  })).filter(m=>m.x!=='');
+  const tvRaw=document.getElementById('bg-target-value').value;
+  const body={
+    patient_id:pid, name,
+    target_behavior:document.getElementById('bg-target-behavior').value.trim()||null,
+    data_type:document.getElementById('bg-data-type').value,
+    graph_type:document.getElementById('bg-graph-type').value,
+    x_axis:document.getElementById('bg-x-axis').value.trim()||null,
+    y_axis:document.getElementById('bg-y-axis').value.trim()||null,
+    goal_direction:document.getElementById('bg-direction').value,
+    target_value:tvRaw===''?null:parseFloat(tvRaw),
+    data_points:JSON.stringify(dataPoints),
+    phase_markers:JSON.stringify(phaseMarkers),
+    goal_id:document.getElementById('bg-goal-id').value||null
+  };
+  const editId=document.getElementById('bg-edit-id').value;
+  let r;
+  if(editId){ r=await sbUpdate('behavior_graphs',editId,body); }
+  else { body.created_by=currentUser?.id||null; r=await sbInsert('behavior_graphs',body); }
+  if(r.error) return toast('שגיאה בשמירה: '+r.error,'error');
+  toast('הגרף נשמר','success');
+  closeModal('modal-behavior-graph');
+  await loadAll();
+  renderPatientBehaviorGraphs(pid);
+}
+
+async function deleteBehaviorGraph(id, pid){
+  if(!confirm('למחוק גרף זה?')) return;
+  const r=await sbDelete('behavior_graphs',id);
+  if(r&&r.error) return toast('שגיאה במחיקה: '+r.error,'error');
+  allBehaviorGraphs=allBehaviorGraphs.filter(g=>g.id!==id);
+  renderPatientBehaviorGraphs(pid);
+  toast('הגרף נמחק','success');
+}
+
+async function exportBehaviorGraphPDF(graphId){
+  const g=allBehaviorGraphs.find(x=>x.id===graphId); if(!g) return;
+  const patient=allPatients.find(p=>p.id===g.patient_id);
+  const canvas=document.getElementById('beh-chart-'+graphId);
+  const imgData=canvas?canvas.toDataURL('image/png'):null;
+  const c=behaviorCalcs(g);
+  const dtLabels={baseline:'איסוף נתוני בסיס',intervention:'תוכנית התערבות',followup:'מעקב',generalization:'הכללה'};
+  const td='style="padding:6px;border-bottom:1px solid #E2E8F0"';
+  const calcRows=c?`
+    <tr><td ${td}>ממוצע בסיס</td><td ${td}>${c.baseline}</td></tr>
+    <tr><td ${td}>ערך נוכחי</td><td ${td}>${c.current}</td></tr>
+    <tr><td ${td}>שינוי מהבסיס</td><td ${td}>${c.change>=0?'+':''}${c.change}</td></tr>
+    <tr><td ${td}>אחוז שיפור</td><td ${td}>${c.pctImprove}%</td></tr>
+    <tr><td ${td}>מגמה</td><td ${td}>${c.trend}</td></tr>
+    ${c.success!=null?`<tr><td ${td}>ימי הצלחה</td><td ${td}>${c.success}</td></tr><tr><td ${td}>ימי כישלון</td><td ${td}>${c.failure}</td></tr>`:''}
+  `:'<tr><td '+td+' colspan="2">אין נתונים</td></tr>';
+  const wrapper=document.createElement('div');
+  wrapper.style.cssText='position:absolute;top:-9999px;left:0;width:794px;padding:36px 48px;font-family:Arial,Helvetica,sans-serif;direction:rtl;color:#1E293B;background:white;box-sizing:border-box;z-index:99999';
+  wrapper.innerHTML=`
+    <div style="font-size:20px;font-weight:700;color:#0C3A5F;margin-bottom:6px">גרף התנהגותי — ${g.name||''}</div>
+    <div style="font-size:13px;color:#475569;margin-bottom:2px">מטופל: ${patient?.name||'—'}</div>
+    <div style="font-size:13px;color:#475569;margin-bottom:2px">התנהגות מטרה: ${g.target_behavior||'—'}</div>
+    <div style="font-size:13px;color:#475569;margin-bottom:14px">סוג נתונים: ${dtLabels[g.data_type]||'—'}</div>
+    ${imgData?`<img src="${imgData}" style="width:100%;max-width:680px;border:1px solid #E2E8F0;border-radius:8px;margin-bottom:16px">`:''}
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr><th style="text-align:right;border-bottom:2px solid #0C3A5F;padding:6px">חישוב</th><th style="text-align:right;border-bottom:2px solid #0C3A5F;padding:6px">ערך</th></tr></thead>
+      <tbody>${calcRows}</tbody>
+    </table>`;
+  document.body.appendChild(wrapper);
+  toast('מכין PDF...','');
+  await new Promise(res=>setTimeout(res,400));
+  try{
+    const cv=await html2canvas(wrapper,{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff'});
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
+    const imgH=(cv.height*pw)/cv.width;
+    let ps=0;
+    while(ps<imgH){ if(ps>0)pdf.addPage(); pdf.addImage(cv.toDataURL('image/jpeg',0.95),'JPEG',0,-ps,pw,imgH); ps+=ph; }
+    pdf.save(`גרף-${g.name||'התנהגותי'}-${patient?.name||''}.pdf`);
+    toast('PDF הורד','success');
+  }catch(e){ toast('שגיאה ביצירת PDF','error'); }
+  finally{ document.body.removeChild(wrapper); }
 }
 
 // === EMAIL ===
