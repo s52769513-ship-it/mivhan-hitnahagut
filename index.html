@@ -5977,21 +5977,23 @@ async function aiSuggestGraphs(pid){
   openModal('modal-bg-suggest');
   if(window.lucide) lucide.createIcons();
 
-  // דייג'סט של התיק
+  // דייג'סט של התיק — כולל תאריכים, כדי שה-AI יוכל לחלץ סדרת נתונים ואירועים
   const goals=allGoals.filter(g=>g.patient_id===pid).map(g=>[g.target,g.behavioral_goal,g.description].filter(Boolean).join(' | ')).filter(Boolean);
-  const obs=allObservations.filter(o=>o.patient_id===pid).map(o=>{
-    if(o.circumstance&&o.circumstance.trim().startsWith('{')){ try{const j=JSON.parse(o.circumstance);return [(j.rows||[]).map(r=>r.b).filter(Boolean).join('; '),j.summary].filter(Boolean).join(' ');}catch{return '';} }
-    return [o.behavior,o.notes].filter(Boolean).join(' ');
+  const obs=allObservations.filter(o=>o.patient_id===pid).sort((a,b)=>new Date(a.obs_date||0)-new Date(b.obs_date||0)).map(o=>{
+    let t='';
+    if(o.circumstance&&o.circumstance.trim().startsWith('{')){ try{const j=JSON.parse(o.circumstance);t=[(j.rows||[]).map(r=>r.b).filter(Boolean).join('; '),j.summary].filter(Boolean).join(' ');}catch{t='';} }
+    else t=[o.behavior,o.notes].filter(Boolean).join(' ');
+    return t?`${o.obs_date?fmtDate(o.obs_date):''}: ${t}`.slice(0,200):'';
   }).filter(Boolean);
-  const noteTxt=allNotes.filter(n=>n.patient_id===pid).map(n=>n.content).filter(Boolean);
+  const noteTxt=allNotes.filter(n=>n.patient_id===pid).sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0)).map(n=>n.content?`${n.created_at?fmtDate(n.created_at):''}: ${n.content}`.slice(0,200):'').filter(Boolean);
   const taskTxt=allTasks.filter(t=>t.patient_id===pid).map(t=>t.name).filter(Boolean);
   const apts=allAppointments.filter(a=>a.patient_id===pid);
   const attended=apts.filter(a=>a.arrived).length;
 
   const digest=[
     goals.length?'מטרות טיפול:\n- '+goals.slice(0,8).join('\n- '):'',
-    obs.length?'תצפיות:\n- '+obs.slice(0,10).map(s=>s.slice(0,150)).join('\n- '):'',
-    noteTxt.length?'הערות:\n- '+noteTxt.slice(0,8).map(s=>s.slice(0,150)).join('\n- '):'',
+    obs.length?'תצפיות (עם תאריך):\n- '+obs.slice(-15).join('\n- '):'',
+    noteTxt.length?'הערות (עם תאריך):\n- '+noteTxt.slice(-12).join('\n- '):'',
     taskTxt.length?'משימות: '+taskTxt.slice(0,10).join(', '):'',
     apts.length?`נוכחות: הגיע ל-${attended} מתוך ${apts.length} מפגשים`:''
   ].filter(Boolean).join('\n\n');
@@ -6009,16 +6011,18 @@ async function aiSuggestGraphs(pid){
 
   // הצעות AI (מבנה בלבד)
   if(digest.trim()){
-    const prompt=`אתה מומחה ABA. לפניך תקציר מתיק של מטופל. הצע 2-4 גרפים התנהגותיים שכדאי לעקוב אחריהם עבור הילד הזה.
+    const prompt=`אתה מומחה ABA. לפניך תקציר מתיק של מטופל (כולל תאריכים). הצע 2-4 גרפים התנהגותיים שכדאי לעקוב אחריהם עבור הילד הזה.
+עבור כל הצעה — חלץ מהטקסט כמה שיותר פרטים:
+• data_points — אם הטקסט מזכיר כמות/תדירות/משך של ההתנהגות בתאריך מסוים, בנה נקודות נתונים [{x:"תאריך/מפגש", y:מספר, note:"ציטוט קצר"}]. אם אין מספרים — החזר [] (אל תמציא מספרים).
+• phase_markers — אם הטקסט מזכיר אירוע משמעותי (החלפת מטפל, תחילת תרופה, מעבר כיתה, שינוי תגמולים) — הוסף [{x:"תאריך", label:"תיאור"}].
 החזר אך ורק JSON חוקי:
-{ "suggestions": [ {"name":"שם בעברית","target_behavior":"ההתנהגות הנמדדת","data_type":"baseline|intervention|followup|generalization","chart_type":"line|bar|percent|cumulative|pie","x_axis":"תווית בעברית","y_axis":"תווית בעברית","goal_direction":"increase|decrease","target_value":מספר או null,"rationale":"נימוק קצר בעברית למה הגרף הזה מתאים"} ] }
-בסס את ההצעות על התוכן. אל תמציא נתונים — רק הגדרות גרף.
+{ "suggestions": [ {"name":"שם בעברית","target_behavior":"ההתנהגות הנמדדת","data_type":"baseline|intervention|followup|generalization","chart_type":"line|bar|percent|cumulative|pie","x_axis":"תווית בעברית","y_axis":"תווית בעברית","goal_direction":"increase|decrease","target_value":מספר או null,"rationale":"נימוק קצר בעברית","data_points":[],"phase_markers":[]} ] }
 
 תקציר התיק:
 ${digest}`;
     try{
-      const j=await openaiJSON(prompt, 900);
-      (Array.isArray(j.suggestions)?j.suggestions:[]).forEach(s=>{ if(s&&s.name) suggestions.push(s); });
+      const j=await openaiJSON(prompt, 1600);
+      (Array.isArray(j.suggestions)?j.suggestions:[]).forEach(s=>{ if(s&&s.name){ if(!Array.isArray(s.data_points))s.data_points=[]; if(!Array.isArray(s.phase_markers))s.phase_markers=[]; suggestions.push(s); } });
     }catch(e){
       if(suggestions.length===0){
         document.getElementById('bg-suggest-body').innerHTML='<div class="empty"><p>שגיאה: '+(e.message||e)+'</p></div>';
@@ -6039,11 +6043,11 @@ ${digest}`;
   document.getElementById('bg-suggest-body').innerHTML=suggestions.map((s,i)=>`
     <div style="border:1px solid var(--g200);border-radius:8px;padding:12px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div style="font-weight:600;color:var(--blue)">${s.name||''}${s.real?' <span class="badge badge-green" style="font-size:10px">נתונים אמיתיים</span>':''}</div>
+        <div style="font-weight:600;color:var(--blue)">${s.name||''}${s.real?' <span class="badge badge-green" style="font-size:10px">נתונים אמיתיים</span>':(Array.isArray(s.data_points)&&s.data_points.length?` <span class="badge badge-amber" style="font-size:10px">${s.data_points.length} נקודות מהטקסט</span>`:'')}</div>
         <button class="btn btn-primary btn-sm" style="flex-shrink:0" onclick="applyBehaviorSuggestion(${i})"><i data-lucide="plus"></i> צור גרף</button>
       </div>
       <div style="font-size:12px;color:var(--g600);margin-top:4px">${s.rationale||''}</div>
-      <div style="font-size:11px;color:var(--g400);margin-top:6px">${dtLabels[s.data_type]||''} · ${ctLabels[s.chart_type]||s.chart_type||''} · ${s.x_axis||''} / ${s.y_axis||''}</div>
+      <div style="font-size:11px;color:var(--g400);margin-top:6px">${dtLabels[s.data_type]||''} · ${ctLabels[s.chart_type]||s.chart_type||''} · ${s.x_axis||''} / ${s.y_axis||''}${Array.isArray(s.phase_markers)&&s.phase_markers.length?' · '+s.phase_markers.length+' קווי שלב':''}</div>
     </div>`).join('');
   if(window.lucide) lucide.createIcons();
 }
