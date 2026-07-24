@@ -1160,6 +1160,11 @@ tr:last-child td{border-bottom:none}
       <div class="form-group"><label class="form-label">שם התוכנית</label><input type="text" class="form-control" id="bg-name" placeholder="למשל: הפחתת התפרצויות"></div>
       <div class="form-group"><label class="form-label">התנהגות המטרה</label><input type="text" class="form-control" id="bg-target-behavior" placeholder="ההתנהגות שנמדדת"></div>
 
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn btn-secondary btn-sm" id="bg-ai-build" onclick="aiBuildBehaviorGraph()"><i data-lucide="sparkles"></i> בנה עם AI</button>
+        <button class="btn btn-secondary btn-sm" id="bg-ai-extract" onclick="aiExtractBehaviorData()"><i data-lucide="wand-2"></i> משוך נתונים מהתצפיות</button>
+      </div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">
         <div class="form-group"><label class="form-label">סוג הנתונים</label>
           <select class="form-control" id="bg-data-type">
@@ -5812,6 +5817,132 @@ async function exportBehaviorGraphPDF(graphId){
     toast('PDF הורד','success');
   }catch(e){ toast('שגיאה ביצירת PDF','error'); }
   finally{ document.body.removeChild(wrapper); }
+}
+
+// === BEHAVIOR GRAPH: AI ASSIST ===
+// עוזר משותף — קורא ל-OpenAI ומחזיר JSON מובנה (מבוסס על callGeminiSMART)
+async function openaiJSON(prompt, maxTokens=800){
+  if(!openaiKey) throw new Error('NO_KEY');
+  let r;
+  try{
+    r=await fetch('https://api.openai.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+openaiKey},
+      body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],max_tokens:maxTokens,temperature:0.3,response_format:{type:'json_object'}})
+    });
+  }catch(netErr){ throw new Error('בעיית חיבור לאינטרנט. בדוק את החיבור ונסה שוב.'); }
+  if(!r.ok){ let e={}; try{e=await r.json();}catch{} throw new Error(openaiHebrewError(r.status,e)); }
+  const data=await r.json();
+  const txt=data.choices?.[0]?.message?.content||'{}';
+  try{ return JSON.parse(txt); }catch(e){ throw new Error('התקבלה תשובה לא תקינה מה-AI. נסה שוב.'); }
+}
+
+function bgRequireOpenAI(){
+  if(openaiKey) return true;
+  toast('נא להגדיר מפתח OpenAI בהגדרות','error');
+  closeModal('modal-behavior-graph');
+  showView('settings');
+  setTimeout(()=>{const el=document.getElementById('settings-openai-key');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}},300);
+  return false;
+}
+
+function bgSetBtnLoading(id, loading, labelHtml){
+  const btn=document.getElementById(id); if(!btn) return;
+  btn.disabled=loading;
+  btn.innerHTML=loading?'<span class="spin" style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px"></span> חושב...':labelHtml;
+  if(!loading&&window.lucide) lucide.createIcons();
+}
+
+// יכולת 1 — AI בונה את הגדרות הגרף מהמטרה (בקשת ה-Word)
+async function aiBuildBehaviorGraph(){
+  if(!bgRequireOpenAI()) return;
+  const behavior=document.getElementById('bg-target-behavior').value.trim();
+  const name=document.getElementById('bg-name').value.trim();
+  const goalId=document.getElementById('bg-goal-id').value;
+  let goalText='';
+  if(goalId){ const g=allGoals.find(x=>x.id===goalId); if(g) goalText=[g.description,g.behavioral_goal,g.target].filter(Boolean).join(' | '); }
+  if(!behavior && !name && !goalText) return toast('הזן קודם שם או התנהגות מטרה','error');
+  bgSetBtnLoading('bg-ai-build', true);
+  const prompt=`אתה מומחה לניתוח התנהגותי יישומי (ABA). על סמך הנתונים הבאים, קבע את ההגדרות הטובות ביותר לגרף מעקב התנהגותי.
+שם התוכנית: ${name||'לא צוין'}
+התנהגות המטרה: ${behavior||'לא צוין'}
+${goalText?'פרטי המטרה: '+goalText:''}
+
+החזר אך ורק JSON חוקי במבנה הבא (ללא טקסט נוסף):
+{
+ "name": "שם קצר לתוכנית בעברית",
+ "target_behavior": "תיאור קצר של ההתנהגות הנמדדת בעברית",
+ "data_type": "baseline|intervention|followup|generalization",
+ "graph_type": "line|bar|percent|cumulative|pie",
+ "x_axis": "תווית ציר X בעברית (למשל: מספר מפגש / ימים / שבועות)",
+ "y_axis": "תווית ציר Y בעברית (למשל: מספר פעמים / אחוז הצלחה / דקות)",
+ "goal_direction": "increase|decrease",
+ "target_value": מספר או null,
+ "phase_label": "כותרת קו שלב מוצע בעברית (למשל: תחילת התערבות)"
+}
+בחר increase אם רוצים להגביר את ההתנהגות, decrease אם רוצים להפחית.`;
+  try{
+    const j=await openaiJSON(prompt, 500);
+    const setV=(id,v)=>{ const el=document.getElementById(id); if(el&&v!=null&&v!=='') el.value=v; };
+    if(j.name && !name) setV('bg-name', j.name);
+    if(j.target_behavior && !behavior) setV('bg-target-behavior', j.target_behavior);
+    if(['baseline','intervention','followup','generalization'].includes(j.data_type)) setV('bg-data-type', j.data_type);
+    if(['line','bar','percent','cumulative','pie'].includes(j.graph_type)) setV('bg-graph-type', j.graph_type);
+    setV('bg-x-axis', j.x_axis); setV('bg-y-axis', j.y_axis);
+    if(['increase','decrease'].includes(j.goal_direction)) setV('bg-direction', j.goal_direction);
+    if(typeof j.target_value==='number') setV('bg-target-value', j.target_value);
+    if(j.phase_label){ addBgPhaseRow('', j.phase_label); }
+    toast('ה-AI מילא את הגדרות הגרף — בדוק והזן נתונים','success');
+  }catch(e){
+    if(e.message==='NO_KEY') return bgRequireOpenAI();
+    toast('שגיאה: '+e.message,'error');
+  }finally{ bgSetBtnLoading('bg-ai-build', false, '<i data-lucide="sparkles"></i> בנה עם AI'); }
+}
+
+// יכולת 2 — AI מנסה למשוך נקודות נתונים מהתצפיות/הערות (טיוטה לעריכה)
+async function aiExtractBehaviorData(){
+  if(!bgRequireOpenAI()) return;
+  const pid=bgCurrentPid; if(!pid) return;
+  const behavior=document.getElementById('bg-target-behavior').value.trim();
+  if(!behavior) return toast('הזן קודם את התנהגות המטרה','error');
+  // איסוף רשומות טקסט של המטופל
+  const recs=[];
+  allObservations.filter(o=>o.patient_id===pid).sort((a,b)=>new Date(a.obs_date||0)-new Date(b.obs_date||0)).forEach(o=>{
+    const d=o.obs_date?fmtDate(o.obs_date):'';
+    let txt='';
+    if(o.circumstance && o.circumstance.trim().startsWith('{')){
+      try{ const j=JSON.parse(o.circumstance); const bs=(j.rows||[]).map(r=>r.b).filter(Boolean).join('; '); txt=[j.summary,bs].filter(Boolean).join(' | '); }catch{ txt=o.circumstance; }
+    } else { txt=[o.behavior,o.notes].filter(Boolean).join(' | '); }
+    if(txt) recs.push(`תצפית ${d}: ${txt}`.slice(0,220));
+  });
+  allNotes.filter(n=>n.patient_id===pid).sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0)).forEach(n=>{
+    if(n.content) recs.push(`הערה ${n.created_at?fmtDate(n.created_at):''}: ${n.content}`.slice(0,220));
+  });
+  allAppointments.filter(a=>a.patient_id===pid).sort((a,b)=>new Date(a.start_time||0)-new Date(b.start_time||0)).forEach((a,i)=>{
+    recs.push(`מפגש ${i+1} (${a.start_time?fmtDate(a.start_time):''}): ${a.arrived?'הגיע':'לא הגיע'}`);
+  });
+  if(recs.length===0){ return toast('אין תצפיות/הערות למטופל זה','info'); }
+  const digest=recs.slice(-30).join('\n');
+  bgSetBtnLoading('bg-ai-extract', true);
+  const prompt=`אתה מומחה ABA. לפניך רשומות טקסט של מטופל. חלץ סדרת נתונים כמותית עבור התנהגות המטרה: "${behavior}".
+החזר אך ורק JSON חוקי:
+{ "points": [ {"x":"תווית מפגש/תאריך","y":מספר,"note":"אופציונלי"} ], "phase_markers": [ {"x":"תווית","label":"כותרת"} ] }
+כללים: y חייב להיות מספר (כמות/אחוז/דקות). כלול נקודה רק אם הרשומה תומכת בערך מספרי עבור ההתנהגות. אם אין נתונים כמותיים ברורים — החזר points ריק. אל תמציא מספרים.
+
+רשומות:
+${digest}`;
+  try{
+    const j=await openaiJSON(prompt, 900);
+    const pts=Array.isArray(j.points)?j.points.filter(p=>p&&p.x!=null&&typeof p.y==='number'):[];
+    if(pts.length===0){ toast('לא נמצאו נתונים כמותיים מספיקים ברשומות — הזן ידנית','info'); return; }
+    document.getElementById('bg-data-rows').innerHTML='';
+    pts.forEach(p=>addBgDataRow(String(p.x), p.y, p.note||''));
+    if(Array.isArray(j.phase_markers)) j.phase_markers.filter(m=>m&&m.x).forEach(m=>addBgPhaseRow(String(m.x), m.label||''));
+    toast(`ה-AI מילא ${pts.length} נקודות — בדוק ותקן לפי הצורך`,'success');
+  }catch(e){
+    if(e.message==='NO_KEY') return bgRequireOpenAI();
+    toast('שגיאה: '+e.message,'error');
+  }finally{ bgSetBtnLoading('bg-ai-extract', false, '<i data-lucide="wand-2"></i> משוך נתונים מהתצפיות'); }
 }
 
 // === BEHAVIOR GRAPH: HELP / SQL / LIVE DEMO ===
