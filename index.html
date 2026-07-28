@@ -110,6 +110,7 @@ tr:last-child td{border-bottom:none}
 .tab-content{display:none}.tab-content.active{display:block}
 #file-tabs{flex-wrap:wrap;overflow-x:visible;gap:2px 4px;padding-bottom:2px}
 #file-tabs .tab-btn{padding:8px 11px;font-size:13px}
+#file-tabs .tab-sep{width:1px;align-self:stretch;margin:4px 8px;background:var(--g200)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--g200);border-radius:12px;overflow:hidden}
 .cal-header{background:var(--g50);padding:10px 4px;text-align:center;font-size:12px;font-weight:600;color:var(--g500)}
 .cal-day{background:white;min-height:90px;padding:5px;cursor:pointer;transition:background .1s}
@@ -369,15 +370,16 @@ tr:last-child td{border-bottom:none}
           <button class="tab-btn" onclick="showFileTab('dt-questionnaires',this)">שאלונים</button>
           <button class="tab-btn" onclick="showFileTab('dt-observations',this)">תצפיות</button>
           <button class="tab-btn" onclick="showFileTab('it-treatment',this)">מטרות</button>
-          <button class="tab-btn" onclick="showFileTab('it-tank',this)">טנ"ק</button>
           <button class="tab-btn" onclick="showFileTab('it-docs',this)">מסמכי תוכנית התערבות</button>
           <button class="tab-btn" onclick="showFileTab('it-graphs',this)">גרפים</button>
+          <button class="tab-btn" onclick="showFileTab('dt-documents',this)" title="נספח א׳ · מסמכים רפואיים">נספח א׳</button>
+          <button class="tab-btn" onclick="showFileTab('tab-appointments',this)" title="נספח ב׳ · פגישות">נספח ב׳</button>
+          <button class="tab-btn" onclick="showFileTab('tab-notes',this)" title="נספח ג׳ · עדכונים">נספח ג׳</button>
+          <button class="tab-btn" onclick="showFileTab('tab-tasks',this)" title="נספח ד׳ · משימות">נספח ד׳</button>
+          <button class="tab-btn" data-admin-tab onclick="showFileTab('tab-payments',this)" title="נספח ה׳ · כספים">נספח ה׳</button>
+          <span class="tab-sep"></span>
+          <button class="tab-btn" onclick="showFileTab('it-tank',this)">טנ"ק</button>
           <button class="tab-btn" onclick="showFileTab('it-progress',this)">התקדמות</button>
-          <button class="tab-btn" onclick="showFileTab('dt-documents',this)">נספח א׳ · מסמכים רפואיים</button>
-          <button class="tab-btn" onclick="showFileTab('tab-appointments',this)">נספח ב׳ · פגישות</button>
-          <button class="tab-btn" onclick="showFileTab('tab-notes',this)">נספח ג׳ · עדכונים</button>
-          <button class="tab-btn" onclick="showFileTab('tab-tasks',this)">נספח ד׳ · משימות</button>
-          <button class="tab-btn" data-admin-tab onclick="showFileTab('tab-payments',this)">נספח ה׳ · כספים</button>
           <button class="tab-btn" onclick="showFileTab('tab-emails',this)"><i data-lucide="mail"></i> מיילים</button>
           <button class="tab-btn" onclick="showFileTab('main-tab-reports',this)"><i data-lucide="file-text"></i> דוחות</button>
         </div>
