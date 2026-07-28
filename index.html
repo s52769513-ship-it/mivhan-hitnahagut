@@ -435,7 +435,7 @@ tr:last-child td{border-bottom:none}
       <!-- APPOINTMENTS -->
       <div class="view" id="view-appointments">
         <div class="card">
-          <div class="card-header"><h3>כל הפגישות</h3><button class="btn btn-primary" onclick="openModal('modal-new-appointment')">+ פגישה חדשה</button></div>
+          <div class="card-header"><h3>כל הפגישות</h3><div style="display:flex;gap:10px;align-items:center"><span id="period-apts"></span><button class="btn btn-primary" onclick="openModal('modal-new-appointment')">+ פגישה חדשה</button></div></div>
           <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>מטופל</th><th>תאריך</th><th>שעה</th><th>מחיר</th><th>הגיע</th></tr></thead><tbody id="apts-tbody"></tbody></table></div>
         </div>
       </div>
@@ -453,6 +453,7 @@ tr:last-child td{border-bottom:none}
                 <button class="pill" onclick="setTaskFilter('overdue',this)">באיחור</button>
                 <button class="pill" onclick="setTaskFilter('done',this)">בוצע</button>
               </div>
+              <span id="period-tasks"></span>
               <button class="btn btn-primary" onclick="openModal('modal-new-task')">+ משימה</button>
             </div>
           </div>
@@ -466,6 +467,7 @@ tr:last-child td{border-bottom:none}
           <div class="card-header">
             <h3><i data-lucide="message-square"></i> כל העדכונים</h3>
             <div style="display:flex;gap:10px;align-items:center">
+              <span id="period-notes"></span>
               <select id="notes-patient-filter" class="form-control" style="width:200px;font-size:13px" onchange="renderAllNotes()"><option value="">כל המטופלים</option></select>
             </div>
           </div>
@@ -475,7 +477,32 @@ tr:last-child td{border-bottom:none}
 
       <!-- FINANCES -->
       <div class="view" id="view-finances">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-body" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <label class="form-label" style="margin:0">שנת כספים</label>
+            <select class="form-control" id="fin-year" style="width:130px" onchange="renderFinances()"></select>
+            <span id="fin-year-note" style="font-size:12px;color:var(--g500)"></span>
+          </div>
+        </div>
         <div class="stats-grid" id="finance-stats"></div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><h3>פירוט חודשי</h3></div>
+          <div style="overflow-x:auto"><table><thead><tr><th>חודש</th><th>צפוי (פגישות)</th><th>נכנס בפועל</th><th>יתרה לחודש</th></tr></thead><tbody id="finance-months"></tbody></table></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:16px">
+          <div class="card" style="padding:14px">
+            <div style="font-weight:600;color:var(--blue);margin-bottom:8px">הכנסות לפי חודש</div>
+            <div style="height:260px;position:relative"><canvas id="fin-chart-income"></canvas></div>
+          </div>
+          <div class="card" style="padding:14px">
+            <div style="font-weight:600;color:var(--blue);margin-bottom:8px">צפוי מול נגבה</div>
+            <div style="height:260px;position:relative"><canvas id="fin-chart-trend"></canvas></div>
+          </div>
+          <div class="card" style="padding:14px">
+            <div style="font-weight:600;color:var(--blue);margin-bottom:8px">יתרות חוב (10 הגדולים)</div>
+            <div style="height:260px;position:relative"><canvas id="fin-chart-debt"></canvas></div>
+          </div>
+        </div>
         <div class="card">
           <div class="card-header"><h3>יתרות חוב לפי מטופל</h3></div>
           <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>חוב</th><th>שולם</th><th>יתרה</th><th>התקדמות</th></tr></thead><tbody id="finance-tbody"></tbody></table></div>
@@ -4034,11 +4061,43 @@ function renderGoals(pid){
 }
 
 // === APPOINTMENTS ===
+// === ארכיון לפי תקופה ===
+// ברירת המחדל היא החודש הנוכחי; שאר החודשים זמינים לעיון דרך הבורר. שום נתון לא נמחק.
+let archivePeriod='current'; // 'current' | 'all' | 'YYYY-MM'
+function monthKey(d){ const x=new Date(d); return isNaN(x)?null:x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'); }
+function inArchivePeriod(dateVal){
+  if(archivePeriod==='all') return true;
+  const k=dateVal?monthKey(dateVal):null;
+  if(!k) return false; // רשומות ללא תאריך מופיעות רק בתצוגת "הכל"
+  if(archivePeriod==='current') return k===monthKey(new Date());
+  return k===archivePeriod;
+}
+function renderPeriodSelect(containerId, dateList){
+  const el=document.getElementById(containerId); if(!el) return;
+  const keys=[...new Set(dateList.map(d=>d?monthKey(d):null).filter(Boolean))].sort().reverse();
+  const cur=monthKey(new Date());
+  const opts=keys.filter(k=>k!==cur).map(k=>{const [y,m]=k.split('-');return `<option value="${k}" ${archivePeriod===k?'selected':''}>${HEB_MONTHS[parseInt(m,10)-1]} ${y}</option>`;}).join('');
+  el.innerHTML=`<select class="form-control" style="width:180px;font-size:13px" onchange="setArchivePeriod(this.value)">
+    <option value="current" ${archivePeriod==='current'?'selected':''}>החודש הנוכחי</option>
+    ${opts}
+    <option value="all" ${archivePeriod==='all'?'selected':''}>הכל (ארכיון)</option>
+  </select>`;
+}
+function setArchivePeriod(v){
+  archivePeriod=v;
+  const active=document.querySelector('.view.active')?.id||'';
+  if(active==='view-appointments') renderAppointments();
+  else if(active==='view-tasks') renderTasks();
+  else if(active==='view-all-notes') renderAllNotes();
+}
+
 async function renderAppointments(){
   await loadAll(); populateSelects();
   const tb=document.getElementById('apts-tbody');
-  if(allAppointments.length===0){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><i data-lucide="calendar"></i><p>אין פגישות</p></div></td></tr>`;return;}
-  const sorted=[...allAppointments].sort((a,b)=>new Date(a.start_time||0)-new Date(b.start_time||0));
+  renderPeriodSelect('period-apts', allAppointments.map(a=>a.start_time));
+  const scoped=allAppointments.filter(a=>inArchivePeriod(a.start_time));
+  if(scoped.length===0){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><i data-lucide="calendar"></i><p>אין פגישות בתקופה זו</p></div></td></tr>`;if(window.lucide)lucide.createIcons();return;}
+  const sorted=[...scoped].sort((a,b)=>new Date(a.start_time||0)-new Date(b.start_time||0));
   tb.innerHTML=sorted.map(a=>{const p=allPatients.find(x=>x.id===a.patient_id);return`<tr>
     <td style="font-weight:600">${a.name||'פגישה'}</td>
     <td>${p?p.name:'-'}</td>
@@ -4296,12 +4355,14 @@ async function renderTasks(){
 
 function renderTasksTable(){
   const today=new Date(); today.setHours(0,0,0,0);
-  let tasks=allTasks;
-  if(taskFilter==='today') tasks=allTasks.filter(t=>{if(!t.due_date)return false;const d=new Date(t.due_date);d.setHours(0,0,0,0);return d.getTime()===today.getTime();});
-  if(taskFilter==='overdue') tasks=allTasks.filter(t=>t.due_date&&new Date(t.due_date)<today&&!t.done);
-  if(taskFilter==='done') tasks=allTasks.filter(t=>t.done);
+  renderPeriodSelect('period-tasks', allTasks.map(t=>t.due_date));
+  // סינון תקופה (ארכיון) — משימות ללא תאריך יעד תמיד מוצגות
+  let tasks=allTasks.filter(t=>!t.due_date||inArchivePeriod(t.due_date));
+  if(taskFilter==='today') tasks=tasks.filter(t=>{if(!t.due_date)return false;const d=new Date(t.due_date);d.setHours(0,0,0,0);return d.getTime()===today.getTime();});
+  if(taskFilter==='overdue') tasks=tasks.filter(t=>t.due_date&&new Date(t.due_date)<today&&!t.done);
+  if(taskFilter==='done') tasks=tasks.filter(t=>t.done);
   const tb=document.getElementById('tasks-tbody');
-  if(tasks.length===0){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><p>אין משימות</p></div></td></tr>`;return;}
+  if(tasks.length===0){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><p>אין משימות בתקופה זו</p></div></td></tr>`;return;}
   tb.innerHTML=tasks.map(t=>{
     const d=t.due_date?new Date(t.due_date):null;
     const isOverdue=d&&d<today&&!t.done;
@@ -4333,8 +4394,10 @@ async function renderAllNotes(){
   let notes=(nr.data||[]);
   const visiblePids=new Set(allPatients.map(p=>p.id));
   notes=notes.filter(n=>visiblePids.has(n.patient_id));
+  renderPeriodSelect('period-notes', notes.map(n=>n.created_at));
+  notes=notes.filter(n=>inArchivePeriod(n.created_at));
   if(filterPid) notes=notes.filter(n=>n.patient_id===filterPid);
-  if(notes.length===0){list.innerHTML='<div class="empty"><i data-lucide="message-square"></i><p>אין עדכונים</p></div>';if(window.lucide)lucide.createIcons();return;}
+  if(notes.length===0){list.innerHTML='<div class="empty"><i data-lucide="message-square"></i><p>אין עדכונים בתקופה זו</p></div>';if(window.lucide)lucide.createIcons();return;}
   list.innerHTML=notes.map(n=>{
     const patient=allPatients.find(p=>p.id===n.patient_id);
     const profile=n.user_id?allUserProfiles.find(u=>u.id===n.user_id):null;
@@ -4556,25 +4619,96 @@ async function deleteTaskFromModal(){
 }
 
 // === FINANCES ===
+let finCharts={};
+
 async function renderFinances(){
   await loadAll();
-  const totalDebt=allPatients.reduce((s,p)=>s+(p.debt||0),0);
-  const totalPaid=allPatients.reduce((s,p)=>s+(p.paid||0),0);
+  // בורר שנה — שנות כספים לפי הנתונים הקיימים
+  const yearsSet=new Set();
+  allPayments.forEach(p=>{ if(p.created_at) yearsSet.add(new Date(p.created_at).getFullYear()); });
+  allAppointments.forEach(a=>{ if(a.start_time) yearsSet.add(new Date(a.start_time).getFullYear()); });
+  const nowYear=new Date().getFullYear();
+  yearsSet.add(nowYear);
+  const years=[...yearsSet].sort((a,b)=>b-a);
+  const sel=document.getElementById('fin-year');
+  const prev=sel&&sel.value?parseInt(sel.value,10):null;
+  const year=(prev&&years.includes(prev))?prev:nowYear;
+  if(sel) sel.innerHTML=years.map(y=>`<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('');
+  const note=document.getElementById('fin-year-note');
+  if(note) note.textContent=(year===nowYear?'שנה נוכחית':'ארכיון — שנה קודמת');
+
+  // צבירה חודשית לשנה הנבחרת
+  const expByMonth=Array(12).fill(0);   // צפוי — מחיר הפגישות
+  const incByMonth=Array(12).fill(0);   // נכנס בפועל — תשלומים
+  allAppointments.forEach(a=>{
+    if(!a.start_time) return;
+    const d=new Date(a.start_time);
+    if(d.getFullYear()!==year) return;
+    expByMonth[d.getMonth()]+=(a.price||0);
+  });
+  allPayments.forEach(p=>{
+    if(!p.created_at) return;
+    const d=new Date(p.created_at);
+    if(d.getFullYear()!==year) return;
+    incByMonth[d.getMonth()]+=(p.amount||0);
+  });
+  const yearExpected=expByMonth.reduce((s,v)=>s+v,0);
+  const yearIncome=incByMonth.reduce((s,v)=>s+v,0);
   const totalRem=allPatients.reduce((s,p)=>s+(p.remaining||0),0);
+
   document.getElementById('finance-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-label">💰 סה"כ חיובים</div><div class="stat-value">₪${totalDebt.toLocaleString()}</div></div>
-    <div class="stat-card"><div class="stat-label"><i data-lucide="check-circle"></i> סה"כ שולם</div><div class="stat-value green">₪${totalPaid.toLocaleString()}</div></div>
-    <div class="stat-card"><div class="stat-label"><i data-lucide="alert-triangle"></i> יתרת חוב</div><div class="stat-value red">₪${totalRem.toLocaleString()}</div></div>`;
+    <div class="stat-card"><div class="stat-label">💰 צפוי בשנת ${year}</div><div class="stat-value">₪${yearExpected.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label"><i data-lucide="check-circle"></i> נכנס בפועל ${year}</div><div class="stat-value green">₪${yearIncome.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label"><i data-lucide="alert-triangle"></i> יתרת חוב כוללת</div><div class="stat-value red">₪${totalRem.toLocaleString()}</div></div>`;
+
+  // טבלת פירוט חודשי + סיכום שנתי
+  const mt=document.getElementById('finance-months');
+  if(mt){
+    mt.innerHTML=HEB_MONTHS.map((m,i)=>{
+      const gap=expByMonth[i]-incByMonth[i];
+      return `<tr>
+        <td style="font-weight:600">${m}</td>
+        <td>₪${expByMonth[i].toLocaleString()}</td>
+        <td style="color:var(--green)">₪${incByMonth[i].toLocaleString()}</td>
+        <td><span class="badge ${gap>0?'badge-red':'badge-green'}">₪${Math.max(0,gap).toLocaleString()}</span></td>
+      </tr>`;
+    }).join('')+`<tr style="background:var(--g50);font-weight:700">
+        <td>סה"כ ${year}</td>
+        <td>₪${yearExpected.toLocaleString()}</td>
+        <td style="color:var(--green)">₪${yearIncome.toLocaleString()}</td>
+        <td><span class="badge ${yearExpected-yearIncome>0?'badge-red':'badge-green'}">₪${Math.max(0,yearExpected-yearIncome).toLocaleString()}</span></td>
+      </tr>`;
+  }
+
+  // טבלת חובות לפי מטופל
   const patients=allPatients.filter(p=>(p.debt||0)>0);
   const tb=document.getElementById('finance-tbody');
-  if(patients.length===0){tb.innerHTML=`<tr><td colspan="5"><div class="empty"><p>אין חובות</p></div></td></tr>`;return;}
-  tb.innerHTML=patients.map(p=>{const pct=p.debt>0?Math.min(100,Math.round((p.paid/p.debt)*100)):0;return`<tr onclick="openPatient('${p.id}')">
-    <td style="font-weight:600">${p.name}</td>
-    <td>₪${(p.debt||0).toLocaleString()}</td>
-    <td style="color:var(--green)">₪${(p.paid||0).toLocaleString()}</td>
-    <td><span class="badge ${(p.remaining||0)>0?'badge-red':'badge-green'}">₪${(p.remaining||0).toLocaleString()}</span></td>
-    <td style="min-width:120px"><div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div><div style="font-size:11px;color:var(--g500)">${pct}%</div></td>
-  </tr>`;}).join('');
+  if(tb){
+    tb.innerHTML=patients.length===0
+      ?`<tr><td colspan="5"><div class="empty"><p>אין חובות</p></div></td></tr>`
+      :patients.map(p=>{const pct=p.debt>0?Math.min(100,Math.round((p.paid/p.debt)*100)):0;return`<tr onclick="openPatient('${p.id}')">
+        <td style="font-weight:600">${p.name}</td>
+        <td>₪${(p.debt||0).toLocaleString()}</td>
+        <td style="color:var(--green)">₪${(p.paid||0).toLocaleString()}</td>
+        <td><span class="badge ${(p.remaining||0)>0?'badge-red':'badge-green'}">₪${(p.remaining||0).toLocaleString()}</span></td>
+        <td style="min-width:120px"><div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div><div style="font-size:11px;color:var(--g500)">${pct}%</div></td>
+      </tr>`;}).join('');
+  }
+
+  // גרפים קבועים
+  Object.values(finCharts).forEach(c=>{ try{ c.destroy(); }catch(e){} });
+  finCharts={};
+  const mk=(id,cfg)=>{ const cv=document.getElementById(id); if(cv&&window.Chart){ try{ finCharts[id]=new Chart(cv,cfg); }catch(e){ console.warn('finance chart',e); } } };
+  const baseOpts={responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}};
+  mk('fin-chart-income',{type:'bar',data:{labels:HEB_MONTHS,datasets:[{label:'נכנס (₪)',data:incByMonth,backgroundColor:'rgba(29,158,117,0.55)',borderColor:'rgba(29,158,117,1)',borderWidth:1}]},options:{...baseOpts,plugins:{legend:{display:false}}}});
+  mk('fin-chart-trend',{type:'line',data:{labels:HEB_MONTHS,datasets:[
+      {label:'צפוי',data:expByMonth,borderColor:'rgba(24,95,165,1)',backgroundColor:'rgba(24,95,165,0.12)',borderWidth:2,fill:true,tension:0.25},
+      {label:'נגבה',data:incByMonth,borderColor:'rgba(29,158,117,1)',backgroundColor:'rgba(29,158,117,0.12)',borderWidth:2,fill:true,tension:0.25}
+    ]},options:{...baseOpts,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}}}});
+  const topDebt=[...allPatients].filter(p=>(p.remaining||0)>0).sort((a,b)=>(b.remaining||0)-(a.remaining||0)).slice(0,10);
+  mk('fin-chart-debt',{type:'bar',data:{labels:topDebt.map(p=>p.name||'—'),datasets:[{label:'יתרה (₪)',data:topDebt.map(p=>p.remaining||0),backgroundColor:'rgba(239,68,68,0.5)',borderColor:'rgba(239,68,68,1)',borderWidth:1}]},options:{...baseOpts,indexAxis:'y',plugins:{legend:{display:false}}}});
+
+  if(window.lucide) lucide.createIcons();
 }
 
 // === PAYMENTS ===
