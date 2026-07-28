@@ -21,6 +21,9 @@
 -- מוסיף שדה folder_type לטבלת patients. ריצה חוזרת בטוחה (IF NOT EXISTS).
 ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS folder_type VARCHAR(30);
 
+-- עמודת אימייל למשתמשים — נדרשת לשליחת התראות במייל למדריך/מטפל
+ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS email TEXT;
+
 -- ============================================================================
 -- טבלות חדשות לשיתוף פעילויות
 -- ============================================================================

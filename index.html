@@ -1471,12 +1471,22 @@ async function sb(table, params=''){
     return {data: await r.json()};
   } catch(e){ return {data:[],error:hebrewError(e.message)}; }
 }
+let _notifyLast={}; // patient_id -> timestamp (מונע הצפת מיילים בהעלאה מרובה)
 async function sbInsert(table, body){
   if(!SB_URL||!SB_KEY) return {error:'לא מחובר'};
   try {
     const r = await sbFetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
     if(!r.ok) return {error:hebrewError(await r.text())};
-    return {data: await r.json()};
+    const out={data: await r.json()};
+    // כל רישום פעילות מפעיל התראת מייל לשאר המשויכים לתיק (fire-and-forget, לכל היותר אחת ל-30 שניות לתיק)
+    if(table==='activity_log' && body && body.patient_id){
+      const now=Date.now(), pid=body.patient_id;
+      if(!_notifyLast[pid] || now-_notifyLast[pid]>30000){
+        _notifyLast[pid]=now;
+        if(typeof notifyPatientChange==='function') notifyPatientChange(pid, body.description||'').catch(()=>{});
+      }
+    }
+    return out;
   } catch(e){ return {error:hebrewError(e.message)}; }
 }
 async function sbUpdate(table, id, body){
@@ -1628,12 +1638,17 @@ async function afterLogin(user){
     const meta=user.user_metadata||{};
     const role=isAdminEmail?'admin':(meta.role||'user');
     const displayName=meta.display_name||(user.email||'').split('@')[0];
-    const ins=await sbAdminInsert('user_profiles',{id:user.id,display_name:displayName,role});
+    let ins=await sbAdminInsert('user_profiles',{id:user.id,display_name:displayName,role,email:user.email||null});
+    if(ins.error&&/email/i.test(ins.error)) ins=await sbAdminInsert('user_profiles',{id:user.id,display_name:displayName,role});
     if(ins.error) console.warn('profile insert failed:',ins.error);
     const retry=await sbAdmin('user_profiles',`?id=eq.${user.id}&select=*`);
     profile=(retry.data||[])[0]||{id:user.id,display_name:displayName,role};
   }
   if(!profile){document.getElementById('login-error').textContent='אין לך הרשאות למערכת. פנה למנהל.';localStorage.removeItem('sb_jwt');return;}
+  // לשמור את כתובת האימייל בפרופיל כדי שאפשר יהיה לשלוח התראות (מתעלם בשקט אם העמודה לא קיימת)
+  if(user.email && profile.email!==user.email){
+    sbAdminUpdate('user_profiles',user.id,{email:user.email}).catch(()=>{});
+  }
   currentUser={id:user.id,email:user.email,role:profile.role,display_name:profile.display_name};
   isAdmin=profile.role==='admin';
   if(!isAdmin){
@@ -1879,7 +1894,8 @@ async function createUser(){
     if(!userId) return toast('משתמש קיים אך הסיסמה שגויה — שנה סיסמה או השתמש בסיסמה הנכונה','error');
   }
   if(!userId) return toast('שגיאה: '+errMsg,'error');
-  const ins=await sbAdminInsert('user_profiles',{id:userId,display_name:name,role});
+  let ins=await sbAdminInsert('user_profiles',{id:userId,display_name:name,role,email});
+  if(ins.error&&/email/i.test(ins.error)) ins=await sbAdminInsert('user_profiles',{id:userId,display_name:name,role});
   if(ins.error) return toast('שגיאה ביצירת פרופיל: '+ins.error,'error');
   toast('משתמש נוצר <i data-lucide="check-circle"></i>','success');
   closeModal('modal-new-user');
@@ -6350,6 +6366,39 @@ async function sendEmail(pid){
     renderPatientEmails(pid);
     switchEmailTab('history',pid);
   }catch(e){ toast('שגיאה בשליחה: '+(e.text||e.message||'בדוק הגדרות'),'error'); }
+}
+
+// === התראות מייל על שינוי בתיק ===
+// שולח מייל לשאר המשתמשים המשויכים לתיק (מדריך/מטפל) כשמישהו מעדכן בו משהו.
+// שקט לחלוטין: אם אין מייל מוגדר / אין הרשאות — פשוט לא נשלח דבר.
+async function notifyPatientChange(pid, description){
+  try{
+    if(!pid||!currentUser) return;
+    if(!isGmailReady() && !(ejsPublicKey&&ejsServiceId&&ejsTemplateId)) return;
+    const [upRef,profRef]=await Promise.all([
+      sbAdmin('user_patients',`?patient_id=eq.${pid}&select=user_id`),
+      sbAdmin('user_profiles','?select=id,display_name,email')
+    ]);
+    const userIds=(upRef.data||[]).map(x=>x.user_id).filter(uid=>uid&&uid!==currentUser.id);
+    if(userIds.length===0) return;
+    const profs=profRef.data||[];
+    const recipients=[...new Set(userIds.map(uid=>profs.find(p=>p.id===uid)?.email).filter(Boolean))];
+    if(recipients.length===0) return;
+    const patient=allPatients.find(p=>p.id===pid);
+    const actor=currentUser.display_name||currentUser.email||'משתמש';
+    const subject=`עדכון בתיק: ${patient?.name||''}`;
+    const bodyHtml=`<div dir="rtl" style="font-family:Arial,sans-serif;font-size:14px;line-height:1.7">
+      <p><strong>${actor}</strong> ביצע עדכון בתיק של <strong>${patient?.name||'—'}</strong>.</p>
+      <p>${description||''}</p>
+      <p style="color:#64748b;font-size:12px">הודעה אוטומטית ממערכת מכון התנהגות.</p>
+    </div>`;
+    for(const to of recipients){
+      try{
+        if(isGmailReady()) await sendViaGmailAPI(to,subject,bodyHtml);
+        else await emailjs.send(ejsServiceId,ejsTemplateId,{to_email:to,subject,message_html:bodyHtml,from_name:'מכון התנהגות'});
+      }catch(e){ console.warn('notify mail failed',to,e); }
+    }
+  }catch(e){ console.warn('notifyPatientChange failed',e); }
 }
 
 // === SUPABASE STORAGE ===
