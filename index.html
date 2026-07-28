@@ -927,8 +927,16 @@ tr:last-child td{border-bottom:none}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header"><h2><i data-lucide="plus-circle"></i> מוסד חדש</h2><button class="btn btn-icon" onclick="closeModal('modal-new-institution')"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
-      <input type="hidden" id="ni-inst-type" value="education">
       <div class="form-group"><label class="form-label">שם מוסד *</label><input type="text" class="form-control" id="ni-name"></div>
+      <div class="form-group"><label class="form-label">שיוך המוסד</label>
+        <select class="form-control" id="ni-inst-type">
+          <option value="general" selected>מוסד עצמאי (כללי)</option>
+          <option value="education">משרד החינוך</option>
+          <option value="clinic">קליניקה</option>
+          <option value="vizhnitz">ויזניץ</option>
+        </select>
+        <div style="font-size:12px;color:var(--g500);margin-top:6px">"מוסד עצמאי" ייווצר כמוסד נפרד ולא ייכנס תחת משרד החינוך.</div>
+      </div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-new-institution')">ביטול</button><button class="btn btn-primary" onclick="createInstitution()">צור מוסד</button></div>
   </div>
@@ -2349,9 +2357,16 @@ function renderInstitutionFilter(){
       const accessTypes=new Set(allInstitutions.filter(i=>accessInsts.includes(i.id)).map(i=>i.type||'general'));
       visibleCats=allCats.filter(c=>accessTypes.has(c.cat));
     }
+    // מוסדות עצמאיים (general) מוצגים כקטגוריה בפני עצמה
+    let genInsts=allInstitutions.filter(i=>(i.type||'general')==='general');
+    if(!isAdmin){
+      const accessInsts=viewAsPermissions?viewAsPermissions.institutions:userAssignedInstitutions;
+      genInsts=genInsts.filter(i=>accessInsts.includes(i.id));
+    }
     el.innerHTML=visibleCats.map(c=>`<button class="cat-btn" onclick="selectCategory('${c.cat}')"><span class="ci"><i data-lucide="${c.icon}"></i></span><span>${c.label}</span></button>`).join('')
+      +genInsts.map(i=>`<button class="cat-btn" onclick="selectGeneralInstitution('${i.id}')"><span class="ci"><i data-lucide="building"></i></span><span>${i.name||'מוסד'}</span></button>`).join('')
       +(isAdmin?`<button class="cat-btn" onclick="selectCategory('all')"><span class="ci"><i data-lucide="users"></i></span><span>כולם</span></button>`:'')
-      +(isAdmin?`<button class="cat-btn" onclick="openModal('modal-new-institution')" style="border-style:dashed"><span class="ci"><i data-lucide="plus-circle"></i></span><span>הוסף +</span></button>`:'');
+      +(isAdmin?`<button class="cat-btn" onclick="openNewInstitution()" style="border-style:dashed"><span class="ci"><i data-lucide="plus-circle"></i></span><span>הוסף +</span></button>`:'');
     ps.style.display='none';
     return;
   }
@@ -2474,6 +2489,17 @@ function selectEduInstitution(instId, instName){
   patientListTitle=instName; patientListBackFn='backToEducation';
   currentContextInstitutionId=instId;
   currentContextType='education';
+  renderInstitutionFilter();
+}
+
+// מוסד עצמאי (general) מהמסך הראשי
+function selectGeneralInstitution(instId){
+  const inst=allInstitutions.find(i=>i.id===instId);
+  patientView='patients-list';
+  patientListData=allPatients.filter(p=>p.institution_id===instId);
+  patientListTitle=inst?.name||'מוסד'; patientListBackFn='backToMain';
+  currentContextInstitutionId=instId;
+  currentContextType='general';
   renderInstitutionFilter();
 }
 
@@ -2754,14 +2780,16 @@ function renderPatientPayments(pid){
     </div>`;
 }
 
+// מסמכים רפואיים / חיצוניים (אבחונים, מסמכים רפואיים, מסמכים חיצוניים)
 function renderPatientDocuments(pid){
-  const files=allFiles.filter(f=>f.patient_id===pid&&!f.drive_file_id?.includes('||apt:'))
+  const files=allFiles.filter(f=>f.patient_id===pid&&!f.drive_file_id?.includes('||apt:')&&fileArea(f)==='med')
     .sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
   document.getElementById('dt-documents').innerHTML=`
     <div class="card">
-      <div class="card-header"><h3><i data-lucide="folder"></i> מסמכים <span style="color:var(--g400);font-weight:500;font-size:13px">(${files.length})</span></h3></div>
+      <div class="card-header"><h3><i data-lucide="folder"></i> מסמכים רפואיים וחיצוניים <span style="color:var(--g400);font-weight:500;font-size:13px">(${files.length})</span></h3></div>
       <div class="card-body">
-        ${docZoneHTML(pid)}
+        <p style="font-size:12px;color:var(--g500);margin-bottom:10px">אבחונים, מסמכים רפואיים ומסמכים חיצוניים. (מסמכי תוכנית ההתערבות נמצאים בלשונית נפרדת.)</p>
+        ${docZoneHTML(pid,'med')}
         ${files.length>0?`<div class="doc-toolbar"><input type="text" class="form-control doc-search" placeholder="חיפוש מסמך לפי שם..." oninput="docSearch(this)"></div>`:''}
         ${files.length===0
           ?`<div class="doc-empty"><i data-lucide="file"></i><p style="margin-top:8px">אין מסמכים עדיין — גרור או העלה את הראשון</p></div>`
@@ -3961,14 +3989,16 @@ function renderIntProgress(pid){
   },100);
 }
 
+// מסמכי תוכנית התערבות (תוכניות, טפסים ומסמכי עבודה מקצועיים)
 function renderIntDocs(pid){
-  const files=(allFiles||[]).filter(f=>f.patient_id===pid&&!f.drive_file_id?.includes('||apt:'))
+  const files=(allFiles||[]).filter(f=>f.patient_id===pid&&!f.drive_file_id?.includes('||apt:')&&fileArea(f)==='int')
     .sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
   document.getElementById('it-docs').innerHTML=`
     <div class="card">
-      <div class="card-header"><h3><i data-lucide="folder"></i> מסמכי התערבות <span style="color:var(--g400);font-weight:500;font-size:13px">(${files.length})</span></h3></div>
+      <div class="card-header"><h3><i data-lucide="folder"></i> מסמכי תוכנית התערבות <span style="color:var(--g400);font-weight:500;font-size:13px">(${files.length})</span></h3></div>
       <div class="card-body">
-        ${docZoneHTML(pid)}
+        <p style="font-size:12px;color:var(--g500);margin-bottom:10px">תוכניות שאני מכין, טפסים ומסמכי עבודה מקצועיים. (מסמכים רפואיים נמצאים בלשונית נפרדת.)</p>
+        ${docZoneHTML(pid,'int')}
         ${files.length>0?`<div class="doc-toolbar"><input type="text" class="form-control doc-search" placeholder="חיפוש מסמך לפי שם..." oninput="docSearch(this)"></div>`:''}
         ${files.length===0
           ?`<div class="doc-empty"><i data-lucide="file"></i><p style="margin-top:8px">אין מסמכים עדיין — גרור או העלה את הראשון</p></div>`
@@ -4763,10 +4793,16 @@ function openNewEduInstitution(){
   document.getElementById('ni-inst-type').value='education';
   openModal('modal-new-institution');
 }
+// מוסד חדש מהמסך הראשי — ברירת מחדל: מוסד עצמאי (כללי)
+function openNewInstitution(){
+  document.getElementById('ni-name').value='';
+  document.getElementById('ni-inst-type').value='general';
+  openModal('modal-new-institution');
+}
 async function createInstitution(){
   const name=document.getElementById('ni-name').value.trim();
   if(!name) return toast('נא להכניס שם','error');
-  const type=document.getElementById('ni-inst-type')?.value||'education';
+  const type=document.getElementById('ni-inst-type')?.value||'general';
   const r=await sbInsert('institutions',{name,type});
   if(r.error) return toast('שגיאה','error');
   toast('מוסד נוצר <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-institution');
@@ -6234,17 +6270,26 @@ function fmtFileSize(bytes){
   return (bytes/1048576).toFixed(1)+' MB';
 }
 // אזור גרירה/לחיצה להעלאת מסמכים
-function docZoneHTML(pid){
-  return `<label class="doc-dropzone" id="dz-${pid}"
+// אזור מסמכים: 'med' = מסמכים רפואיים/חיצוניים · 'int' = מסמכי תוכנית התערבות
+function docZoneHTML(pid, area){
+  area=area||'med';
+  const zid=`${area}-${pid}`;
+  return `<label class="doc-dropzone" id="dz-${zid}"
       ondragover="event.preventDefault();this.classList.add('dragover')"
       ondragleave="this.classList.remove('dragover')"
-      ondrop="handleDocDrop(event,'${pid}')">
+      ondrop="handleDocDrop(event,'${pid}','${area}')">
       <span class="dz-ic"><i data-lucide="upload-cloud"></i></span>
       <span class="dz-main">גרור קבצים לכאן או לחץ לבחירה</span>
       <span class="dz-sub">תמונות, PDF, Word, Excel, וידאו ועוד · עד ${MAX_DOC_MB}MB לקובץ</span>
-      <input type="file" multiple style="display:none" onchange="uploadToSupabase('${pid}',this)">
+      <input type="file" multiple style="display:none" onchange="uploadToSupabase('${pid}',this,'${area}')">
     </label>
-    <div id="dz-progress-${pid}"></div>`;
+    <div id="dz-progress-${zid}"></div>`;
+}
+// לאיזה אזור שייך קובץ (קבצים ישנים ללא סמן — נחשבים רפואיים)
+function fileArea(f){
+  const id=f.drive_file_id||'';
+  if(id.includes('||int:')) return 'int';
+  return 'med';
 }
 // כרטיס מסמך בודד
 function docCardHTML(f,pid){
@@ -6280,21 +6325,23 @@ function docSearch(inputEl){
   if(empty) empty.style.display=visible?'none':'';
 }
 // העלאה מגרירה
-function handleDocDrop(ev,pid){
+function handleDocDrop(ev,pid,area){
   ev.preventDefault();
-  const zone=document.getElementById('dz-'+pid); if(zone) zone.classList.remove('dragover');
+  area=area||'med';
+  const zone=document.getElementById('dz-'+area+'-'+pid); if(zone) zone.classList.remove('dragover');
   const files=[...(ev.dataTransfer?.files||[])];
-  if(files.length) uploadPatientFiles(pid,files);
+  if(files.length) uploadPatientFiles(pid,files,area);
 }
 // העלאה מבחירת קובץ
-function uploadToSupabase(pid, input){
+function uploadToSupabase(pid, input, area){
   const files=[...(input.files||[])];
   input.value='';
-  if(files.length) uploadPatientFiles(pid,files);
+  if(files.length) uploadPatientFiles(pid,files,area||'med');
 }
 // ליבת ההעלאה — תומכת בכמה קבצים, מציגה התקדמות ושגיאות בעברית
-async function uploadPatientFiles(pid, files){
-  const prog=document.getElementById('dz-progress-'+pid);
+async function uploadPatientFiles(pid, files, area){
+  area=area||'med';
+  const prog=document.getElementById('dz-progress-'+area+'-'+pid);
   const setProg=(html)=>{ if(prog){ prog.innerHTML=html; if(window.lucide) lucide.createIcons(); } };
   let ok=0; const failed=[];
   for(let i=0;i<files.length;i++){
@@ -6306,7 +6353,9 @@ async function uploadPatientFiles(pid, files){
       const safeName=safeStorageName(file.name);
       const storagePath=`${pid}/${ts}-${safeName}`;
       const url=await sbStorageUpload(storagePath,file);
-      const ins=await sbInsert('patient_files',{patient_id:pid,name:file.name,drive_file_id:storagePath,drive_url:url,created_at:new Date().toISOString()});
+      // סמן אזור על drive_file_id (כמו ||apt: הקיים) כדי להפריד רפואי/התערבות
+      const fileId=`${storagePath}||${area}:1`;
+      const ins=await sbInsert('patient_files',{patient_id:pid,name:file.name,drive_file_id:fileId,drive_url:url,created_at:new Date().toISOString()});
       if(ins.error) throw new Error(ins.error);
       // Log activity
       if(currentUser && pid){
