@@ -108,18 +108,6 @@ tr:last-child td{border-bottom:none}
 .q-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid var(--g100)}
 .qf-hint{display:block;font-size:11.5px;color:var(--g400);margin-top:2px;font-style:italic;line-height:1.4}
 .tab-content{display:none}.tab-content.active{display:block}
-#file-tabs{flex-wrap:wrap;overflow-x:visible;gap:2px 4px;padding-bottom:2px}
-#file-tabs .tab-btn{padding:8px 11px;font-size:13px}
-.tab-more{position:relative;display:inline-flex}
-.tab-more>.tab-btn{display:inline-flex;align-items:center;gap:5px}
-.tab-more>.tab-btn i{width:14px;height:14px}
-.tab-more.open>.tab-btn i{transform:rotate(180deg)}
-.tab-more-menu{display:none;position:absolute;top:100%;inset-inline-end:0;z-index:60;min-width:210px;background:white;border:1px solid var(--g200);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:6px;margin-top:5px}
-.tab-more.open .tab-more-menu{display:block}
-.tab-more-menu button{display:block;width:100%;text-align:right;padding:8px 10px;border:none;background:none;border-radius:7px;font-family:'Rubik',sans-serif;font-size:13px;color:var(--g600);cursor:pointer;white-space:nowrap}
-.tab-more-menu button:hover{background:var(--g50)}
-.tab-more-menu button.sel{background:var(--blue-light);color:var(--blue2);font-weight:600}
-.tab-more-sep{height:1px;background:var(--g200);margin:5px 2px}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--g200);border-radius:12px;overflow:hidden}
 .cal-header{background:var(--g50);padding:10px 4px;text-align:center;font-size:12px;font-weight:600;color:var(--g500)}
 .cal-day{background:white;min-height:90px;padding:5px;cursor:pointer;transition:background .1s}
@@ -373,49 +361,56 @@ tr:last-child td{border-bottom:none}
       <div class="view" id="view-patient-detail">
         <button class="btn btn-secondary btn-sm" onclick="showView('patients')" style="margin-bottom:16px"><i data-lucide="arrow-right"></i> חזרה</button>
         <div id="patient-header" style="background:white;border-radius:12px;border:1px solid var(--g200);padding:18px;margin-bottom:20px;display:flex;align-items:center;gap:16px"></div>
-        <div class="tabs" id="file-tabs">
-          <button class="tab-btn active" onclick="showFileTab('tab-personal',this)">פרטים אישיים</button>
-          <button class="tab-btn" onclick="showFileTab('dt-background',this)">רקע</button>
-          <button class="tab-btn" onclick="showFileTab('dt-questionnaires',this)">שאלונים</button>
-          <button class="tab-btn" onclick="showFileTab('dt-observations',this)">תצפיות</button>
-          <button class="tab-btn" onclick="showFileTab('it-treatment',this)">מטרות</button>
-          <button class="tab-btn" onclick="showFileTab('it-docs',this)">מסמכי תוכנית התערבות</button>
-          <button class="tab-btn" onclick="showFileTab('it-graphs',this)">גרפים</button>
-          <div class="tab-more" id="file-more">
-            <button class="tab-btn" id="file-more-btn" onclick="toggleFileMore(event)"><span id="file-more-label">נספחים</span><i data-lucide="chevron-down"></i></button>
-            <div class="tab-more-menu" id="file-more-menu">
-              <button onclick="showFileTab('dt-documents',this)" data-short="נספח א׳">נספח א׳ · מסמכים רפואיים</button>
-              <button onclick="showFileTab('tab-appointments',this)" data-short="נספח ב׳">נספח ב׳ · פגישות</button>
-              <button onclick="showFileTab('tab-notes',this)" data-short="נספח ג׳">נספח ג׳ · עדכונים</button>
-              <button onclick="showFileTab('tab-tasks',this)" data-short="נספח ד׳">נספח ד׳ · משימות</button>
-              <button data-admin-tab onclick="showFileTab('tab-payments',this)" data-short="נספח ה׳">נספח ה׳ · כספים</button>
-              <div class="tab-more-sep"></div>
-              <button onclick="showFileTab('it-tank',this)" data-short='טנ"ק'>טנ"ק</button>
-              <button onclick="showFileTab('it-progress',this)" data-short="התקדמות">התקדמות</button>
-              <button onclick="showFileTab('tab-emails',this)" data-short="מיילים">מיילים</button>
-              <button onclick="showFileTab('main-tab-reports',this)" data-short="דוחות">דוחות</button>
-            </div>
-          </div>
+        <div class="main-tabs" id="main-tabs">
+          <button class="main-tab-btn blue active" onclick="showMainTab('clinical')"><i data-lucide="clipboard-list"></i> תיק קליני</button>
+          <button class="main-tab-btn green" onclick="showMainTab('data')"><i data-lucide="bar-chart-2"></i> איסוף נתונים</button>
+          <button class="main-tab-btn purple" onclick="showMainTab('intervention')"><i data-lucide="target"></i> תוכנית התערבות</button>
+          <button class="main-tab-btn orange" onclick="showMainTab('reports')"><i data-lucide="file-text"></i> דוחות</button>
         </div>
-        <div id="file-tab-panels">
+        <div id="main-tab-clinical">
+          <div class="tabs" id="clinical-tabs">
+            <button class="tab-btn active" onclick="showTab('tab-personal')">פרטים אישיים</button>
+            <button class="tab-btn" onclick="showTab('tab-appointments')">פגישות</button>
+            <button class="tab-btn" data-admin-tab onclick="showTab('tab-payments')">תשלומים</button>
+            <button class="tab-btn" onclick="showTab('tab-tasks')">משימות</button>
+            <button class="tab-btn" onclick="showTab('tab-notes')">עדכונים</button>
+            <button class="tab-btn" onclick="showTab('tab-emails')"><i data-lucide="mail"></i> מיילים</button>
+          </div>
           <div class="tab-content active" id="tab-personal"></div>
-          <div class="tab-content" id="dt-background"></div>
-          <div class="tab-content" id="dt-questionnaires"></div>
-          <div class="tab-content" id="dt-observations"></div>
-          <div class="tab-content" id="it-treatment"></div>
-          <div class="tab-content" id="it-tank"></div>
-          <div class="tab-content" id="it-docs"></div>
-          <div class="tab-content" id="it-graphs"></div>
-          <div class="tab-content" id="it-progress"></div>
-          <div class="tab-content" id="dt-documents"></div>
           <div class="tab-content" id="tab-appointments"></div>
-          <div class="tab-content" id="tab-notes"></div>
-          <div class="tab-content" id="tab-tasks"></div>
           <div class="tab-content" id="tab-payments"></div>
+          <div class="tab-content" id="tab-tasks"></div>
+          <div class="tab-content" id="tab-notes"></div>
           <div class="tab-content" id="tab-emails"></div>
-          <div class="tab-content" id="main-tab-reports"></div>
           <div id="patient-notes-panel" style="display:none"></div>
         </div>
+        <div id="main-tab-data" style="display:none">
+          <div class="tabs">
+            <button class="tab-btn active" onclick="showDataTab('dt-background')">רקע</button>
+            <button class="tab-btn" onclick="showDataTab('dt-documents')">מסמכים רפואיים</button>
+            <button class="tab-btn" onclick="showDataTab('dt-questionnaires')">שאלונים</button>
+            <button class="tab-btn" onclick="showDataTab('dt-observations')">תצפיות ABC</button>
+          </div>
+          <div id="dt-background" class="tab-content active"></div>
+          <div id="dt-documents" class="tab-content"></div>
+          <div id="dt-observations" class="tab-content"></div>
+          <div id="dt-questionnaires" class="tab-content"></div>
+        </div>
+        <div id="main-tab-intervention" style="display:none">
+          <div class="tabs">
+            <button class="tab-btn active" onclick="showIntTab('it-treatment')">תוכנית טיפול</button>
+            <button class="tab-btn" onclick="showIntTab('it-tank')">טנ"ק</button>
+            <button class="tab-btn" onclick="showIntTab('it-progress')">התקדמות</button>
+            <button class="tab-btn" onclick="showIntTab('it-graphs')">גרפים</button>
+            <button class="tab-btn" onclick="showIntTab('it-docs')">מסמכי תוכנית התערבות</button>
+          </div>
+          <div id="it-treatment" class="tab-content active"></div>
+          <div id="it-tank" class="tab-content"></div>
+          <div id="it-progress" class="tab-content"></div>
+          <div id="it-graphs" class="tab-content"></div>
+          <div id="it-docs" class="tab-content"></div>
+        </div>
+        <div id="main-tab-reports" style="display:none"></div>
       </div>
 
       <!-- DIARY -->
@@ -1386,6 +1381,9 @@ let currentPatientId = null;
 let currentPayPatientId = null;
 let selectedInstitution = null;
 let selectedClass = null;
+let currentMainTab = 'clinical';
+let currentDataTab = 'dt-background';
+let currentIntTab = 'it-treatment';
 let currentQTab = 'parent';
 
 // === SUPABASE ===
@@ -2628,53 +2626,45 @@ async function openPatient(id){
   renderIntDocs(id);
 }
 
-// לשונית אחידה לכל התיק — כל הלשוניות בשורה אחת לפי הסדר שנקבע
-function showFileTab(id, btn){
-  document.querySelectorAll('#file-tab-panels > .tab-content').forEach(t=>t.classList.remove('active'));
-  document.getElementById(id)?.classList.add('active');
-  document.querySelectorAll('#file-tabs .tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('#file-more-menu button').forEach(b=>b.classList.remove('sel'));
-  const label=document.getElementById('file-more-label');
-  const inMenu=document.querySelector(`#file-more-menu button[onclick*="'${id}'"]`);
-  if(inMenu){
-    // לשונית שנמצאת בתפריט הנפתח — הכפתור מציג את שמה כדי שתמיד ברור איפה אנחנו
-    inMenu.classList.add('sel');
-    document.getElementById('file-more-btn')?.classList.add('active');
-    if(label) label.textContent=inMenu.dataset.short||inMenu.textContent.trim();
-  }else{
-    if(label) label.textContent='נספחים';
-    const b=(btn&&btn.classList.contains('tab-btn'))?btn:document.querySelector(`#file-tabs > .tab-btn[onclick*="'${id}'"]`);
-    if(b) b.classList.add('active');
-  }
-  closeFileMore();
-  currentFileTab=id;
-  // רינדור עצל ללשוניות כבדות
-  if(currentPatientId){
-    if(id==='it-progress') renderIntProgress(currentPatientId);
-    if(id==='it-graphs') renderPatientBehaviorGraphs(currentPatientId);
-    if(id==='main-tab-reports') renderReportsTab(currentPatientId);
-  }
-  if(window.lucide) lucide.createIcons();
-}
-let currentFileTab='tab-personal';
-
-function toggleFileMore(e){
-  e?.stopPropagation();
-  document.getElementById('file-more')?.classList.toggle('open');
-  if(window.lucide) lucide.createIcons();
-}
-function closeFileMore(){ document.getElementById('file-more')?.classList.remove('open'); }
-document.addEventListener('click',e=>{ if(!e.target.closest('#file-more')) closeFileMore(); });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeFileMore(); });
-
-// תאימות לאחור — קריאות ישנות ממשיכות לעבוד מול הלשוניות השטוחות
 function showMainTab(tab){
-  const map={clinical:'tab-personal',data:'dt-background',intervention:'it-treatment',reports:'main-tab-reports'};
-  showFileTab(map[tab]||'tab-personal');
+  currentMainTab=tab;
+  const colorMap={clinical:'blue',data:'green',intervention:'purple',reports:'orange'};
+  ['clinical','data','intervention','reports'].forEach(t=>{
+    const el=document.getElementById('main-tab-'+t);
+    if(el)el.style.display=t===tab?'block':'none';
+    const btn=document.querySelector(`.main-tab-btn.${colorMap[t]}`);
+    if(btn)btn.classList.toggle('active',t===tab);
+  });
+  if(tab==='reports'&&currentPatientId)renderReportsTab(currentPatientId);
 }
-function showTab(id){ showFileTab(id); }
-function showDataTab(id){ showFileTab(id); }
-function showIntTab(id){ showFileTab(id); }
+
+function showTab(id){
+  document.querySelectorAll('#main-tab-clinical .tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('#clinical-tabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+  const idx=['tab-personal','tab-appointments','tab-payments','tab-tasks','tab-notes','tab-emails'].indexOf(id);
+  document.querySelectorAll('#clinical-tabs .tab-btn')[idx]?.classList.add('active');
+}
+
+function showDataTab(id){
+  document.querySelectorAll('#main-tab-data .tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('#main-tab-data .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+  currentDataTab=id;
+  const idx=['dt-background','dt-documents','dt-questionnaires','dt-observations'].indexOf(id);
+  document.querySelectorAll('#main-tab-data .tab-btn')[idx]?.classList.add('active');
+}
+
+function showIntTab(id){
+  document.querySelectorAll('#main-tab-intervention .tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('#main-tab-intervention .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+  currentIntTab=id;
+  const idx=['it-treatment','it-tank','it-progress','it-graphs','it-docs'].indexOf(id);
+  document.querySelectorAll('#main-tab-intervention .tab-btn')[idx]?.classList.add('active');
+  if(id==='it-progress'&&currentPatientId) renderIntProgress(currentPatientId);
+  if(id==='it-graphs'&&currentPatientId) renderPatientBehaviorGraphs(currentPatientId);
+}
 
 function renderPersonalTab(p){
   const calcDebt=allAppointments.filter(a=>a.patient_id===p.id).reduce((s,a)=>s+(a.price||0),0);
