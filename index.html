@@ -272,7 +272,6 @@ tr:last-child td{border-bottom:none}
       <button id="nav-tasks" class="nav-item" onclick="showView('tasks')"><span class="ni"><i data-lucide="check-square"></i></span>משימות</button>
       <button id="nav-all-notes" class="nav-item" onclick="showView('all-notes')"><span class="ni"><i data-lucide="message-square"></i></span>עדכונים</button>
       <button id="nav-finances" class="nav-item" onclick="showView('finances')"><span class="ni"><i data-lucide="banknote"></i></span>כספים</button>
-      <button id="nav-graphs" class="nav-item" onclick="renderGraphsView();showView('graphs')"><span class="ni"><i data-lucide="bar-chart-2"></i></span>גרפים</button>
       <div id="nav-section-admin" class="nav-section-title">ניהול משתמשים</div>
       <button id="nav-users" class="nav-item" onclick="showView('users')"><span class="ni"><i data-lucide="user"></i></span>משתמשים</button>
       <div class="nav-section-title">הגדרות</div>
@@ -677,7 +676,7 @@ tr:last-child td{border-bottom:none}
         <div class="form-group"><label class="form-label">כתובת</label><input type="text" class="form-control" id="np-address"></div>
       </div>
       <div class="form-group"><label class="form-label">הורים</label><input type="text" class="form-control" id="np-parents"></div>
-      <div class="form-group"><label class="form-label">שיוך ל:</label><select class="form-control" id="np-affiliation" onchange="updateNpClassOptions()"><option value="">-- ללא --</option><option value="clinic">קליניקה</option><option value="vizhnitz">ויזניץ</option><option value="education">משרד החינוך</option><option value="ponivez">פוניבז</option></select></div>
+      <div class="form-group"><label class="form-label">שיוך ל:</label><select class="form-control" id="np-affiliation" onchange="updateNpClassOptions()"><option value="">-- ללא --</option><option value="clinic">קליניקה</option><option value="vizhnitz">ויזניץ</option><option value="education">משרד החינוך</option></select></div>
       <div class="form-group"><label class="form-label">מוסד</label><input type="text" class="form-control" id="np-institution" placeholder="שם המוסד..."></div>
       <div class="form-group" id="np-class-group"><label class="form-label">כיתה</label><select class="form-control" id="np-class"><option value="">-- ללא --</option></select></div>
       <div class="form-group"><label class="form-label">סוג תיקייה</label><select class="form-control" id="np-folder-type"><option value="">-- בלי סיווג --</option><option value="consultation">ייעוץ</option><option value="full_process">תהליך שלם</option><option value="inactive">לא פעיל</option></select></div>
@@ -2106,16 +2105,6 @@ async function renderDashboard(){
     }catch(e){ console.warn('shared notification check failed',e); }
   }
 
-  // Show create graph button
-  document.getElementById('setup-area').innerHTML=`<div class="card" style="margin-bottom:20px;background:linear-gradient(135deg,var(--blue-light) 0%,rgba(100,215,200,0.1) 100%);border:1px solid var(--blue)">
-    <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px">
-      <div>
-        <div style="font-weight:600;color:var(--blue);margin-bottom:4px;font-size:15px"><i data-lucide="bar-chart-2"></i> צור גרף וניתוח</div>
-        <p style="font-size:13px;color:var(--g600);margin:0">בחר שלב תהליך ונתונים להצגה בגרף</p>
-      </div>
-      <button class="btn btn-primary" onclick="openModal('modal-create-graph')" style="flex-shrink:0"><i data-lucide="bar-chart-2"></i> צור גרף</button>
-    </div>
-  </div>`;
 
   const today=new Date(); today.setHours(0,0,0,0);
   const todayApts=allAppointments.filter(a=>{if(!a.start_time)return false;const d=new Date(a.start_time);d.setHours(0,0,0,0);return d.getTime()===today.getTime();});
@@ -2352,8 +2341,7 @@ function renderInstitutionFilter(){
     const allCats=[
       {cat:'clinic',icon:'building-2',label:'קליניקה'},
       {cat:'vizhnitz',icon:'graduation-cap',label:'ויזניץ'},
-      {cat:'education',icon:'clipboard-list',label:'משרד החינוך'},
-      {cat:'ponivez',icon:'building',label:'פוניבז'}
+      {cat:'education',icon:'clipboard-list',label:'משרד החינוך'}
     ];
     let visibleCats=allCats;
     if(!isAdmin){
@@ -2410,8 +2398,12 @@ function renderInstitutionFilter(){
 if(patientView==='patients-list'){
     el.style.display='none';
     ps.style.display='block';
+    const folderPill=(v,l)=>`<button class="pill${allFolderTypeFilter===v?' active':''}" onclick="setFolderTypeFilter('${v}',this)" style="padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allFolderTypeFilter===v?'var(--blue2)':'white'};color:${allFolderTypeFilter===v?'white':'var(--g700)'};font-family:'Rubik',sans-serif">${l}</button>`;
+    const folderPillsHtml=`<div id="folder-type-pills" style="display:flex;gap:8px;flex-wrap:wrap;padding:8px 0">
+        ${folderPill('all','כל התיקיות')}${folderPill('consultation','ייעוץ')}${folderPill('full_process','תהליך שלם')}${folderPill('inactive','לא פעיל')}
+      </div>`;
     if(currentContextType==='all'){
-      let pills=[{v:'all',l:'הכל'},{v:'clinic',l:'קליניקה'},{v:'vizhnitz',l:'ויזניץ'},{v:'education',l:'משרד החינוך'},{v:'ponivez',l:'פוניבז'}];
+      let pills=[{v:'all',l:'הכל'},{v:'clinic',l:'קליניקה'},{v:'vizhnitz',l:'ויזניץ'},{v:'education',l:'משרד החינוך'}];
       if(!isAdmin){
         const accessInsts=viewAsPermissions?viewAsPermissions.institutions:userAssignedInstitutions;
         const accessTypes=new Set(allInstitutions.filter(i=>accessInsts.includes(i.id)).map(i=>i.type||'general'));
@@ -2421,13 +2413,11 @@ if(patientView==='patients-list'){
       cf.style.display='block';
       cf.innerHTML=`<div id="all-patients-pills" style="display:flex;gap:8px;flex-wrap:wrap;padding:0 0 8px">
         ${pills.map(p=>`<button class="pill${allPatientsFilter===p.v?' active':''}" onclick="setAllPatientsFilter('${p.v}',this)" style="padding:5px 14px;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allPatientsFilter===p.v?'var(--blue2)':'white'};color:${allPatientsFilter===p.v?'white':'var(--g700)'};font-family:'Rubik',sans-serif">${p.l}</button>`).join('')}
-      </div>
-      <div id="folder-type-pills" style="display:flex;gap:8px;flex-wrap:wrap;padding:8px 0">
-        <button class="pill${allFolderTypeFilter==='all'?' active':''}" onclick="setFolderTypeFilter('all',this)" style="padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allFolderTypeFilter==='all'?'var(--blue2)':'white'};color:${allFolderTypeFilter==='all'?'white':'var(--g700)'};font-family:'Rubik',sans-serif">כל התיקיות</button>
-        <button class="pill${allFolderTypeFilter==='consultation'?' active':''}" onclick="setFolderTypeFilter('consultation',this)" style="padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allFolderTypeFilter==='consultation'?'var(--blue2)':'white'};color:${allFolderTypeFilter==='consultation'?'white':'var(--g700)'};font-family:'Rubik',sans-serif">ייעוץ</button>
-        <button class="pill${allFolderTypeFilter==='full_process'?' active':''}" onclick="setFolderTypeFilter('full_process',this)" style="padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allFolderTypeFilter==='full_process'?'var(--blue2)':'white'};color:${allFolderTypeFilter==='full_process'?'white':'var(--g700)'};font-family:'Rubik',sans-serif">תהליך שלם</button>
-        <button class="pill${allFolderTypeFilter==='inactive'?' active':''}" onclick="setFolderTypeFilter('inactive',this)" style="padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:${allFolderTypeFilter==='inactive'?'var(--blue2)':'white'};color:${allFolderTypeFilter==='inactive'?'white':'var(--g700)'};font-family:'Rubik',sans-serif">לא פעיל</button>
-      </div>`;
+      </div>${folderPillsHtml}`;
+    } else if(currentContextType==='clinic'){
+      const cf=document.getElementById('class-filter');
+      cf.style.display='block';
+      cf.innerHTML=folderPillsHtml;
     } else {
       document.getElementById('class-filter').style.display='none';
     }
@@ -2516,7 +2506,6 @@ function renderPatientsTable(patients){
       return `<div class="cat-btn" onclick="openPatient('${p.id}')" style="padding:16px 10px;position:relative;cursor:pointer">
       <div class="avatar" style="background:${avatarColor(p.name)};width:44px;height:44px;font-size:16px;border-radius:50%">${initials(p.name)}</div>
       <span style="font-size:13px;font-weight:600;text-align:center;line-height:1.3">${p.name||''}</span>
-      ${p.phone?`<span style="font-size:11px;color:var(--g400)">${p.phone}</span>`:''}
       ${p.folder_type?`<span style="display:inline-block;margin-top:6px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;background:${folderColors[p.folder_type]||'var(--g50)'};color:${folderTextColors[p.folder_type]||'var(--g500)'}">${folderLabels[p.folder_type]||p.folder_type}</span>`:''}
       ${isAdmin?`<button class="btn btn-danger" onclick="event.stopPropagation();deletePatient('${p.id}')" style="position:absolute;top:6px;left:6px;padding:2px 6px;font-size:11px;border-radius:6px"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>`:''}
     </div>`;
@@ -2638,9 +2627,9 @@ function renderPersonalTab(p){
           <div class="detail-row"><div class="detail-label">כתובת</div><div class="detail-value"><input type="text" id="pf-address" value="${p.address||''}"></div></div>
           <div class="detail-row" style="grid-column:1/-1"><div class="detail-label">אימייל</div><div class="detail-value"><input type="email" id="pf-email" value="${p.email||''}" dir="ltr" placeholder="example@email.com"></div></div>
           <div class="detail-row" style="grid-column:1/-1"><div class="detail-label">הורים / איש קשר</div><div class="detail-value"><input type="text" id="pf-parents" value="${p.parents||''}"></div></div>
-          <div class="detail-row"><div class="detail-label">שיוך ל:</div><div class="detail-value"><select id="pf-affiliation" onchange="updatePfClassOptions()"><option value="">-- ללא --</option><option value="clinic" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='clinic'?'selected':''}>קליניקה</option><option value="vizhnitz" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='vizhnitz'?'selected':''}>ויזניץ</option><option value="education" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='education'?'selected':''}>משרד החינוך</option><option value="ponivez" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='ponivez'?'selected':''}>פוניבז</option></select></div></div>
+          <div class="detail-row"><div class="detail-label">שיוך ל:</div><div class="detail-value"><select id="pf-affiliation" onchange="updatePfClassOptions()"><option value="">-- ללא --</option><option value="clinic" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='clinic'?'selected':''}>קליניקה</option><option value="vizhnitz" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='vizhnitz'?'selected':''}>ויזניץ</option><option value="education" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='education'?'selected':''}>משרד החינוך</option></select></div></div>
           <div class="detail-row"><div class="detail-label">מוסד</div><div class="detail-value"><input type="text" id="pf-inst" value="${allInstitutions.find(i=>i.id===p.institution_id)?.name||''}"></div></div>
-          <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${[...allClasses].filter(c=>p.institution_id?c.institution_id===p.institution_id:true).sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);}).map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
+          <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${[...allClasses].sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);}).map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
           <div class="detail-row"><div class="detail-label">סוג תיקייה</div><div class="detail-value"><select id="pf-folder-type"><option value="">-- בלי סיווג --</option><option value="consultation" ${p.folder_type==='consultation'?'selected':''}>ייעוץ</option><option value="full_process" ${p.folder_type==='full_process'?'selected':''}>תהליך שלם</option><option value="inactive" ${p.folder_type==='inactive'?'selected':''}>לא פעיל</option></select></div></div>
         </div>
       </div>
@@ -2664,12 +2653,13 @@ function updatePfClassOptions(){
   const instInput=document.getElementById('pf-inst');
   const ctxDef={education:'משרד החינוך',clinic:'קליניקה',ponivez:'פוניבז',vizhnitz:'ויזניץ'};
   if(aff&&ctxDef[aff]) instInput.value=ctxDef[aff];
-  const matchInsts=aff?allInstitutions.filter(i=>i.type===aff):allInstitutions;
-  const instIds=new Set(matchInsts.map(i=>i.id));
-  const classes=[...allClasses].filter(c=>instIds.has(c.institution_id)).sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
+  // תמיד להציג את כל הכיתות כדי שבחירה תמיד תתאפשר
+  const classes=[...allClasses].sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
   const sel=document.getElementById('pf-class');
   if(!sel) return;
+  const cur=sel.value;
   sel.innerHTML='<option value="">-- ללא --</option>'+classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  if(cur) sel.value=cur;
 }
 
 async function savePersonal(id){
@@ -3448,7 +3438,7 @@ function repBuildSection(title,html){
 
 function repRow(label,val){
   if(!val&&val!==0)return'';
-  return`<div style="display:flex;gap:14px;margin-bottom:9px;font-size:15px;"><span style="color:#64748b;min-width:145px;flex-shrink:0;">${label}</span><span style="color:#1e293b;flex:1;">${val}</span></div>`;
+  return`<div style="display:flex;gap:14px;margin-bottom:9px;font-size:15px;"><span style="color:#64748b;min-width:90px;flex-shrink:0;">${label}</span><span style="color:#1e293b;flex:1;">${val}</span></div>`;
 }
 function repStripHtml(s){return s?s.replace(/<[^>]+>/g,''):''}
 
@@ -3524,11 +3514,13 @@ function _repBuildSections(include,pid){
           <tbody>
             ${dateApts.map(a=>{
               const d=new Date(a.start_time);
+              // תיעוד המטפל בלבד — ללא הערות המדריך (sup)
+              let doc=a.description||'';
+              try{ const parsed=JSON.parse(a.description||'{}'); if(parsed&&typeof parsed==='object') doc=parsed.notes||''; }catch{}
               return`<tr style="page-break-inside:avoid;">
                 <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;min-width:50px;">${d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</td>
                 <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;">${a.name||''}</td>
-                <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;text-align:center;">${a.arrived?'✓':''}</td>
-                <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;">${a.description||''}</td>
+                <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;">${doc}</td>
                 ${isAdmin&&include.payments?`<td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;">₪${(a.price||0).toLocaleString()}</td>`:''}
               </tr>`;
             }).join('')}
@@ -3717,7 +3709,7 @@ async function generateFullReport(mode){
   const pw=pdf.internal.pageSize.getWidth();
   const ph=pdf.internal.pageSize.getHeight();
   let isFirstPage=true;
-  const wrapStyle='position:absolute;top:-9999px;left:0;width:794px;padding:14mm 18mm;font-family:Arial,Helvetica,sans-serif;direction:rtl;color:#1e293b;background:white;box-sizing:border-box;font-size:15px;line-height:1.7;';
+  const wrapStyle='position:absolute;top:-9999px;left:0;width:794px;padding:26mm 12mm 14mm;font-family:Arial,Helvetica,sans-serif;direction:rtl;color:#1e293b;background:white;box-sizing:border-box;font-size:15px;line-height:1.7;';
   try{
     for(const secHtml of sections){
       const wrapper=document.createElement('div');
@@ -4304,7 +4296,7 @@ async function renderAllNotes(){
   if(!list) return;
   list.innerHTML='<div style="color:var(--g400);font-size:13px">טוען...</div>';
   const [nr,pr]=await Promise.all([
-    sbAdmin('notes','?order=created_at.desc'),
+    sbAdmin('notes','?order=created_at.asc'),
     sbAdmin('user_profiles','?select=id,display_name')
   ]);
   if(pr.data?.length) allUserProfiles=pr.data;
@@ -6515,13 +6507,8 @@ function updateNpClassOptions(){
   const affEl=document.getElementById('np-affiliation');
   const clsEl=document.getElementById('np-class');
   if(!clsEl) return;
-  const affType=affEl?affEl.value:'';
-  let cls=allClasses;
-  if(affType){
-    const instIds=new Set(allInstitutions.filter(i=>i.type===affType).map(i=>i.id));
-    cls=allClasses.filter(c=>instIds.has(c.institution_id));
-  }
-  const sorted=[...cls].sort((a,b)=>{const ai=CLASS_ORDER.indexOf(a.name),bi=CLASS_ORDER.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
+  // תמיד להציג את כל הכיתות כדי שבחירה תמיד תתאפשר
+  const sorted=[...allClasses].sort((a,b)=>{const ai=CLASS_ORDER.indexOf(a.name),bi=CLASS_ORDER.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
   const seen=new Set();
   const unique=sorted.filter(c=>{if(seen.has(c.name))return false;seen.add(c.name);return true;});
   clsEl.innerHTML='<option value="">-- ללא --</option>'+unique.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
