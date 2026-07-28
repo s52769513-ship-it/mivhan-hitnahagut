@@ -110,7 +110,16 @@ tr:last-child td{border-bottom:none}
 .tab-content{display:none}.tab-content.active{display:block}
 #file-tabs{flex-wrap:wrap;overflow-x:visible;gap:2px 4px;padding-bottom:2px}
 #file-tabs .tab-btn{padding:8px 11px;font-size:13px}
-#file-tabs .tab-sep{width:1px;align-self:stretch;margin:4px 8px;background:var(--g200)}
+.tab-more{position:relative;display:inline-flex}
+.tab-more>.tab-btn{display:inline-flex;align-items:center;gap:5px}
+.tab-more>.tab-btn i{width:14px;height:14px}
+.tab-more.open>.tab-btn i{transform:rotate(180deg)}
+.tab-more-menu{display:none;position:absolute;top:100%;inset-inline-end:0;z-index:60;min-width:210px;background:white;border:1px solid var(--g200);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:6px;margin-top:5px}
+.tab-more.open .tab-more-menu{display:block}
+.tab-more-menu button{display:block;width:100%;text-align:right;padding:8px 10px;border:none;background:none;border-radius:7px;font-family:'Rubik',sans-serif;font-size:13px;color:var(--g600);cursor:pointer;white-space:nowrap}
+.tab-more-menu button:hover{background:var(--g50)}
+.tab-more-menu button.sel{background:var(--blue-light);color:var(--blue2);font-weight:600}
+.tab-more-sep{height:1px;background:var(--g200);margin:5px 2px}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--g200);border-radius:12px;overflow:hidden}
 .cal-header{background:var(--g50);padding:10px 4px;text-align:center;font-size:12px;font-weight:600;color:var(--g500)}
 .cal-day{background:white;min-height:90px;padding:5px;cursor:pointer;transition:background .1s}
@@ -372,16 +381,21 @@ tr:last-child td{border-bottom:none}
           <button class="tab-btn" onclick="showFileTab('it-treatment',this)">מטרות</button>
           <button class="tab-btn" onclick="showFileTab('it-docs',this)">מסמכי תוכנית התערבות</button>
           <button class="tab-btn" onclick="showFileTab('it-graphs',this)">גרפים</button>
-          <button class="tab-btn" onclick="showFileTab('dt-documents',this)" title="נספח א׳ · מסמכים רפואיים">נספח א׳</button>
-          <button class="tab-btn" onclick="showFileTab('tab-appointments',this)" title="נספח ב׳ · פגישות">נספח ב׳</button>
-          <button class="tab-btn" onclick="showFileTab('tab-notes',this)" title="נספח ג׳ · עדכונים">נספח ג׳</button>
-          <button class="tab-btn" onclick="showFileTab('tab-tasks',this)" title="נספח ד׳ · משימות">נספח ד׳</button>
-          <button class="tab-btn" data-admin-tab onclick="showFileTab('tab-payments',this)" title="נספח ה׳ · כספים">נספח ה׳</button>
-          <span class="tab-sep"></span>
-          <button class="tab-btn" onclick="showFileTab('it-tank',this)">טנ"ק</button>
-          <button class="tab-btn" onclick="showFileTab('it-progress',this)">התקדמות</button>
-          <button class="tab-btn" onclick="showFileTab('tab-emails',this)"><i data-lucide="mail"></i> מיילים</button>
-          <button class="tab-btn" onclick="showFileTab('main-tab-reports',this)"><i data-lucide="file-text"></i> דוחות</button>
+          <div class="tab-more" id="file-more">
+            <button class="tab-btn" id="file-more-btn" onclick="toggleFileMore(event)"><span id="file-more-label">נספחים</span><i data-lucide="chevron-down"></i></button>
+            <div class="tab-more-menu" id="file-more-menu">
+              <button onclick="showFileTab('dt-documents',this)" data-short="נספח א׳">נספח א׳ · מסמכים רפואיים</button>
+              <button onclick="showFileTab('tab-appointments',this)" data-short="נספח ב׳">נספח ב׳ · פגישות</button>
+              <button onclick="showFileTab('tab-notes',this)" data-short="נספח ג׳">נספח ג׳ · עדכונים</button>
+              <button onclick="showFileTab('tab-tasks',this)" data-short="נספח ד׳">נספח ד׳ · משימות</button>
+              <button data-admin-tab onclick="showFileTab('tab-payments',this)" data-short="נספח ה׳">נספח ה׳ · כספים</button>
+              <div class="tab-more-sep"></div>
+              <button onclick="showFileTab('it-tank',this)" data-short='טנ"ק'>טנ"ק</button>
+              <button onclick="showFileTab('it-progress',this)" data-short="התקדמות">התקדמות</button>
+              <button onclick="showFileTab('tab-emails',this)" data-short="מיילים">מיילים</button>
+              <button onclick="showFileTab('main-tab-reports',this)" data-short="דוחות">דוחות</button>
+            </div>
+          </div>
         </div>
         <div id="file-tab-panels">
           <div class="tab-content active" id="tab-personal"></div>
@@ -651,13 +665,6 @@ tr:last-child td{border-bottom:none}
               <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="tag"></i> סיווג תיקים</div>
               <p style="font-size:13px;color:var(--g600);margin-bottom:12px">כל תיקייה יכולה להיות מסווגת לאחד מ: ייעוץ, תהליך שלם, או לא פעיל.</p>
               <button class="btn btn-secondary" onclick="toast('סיווג התיקים זמין בעמוד כל התיקיות - בחר תיקייה לשינוי הסיווג','info')"><i data-lucide="tag"></i> עדכן סיווג תיקה</button>
-            </div>
-
-            <!-- Create Graphs -->
-            <div style="margin-bottom:0;padding:14px;background:var(--g50);border-radius:8px;border:1px solid var(--g200)">
-              <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="bar-chart-2"></i> צור גרף</div>
-              <p style="font-size:13px;color:var(--g600);margin-bottom:12px">צור גרפים וניתוחים לפי שלב התהליך וסוג הנתונים.</p>
-              <button class="btn btn-primary" onclick="openModal('modal-create-graph')"><i data-lucide="bar-chart-2"></i> צור גרף חדש</button>
             </div>
           </div>
         </div>
@@ -1755,11 +1762,11 @@ function openEditUser(uid){
   openModal('modal-edit-user');
 }
 
-const CATEGORY_LABELS={clinic:'קליניקה',vizhnitz:'ויזניץ',education:'חינוך',ponivez:'פונוביז',general:'כללי'};
+const CATEGORY_LABELS={clinic:'קליניקה',vizhnitz:'ויזניץ',education:'חינוך',general:'כללי'};
 function renderAssignInstitutions(uid){
   const assigned=allUserInstitutions.filter(x=>x.user_id===uid).map(x=>x.institution_id);
   const el=document.getElementById('eu-institutions');
-  const mainCats=['clinic','vizhnitz','education','ponivez'];
+  const mainCats=['clinic','vizhnitz','education'];
   const catRows=mainCats.map(cat=>{
     const typeInsts=allInstitutions.filter(i=>(i.type||'general')===cat);
     const allOn=typeInsts.length>0&&typeInsts.every(i=>assigned.includes(i.id));
@@ -1783,7 +1790,7 @@ function renderAssignInstitutions(uid){
 async function toggleCategoryAccess(uid,cat,add){
   let typeInsts=allInstitutions.filter(i=>(i.type||'general')===cat);
   if(typeInsts.length===0&&add){
-    const names={clinic:'קליניקה',vizhnitz:'ויזניץ',education:'משרד החינוך',ponivez:'פוניבז'};
+    const names={clinic:'קליניקה',vizhnitz:'ויזניץ',education:'משרד החינוך'};
     const r=await sbAdminInsert('institutions',{name:names[cat]||cat,type:cat});
     if(!r.error&&r.data?.[0]){ allInstitutions.push(r.data[0]); typeInsts=[r.data[0]]; }
     else{ toast('שגיאה ביצירת מוסד','error'); return; }
@@ -2300,7 +2307,7 @@ async function renderPatients(){
   populateSelects();
 }
 
-// State: null=main, 'clinic'/'vizhnitz'/'education'/'ponivez'=category, then sub-selection
+// State: null=main, 'clinic'/'vizhnitz'/'education'=category, then sub-selection
 const CLASS_ORDER=['ב','ג','ד','ה','ו','ז','ח','ט'];
 async function findOrCreateInstitution(name, type='general'){
   name=(name||'').trim();
@@ -2321,9 +2328,6 @@ function reapplyPatientFilter(){
   } else if(currentContextType==='education'){
     const eduIds=new Set(allInstitutions.filter(i=>i.type==='education').map(i=>i.id));
     patientListData=allPatients.filter(p=>eduIds.has(p.institution_id));
-  } else if(currentContextType==='ponivez'){
-    const ponIds=new Set(allInstitutions.filter(i=>i.type==='ponivez').map(i=>i.id));
-    patientListData=allPatients.filter(p=>ponIds.has(p.institution_id));
   } else if(currentContextType==='vizhnitz'&&currentContextClassId){
     patientListData=allPatients.filter(p=>p.class_id===currentContextClassId);
   } else if(currentContextType==='all'){
@@ -2361,7 +2365,7 @@ let patientView = 'main'; // 'main' | 'vizhnitz-classes' | 'education-institutio
 let patientListTitle = '';
 let patientListBackFn = 'backToMain';
 let patientListData = [];
-let currentContextType = null; // 'clinic' | 'vizhnitz' | 'education' | 'ponivez' | 'all' | null
+let currentContextType = null; // 'clinic' | 'vizhnitz' | 'education' | 'all' | null
 let currentContextInstitutionId = null;
 let currentContextClassId = null;
 let allPatientsFilter = 'all'; // filter within 'all' view
@@ -2488,13 +2492,6 @@ function selectCategory(cat){
     patientView='education-institutions';
     currentContextType='education'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
-  } else if(cat==='ponivez'){
-    patientView='patients-list';
-    patientListTitle='פוניבז'; patientListBackFn='backToMain';
-    const ponIds=new Set(allInstitutions.filter(i=>i.type==='ponivez').map(i=>i.id));
-    patientListData=allPatients.filter(p=>ponIds.has(p.institution_id));
-    currentContextType='ponivez'; currentContextInstitutionId=null; currentContextClassId=null;
-    renderInstitutionFilter();
   } else if(cat==='all'){
     patientView='patients-list';
     patientListTitle='כל המטופלים'; patientListBackFn='backToMain';
@@ -2580,7 +2577,7 @@ async function createPatient(){
   const name=document.getElementById('np-name').value.trim();
   if(!name) return toast('נא להכניס שם','error');
   const affiliation=document.getElementById('np-affiliation').value||'general';
-  const ctxDefaults={education:'משרד החינוך',clinic:'קליניקה',ponivez:'פוניבז',vizhnitz:'ויזניץ'};
+  const ctxDefaults={education:'משרד החינוך',clinic:'קליניקה',vizhnitz:'ויזניץ'};
   const instName=document.getElementById('np-institution').value||ctxDefaults[affiliation]||'';
   const institution_id=await findOrCreateInstitution(instName,affiliation);
   const folderType=document.getElementById('np-folder-type').value||null;
@@ -2636,11 +2633,20 @@ function showFileTab(id, btn){
   document.querySelectorAll('#file-tab-panels > .tab-content').forEach(t=>t.classList.remove('active'));
   document.getElementById(id)?.classList.add('active');
   document.querySelectorAll('#file-tabs .tab-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  else {
-    const b=document.querySelector(`#file-tabs .tab-btn[onclick*="'${id}'"]`);
+  document.querySelectorAll('#file-more-menu button').forEach(b=>b.classList.remove('sel'));
+  const label=document.getElementById('file-more-label');
+  const inMenu=document.querySelector(`#file-more-menu button[onclick*="'${id}'"]`);
+  if(inMenu){
+    // לשונית שנמצאת בתפריט הנפתח — הכפתור מציג את שמה כדי שתמיד ברור איפה אנחנו
+    inMenu.classList.add('sel');
+    document.getElementById('file-more-btn')?.classList.add('active');
+    if(label) label.textContent=inMenu.dataset.short||inMenu.textContent.trim();
+  }else{
+    if(label) label.textContent='נספחים';
+    const b=(btn&&btn.classList.contains('tab-btn'))?btn:document.querySelector(`#file-tabs > .tab-btn[onclick*="'${id}'"]`);
     if(b) b.classList.add('active');
   }
+  closeFileMore();
   currentFileTab=id;
   // רינדור עצל ללשוניות כבדות
   if(currentPatientId){
@@ -2651,6 +2657,15 @@ function showFileTab(id, btn){
   if(window.lucide) lucide.createIcons();
 }
 let currentFileTab='tab-personal';
+
+function toggleFileMore(e){
+  e?.stopPropagation();
+  document.getElementById('file-more')?.classList.toggle('open');
+  if(window.lucide) lucide.createIcons();
+}
+function closeFileMore(){ document.getElementById('file-more')?.classList.remove('open'); }
+document.addEventListener('click',e=>{ if(!e.target.closest('#file-more')) closeFileMore(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeFileMore(); });
 
 // תאימות לאחור — קריאות ישנות ממשיכות לעבוד מול הלשוניות השטוחות
 function showMainTab(tab){
@@ -2701,7 +2716,7 @@ function renderPersonalTab(p){
 function updatePfClassOptions(){
   const aff=document.getElementById('pf-affiliation')?.value||'';
   const instInput=document.getElementById('pf-inst');
-  const ctxDef={education:'משרד החינוך',clinic:'קליניקה',ponivez:'פוניבז',vizhnitz:'ויזניץ'};
+  const ctxDef={education:'משרד החינוך',clinic:'קליניקה',vizhnitz:'ויזניץ'};
   if(aff&&ctxDef[aff]) instInput.value=ctxDef[aff];
   // תמיד להציג את כל הכיתות כדי שבחירה תמיד תתאפשר
   const classes=[...allClasses].sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
@@ -2716,7 +2731,7 @@ async function savePersonal(id){
   const debt=allAppointments.filter(a=>a.patient_id===id).reduce((s,a)=>s+(a.price||0),0);
   const paid=allPayments.filter(p=>p.patient_id===id).reduce((s,p)=>s+(p.amount||0),0);
   const pfAff=document.getElementById('pf-affiliation')?.value||'general';
-  const ctxDef={education:'משרד החינוך',clinic:'קליניקה',ponivez:'פוניבז',vizhnitz:'ויזניץ'};
+  const ctxDef={education:'משרד החינוך',clinic:'קליניקה',vizhnitz:'ויזניץ'};
   const pfInstName=document.getElementById('pf-inst')?.value||ctxDef[pfAff]||'';
   const institution_id=await findOrCreateInstitution(pfInstName,pfAff);
   const body={name:document.getElementById('pf-name').value,identity_number:document.getElementById('pf-id').value,phone:document.getElementById('pf-phone').value,address:document.getElementById('pf-address').value,email:document.getElementById('pf-email').value,parents:document.getElementById('pf-parents').value,institution_id,class_id:document.getElementById('pf-class').value||null,folder_type:document.getElementById('pf-folder-type')?.value||null,debt,paid,remaining:Math.max(0,debt-paid)};
