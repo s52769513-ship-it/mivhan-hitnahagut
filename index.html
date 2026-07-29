@@ -2383,7 +2383,8 @@ function renderInstitutionFilter(){
     const allCats=[
       {cat:'clinic',icon:'building-2',label:'קליניקה'},
       {cat:'vizhnitz',icon:'graduation-cap',label:'ויזניץ'},
-      {cat:'education',icon:'clipboard-list',label:'משרד החינוך'}
+      {cat:'education',icon:'clipboard-list',label:'משרד החינוך'},
+      {cat:'general',icon:'building',label:'עצמאי'}
     ];
     let visibleCats=allCats;
     if(!isAdmin){
@@ -2397,11 +2398,37 @@ function renderInstitutionFilter(){
       const accessInsts=viewAsPermissions?viewAsPermissions.institutions:userAssignedInstitutions;
       genInsts=genInsts.filter(i=>accessInsts.includes(i.id));
     }
+    // המוסדות העצמאיים אינם מוצגים אחד-אחד במסך הראשי — הם מאחורי קטגוריית "עצמאי"
+    if(genInsts.length===0) visibleCats=visibleCats.filter(c=>c.cat!=='general');
     el.innerHTML=visibleCats.map(c=>`<button class="cat-btn" onclick="selectCategory('${c.cat}')"><span class="ci"><i data-lucide="${c.icon}"></i></span><span>${c.label}</span></button>`).join('')
-      +genInsts.map(i=>`<button class="cat-btn" onclick="selectGeneralInstitution('${i.id}')"><span class="ci"><i data-lucide="building"></i></span><span>${i.name||'מוסד'}</span></button>`).join('')
       +(isAdmin?`<button class="cat-btn" onclick="selectCategory('all')"><span class="ci"><i data-lucide="users"></i></span><span>כולם</span></button>`:'')
       +(isAdmin?`<button class="cat-btn" onclick="openNewInstitution()" style="border-style:dashed"><span class="ci"><i data-lucide="plus-circle"></i></span><span>הוסף +</span></button>`:'');
     ps.style.display='none';
+    return;
+  }
+
+  if(patientView==='general-institutions'){
+    el.style.display='none';
+    ps.style.display='block';
+    cf.style.display='block';
+    let gInsts=allInstitutions.filter(i=>(i.type||'general')==='general');
+    if(!isAdmin){
+      const accessInsts=viewAsPermissions?viewAsPermissions.institutions:userAssignedInstitutions;
+      gInsts=gInsts.filter(i=>accessInsts.includes(i.id));
+    }
+    document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> עצמאי – בחר מוסד`;
+    document.getElementById('patients-tbody').innerHTML=`<tr><td colspan="6" style="border:none;padding:16px"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
+      ${gInsts.map(inst=>`<div class="cat-btn" style="position:relative;padding:16px 10px;cursor:pointer" onclick="selectGeneralInstitution('${inst.id}')">
+        <span class="ci"><i data-lucide="building"></i></span>
+        <span style="text-align:center;line-height:1.3">${inst.name||'מוסד'}</span>
+        ${isAdmin?`<button class="btn btn-danger" onclick="event.stopPropagation();deleteInstitution('${inst.id}')" style="position:absolute;top:6px;left:6px;padding:2px 6px;font-size:11px;border-radius:6px"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>`:''}
+      </div>`).join('')}
+      ${isAdmin?`<div class="cat-btn" style="border-style:dashed;padding:16px 10px;cursor:pointer" onclick="openNewInstitution()">
+        <span class="ci"><i data-lucide="plus-circle"></i></span>
+        <span>מוסד חדש</span>
+      </div>`:''}
+    </div></td></tr>`;
+    if(window.lucide) lucide.createIcons();
     return;
   }
 
@@ -2491,6 +2518,10 @@ function selectCategory(cat){
     patientView='education-institutions';
     currentContextType='education'; currentContextInstitutionId=null; currentContextClassId=null;
     renderInstitutionFilter();
+  } else if(cat==='general'){
+    patientView='general-institutions';
+    currentContextType='general'; currentContextInstitutionId=null; currentContextClassId=null;
+    renderInstitutionFilter();
   } else if(cat==='all'){
     patientView='patients-list';
     patientListTitle='כל המטופלים'; patientListBackFn='backToMain';
@@ -2524,7 +2555,7 @@ function selectGeneralInstitution(instId){
   const inst=allInstitutions.find(i=>i.id===instId);
   patientView='patients-list';
   patientListData=allPatients.filter(p=>p.institution_id===instId);
-  patientListTitle=inst?.name||'מוסד'; patientListBackFn='backToMain';
+  patientListTitle=inst?.name||'מוסד'; patientListBackFn='backToGeneral';
   currentContextInstitutionId=instId;
   currentContextType='general';
   renderInstitutionFilter();
@@ -2533,6 +2564,7 @@ function selectGeneralInstitution(instId){
 function backToMain(){ patientView='main'; selectedInstitution=null; selectedClass=null; currentContextType=null; currentContextInstitutionId=null; currentContextClassId=null; renderInstitutionFilter(); }
 function backToVizhnitz(){ patientView='vizhnitz-classes'; currentContextClassId=null; renderInstitutionFilter(); }
 function backToEducation(){ patientView='education-institutions'; currentContextInstitutionId=null; renderInstitutionFilter(); }
+function backToGeneral(){ patientView='general-institutions'; currentContextInstitutionId=null; renderInstitutionFilter(); }
 function selectCustomInstitution(instId, instName){
   patientView='patients-list';
   patientListData=allPatients.filter(p=>p.institution_id===instId);
@@ -2741,20 +2773,22 @@ let patientAptView='list';
 let patientCalDate=new Date();
 
 function renderPatientAppointments(pid){
-  const apts=[...allAppointments.filter(a=>a.patient_id===pid)].sort((a,b)=>new Date(a.start_time||0)-new Date(b.start_time||0));
+  const allApts=[...allAppointments.filter(a=>a.patient_id===pid)].sort((a,b)=>new Date(a.start_time||0)-new Date(b.start_time||0));
+  // ברירת המחדל היא החודש הנוכחי; שאר החודשים דרך הבורר. היומן מסנן לבד לפי החודש שהוא מציג.
+  const apts=allApts.filter(a=>inFilePeriod(a.start_time));
   const toggleBtns=`<div style="display:flex;gap:4px"><button class="btn btn-sm ${patientAptView==='list'?'btn-primary':'btn-secondary'}" onclick="patientAptView='list';renderPatientAppointments('${pid}')"><i data-lucide="clipboard-list"></i> רשימה</button><button class="btn btn-sm ${patientAptView==='calendar'?'btn-primary':'btn-secondary'}" onclick="patientAptView='calendar';renderPatientAppointments('${pid}')"><i data-lucide="calendar"></i> יומן</button></div>`;
   if(patientAptView==='calendar'){
     document.getElementById('tab-appointments').innerHTML=`
       <div class="card">
         <div class="card-header"><h3>פגישות</h3><div style="display:flex;gap:6px;align-items:center">${toggleBtns}<button class="btn btn-primary btn-sm" onclick="openModal('modal-new-appointment')">+ פגישה</button></div></div>
-        ${renderPatientMiniCal(pid,apts)}
+        ${renderPatientMiniCal(pid,allApts)}
       </div>`;
   }else{
     document.getElementById('tab-appointments').innerHTML=`
       <div class="card">
-        <div class="card-header"><h3>פגישות</h3><div style="display:flex;gap:6px;align-items:center">${toggleBtns}<button class="btn btn-primary btn-sm" onclick="openModal('modal-new-appointment')">+ פגישה</button></div></div>
+        <div class="card-header"><h3>פגישות</h3><div style="display:flex;gap:6px;align-items:center"><span id="period-file-apts"></span>${toggleBtns}<button class="btn btn-primary btn-sm" onclick="openModal('modal-new-appointment')">+ פגישה</button></div></div>
         <div style="overflow-x:auto"><table><thead><tr><th>שם</th><th>תאריך</th><th>שעה</th><th>מחיר</th><th>הגיע</th></tr></thead>
-        <tbody>${apts.length===0?'<tr><td colspan="5"><div class="empty"><p>אין פגישות</p></div></td></tr>':apts.map(a=>`<tr style="cursor:pointer" onclick="openEditApt('${a.id}')">
+        <tbody>${apts.length===0?'<tr><td colspan="5"><div class="empty"><p>אין פגישות בתקופה שנבחרה</p></div></td></tr>':apts.map(a=>`<tr style="cursor:pointer" onclick="openEditApt('${a.id}')">
           <td>${a.name||'פגישה'}</td>
           <td>${a.start_time?fmtDate(a.start_time):'-'}</td>
           <td>${a.start_time?fmtTime(a.start_time):'-'}</td>
@@ -2762,7 +2796,9 @@ function renderPatientAppointments(pid){
           <td><span class="badge ${a.arrived?'badge-green':'badge-amber'}">${a.arrived?'הגיע':'לא הגיע'}</span></td>
         </tr>`).join('')}</tbody></table></div>
       </div>`;
+    renderPeriodSelect('period-file-apts', allApts.map(a=>a.start_time), 'setFilePeriod', filePeriod);
   }
+  if(window.lucide) lucide.createIcons();
 }
 
 function renderPatientMiniCal(pid,apts){
@@ -4138,16 +4174,32 @@ function inArchivePeriod(dateVal){
   if(archivePeriod==='current') return k===monthKey(new Date());
   return k===archivePeriod;
 }
-function renderPeriodSelect(containerId, dateList){
+function renderPeriodSelect(containerId, dateList, onChangeFn, period){
   const el=document.getElementById(containerId); if(!el) return;
+  const per=period||archivePeriod;
+  const fn=onChangeFn||'setArchivePeriod';
   const keys=[...new Set(dateList.map(d=>d?monthKey(d):null).filter(Boolean))].sort().reverse();
   const cur=monthKey(new Date());
-  const opts=keys.filter(k=>k!==cur).map(k=>{const [y,m]=k.split('-');return `<option value="${k}" ${archivePeriod===k?'selected':''}>${HEB_MONTHS[parseInt(m,10)-1]} ${y}</option>`;}).join('');
-  el.innerHTML=`<select class="form-control" style="width:180px;font-size:13px" onchange="setArchivePeriod(this.value)">
-    <option value="current" ${archivePeriod==='current'?'selected':''}>החודש הנוכחי</option>
+  const opts=keys.filter(k=>k!==cur).map(k=>{const [y,m]=k.split('-');return `<option value="${k}" ${per===k?'selected':''}>${HEB_MONTHS[parseInt(m,10)-1]} ${y}</option>`;}).join('');
+  el.innerHTML=`<select class="form-control" style="width:170px;font-size:13px" onchange="${fn}(this.value)">
+    <option value="current" ${per==='current'?'selected':''}>החודש הנוכחי</option>
     ${opts}
-    <option value="all" ${archivePeriod==='all'?'selected':''}>הכל (ארכיון)</option>
+    <option value="all" ${per==='all'?'selected':''}>הכל (ארכיון)</option>
   </select>`;
+}
+
+// תקופה נפרדת לתיק המטופל, כדי שהבחירה בתיק לא תשפיע על המסכים הראשיים
+let filePeriod='current';
+function inFilePeriod(dateVal){
+  if(filePeriod==='all') return true;
+  const k=dateVal?monthKey(dateVal):null;
+  if(!k) return false;
+  if(filePeriod==='current') return k===monthKey(new Date());
+  return k===filePeriod;
+}
+function setFilePeriod(v){
+  filePeriod=v;
+  if(currentPatientId) renderPatientAppointments(currentPatientId);
 }
 function setArchivePeriod(v){
   archivePeriod=v;
