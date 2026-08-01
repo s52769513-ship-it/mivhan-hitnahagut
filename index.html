@@ -752,7 +752,7 @@ tr:last-child td{border-bottom:none}
         <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-apx-apts" checked style="width:16px;height:16px"> נספח ב׳ · פגישות</label>
         <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-apx-notes" checked style="width:16px;height:16px"> נספח ג׳ · עדכונים</label>
         <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-apx-tasks" style="width:16px;height:16px"> נספח ד׳ · משימות</label>
-        <label id="rep-payments-lbl" style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-apx-pay" checked style="width:16px;height:16px"> נספח ה׳ · כספים</label>
+        <label id="rep-payments-lbl" style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:10px 12px;border:1px solid var(--g200);border-radius:8px;"><input type="checkbox" id="rep-apx-pay" checked style="width:16px;height:16px"> נספח ה׳ · כספים ותשלומים</label>
       </div>
     </div>
     <div class="modal-footer">
@@ -3774,27 +3774,21 @@ function _repBuildSections(include,pid){
       if(!groupedByDate[dateKey])groupedByDate[dateKey]=[];
       groupedByDate[dateKey].push(a);
     });
+    // פרטי הפגישה מעל הטקסט, כדי שהתיעוד ישתרע על רוחב העמוד המלא
     const appointmentsHtml=Object.entries(groupedByDate).map(([dateStr,dateApts])=>`
-      <div style="margin-bottom:18px;page-break-inside:avoid;">
-        <div style="display:flex;gap:14px;margin-bottom:10px;font-size:14px;font-weight:600;color:#1e3a5f;padding:8px 10px;background:#f0f4f8;border-radius:5px;">
-          <span>${dateStr}</span>
+      <div style="margin-bottom:18px;">
+        <div style="margin-bottom:10px;font-size:14px;font-weight:600;color:#1e3a5f;padding:8px 10px;background:#f0f4f8;border-radius:5px;">
+          ${dateStr}
         </div>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
-          <tbody>
-            ${dateApts.map(a=>{
-              const d=new Date(a.start_time);
-              // תיעוד המטפל בלבד — ללא הערות המדריך (sup)
-              let doc=a.description||'';
-              try{ const parsed=JSON.parse(a.description||'{}'); if(parsed&&typeof parsed==='object') doc=parsed.notes||''; }catch{}
-              return`<tr style="page-break-inside:avoid;">
-                <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;min-width:50px;">${d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</td>
-                <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;">${a.name||''}</td>
-                <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;">${doc}</td>
-                ${include.apxPay?`<td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:13px;">₪${(a.price||0).toLocaleString()}</td>`:''}
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
+        ${dateApts.map(a=>{
+          // תיעוד המטפל בלבד — ללא הערות המדריך (sup)
+          let doc=a.description||'';
+          try{ const parsed=JSON.parse(a.description||'{}'); if(parsed&&typeof parsed==='object') doc=parsed.notes||''; }catch{}
+          return`<div style="margin-bottom:14px;padding:14px;border:1px solid #e2e8f0;border-radius:7px;background:#f8fafc;page-break-inside:avoid;">
+            ${a.name?`<div style="font-size:13px;color:#64748b;margin-bottom:8px;">סגנון פגישה: <span style="color:#1e293b;font-weight:600;">${a.name}</span></div>`:''}
+            <div style="font-size:15px;line-height:1.8;white-space:pre-wrap;color:#1e293b;">${doc||'<span style="color:#94a3b8;">אין תיעוד</span>'}</div>
+          </div>`;
+        }).join('')}
       </div>
     `).join('');
     sections.push(repBuildSection('נספח ב׳ · פגישות',apts.length===0?'<p style="color:#94a3b8;font-size:15px;">אין פגישות</p>':appointmentsHtml));
@@ -3820,20 +3814,47 @@ function _repBuildSections(include,pid){
   }
 
   if(include.apxPay){
+    // חיובי הפגישות עברו לכאן מנספח ב׳, כדי שנספח הפגישות יישאר תיעוד בלבד
+    const chargeApts=allAppointments.filter(a=>a.patient_id===pid).sort((a,b)=>new Date(a.start_time)-new Date(b.start_time));
     const pays=allPayments.filter(pp=>pp.patient_id===pid).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-    const rows=pays.map(pay=>`<tr>
-      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${pay.created_at?new Date(pay.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}):'-'}</td>
-      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">₪${(pay.amount||0).toLocaleString()}</td>
-      <td style="padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;">${pay.description||''}</td>
-    </tr>`).join('');
-    sections.push(repBuildSection('נספח ה׳ · כספים',pays.length===0?'<p style="color:#94a3b8;font-size:15px;">אין תשלומים</p>':`
-      <table style="width:100%;border-collapse:collapse;">
+    const totalDebt=chargeApts.reduce((sum,a)=>sum+(a.price||0),0);
+    const totalPaid=pays.reduce((sum,pay)=>sum+(pay.amount||0),0);
+    const th='padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;';
+    const td='padding:8px 10px;border:1px solid #e2e8f0;font-size:14px;';
+    let payHtml='';
+    if(chargeApts.length>0){
+      payHtml+=`<div style="font-size:15px;font-weight:700;color:#1e3a5f;margin-bottom:10px;">חיובי פגישות</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:22px;">
         <thead><tr style="background:#f0f4f8;">
-          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">תאריך</th>
-          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">סכום</th>
-          <th style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-size:14px;">תיאור</th>
-        </tr></thead><tbody>${rows}</tbody>
-      </table>`));
+          <th style="${th}">תאריך</th><th style="${th}">סגנון פגישה</th><th style="${th}">סכום</th>
+        </tr></thead><tbody>${chargeApts.map(a=>`<tr style="page-break-inside:avoid;">
+          <td style="${td}">${a.start_time?new Date(a.start_time).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}):'-'}</td>
+          <td style="${td}">${a.name||'פגישה'}</td>
+          <td style="${td}">₪${(a.price||0).toLocaleString()}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+    }
+    if(pays.length>0){
+      payHtml+=`<div style="font-size:15px;font-weight:700;color:#1e3a5f;margin-bottom:10px;">תשלומים שהתקבלו</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:22px;">
+        <thead><tr style="background:#f0f4f8;">
+          <th style="${th}">תאריך</th><th style="${th}">סכום</th><th style="${th}">תיאור</th>
+        </tr></thead><tbody>${pays.map(pay=>`<tr style="page-break-inside:avoid;">
+          <td style="${td}">${pay.created_at?new Date(pay.created_at).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}):'-'}</td>
+          <td style="${td}">₪${(pay.amount||0).toLocaleString()}</td>
+          <td style="${td}">${pay.description||''}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+    }
+    if(payHtml){
+      payHtml+=`<div style="padding:14px;background:#f0f4f8;border-radius:7px;page-break-inside:avoid;">
+        ${repRow('סה"כ חיובים',`₪${totalDebt.toLocaleString()}`)}
+        ${repRow('סה"כ שולם',`₪${totalPaid.toLocaleString()}`)}
+        ${repRow('יתרה',`₪${Math.max(0,totalDebt-totalPaid).toLocaleString()}`)}
+      </div>`;
+    }
+    sections.push(repBuildSection('נספח ה׳ · כספים ותשלומים',
+      payHtml||'<p style="color:#94a3b8;font-size:15px;">אין חיובים או תשלומים</p>'));
   }
 
   return sections;
