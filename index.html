@@ -2338,6 +2338,16 @@ function reapplyPatientFilter(){
     patientListData=allPatients.filter(p=>p.institution_id===currentContextInstitutionId);
   }
 }
+// #patients-tbody משמש גם לרשימת המטופלים וגם לגרידים של הכיתות/המוסדות,
+// ולכן רענון חייב לצייר מחדש את המסך שבו נמצאים ולא תמיד את טבלת המטופלים
+function refreshPatientsView(){
+  if(patientView==='patients-list'){
+    reapplyPatientFilter();
+    renderPatientsTable(patientListData);
+  }else{
+    renderInstitutionFilter();
+  }
+}
 function filterAllPatients(f){
   if(f==='all') return [...allPatients];
   const ids=new Set(allInstitutions.filter(i=>i.type===f).map(i=>i.id));
@@ -2661,12 +2671,12 @@ async function createPatient(){
   if(r.error) return toast('שגיאה: '+r.error,'error');
   toast('מטופל נוצר <i data-lucide="check-circle"></i>','success'); closeModal('modal-new-patient');
   ['np-name','np-phone','np-id','np-address','np-parents'].forEach(id=>document.getElementById(id).value='');
-  await loadAll(); reapplyPatientFilter(); renderPatientsTable(patientListData);
+  await loadAll(); refreshPatientsView();
 }
 
 async function deletePatient(id){
   if(!confirm('למחוק מטופל זה?')) return;
-  await sbDelete('patients',id); toast('נמחק',''); await loadAll(); reapplyPatientFilter(); renderPatientsTable(patientListData);
+  await sbDelete('patients',id); toast('נמחק',''); await loadAll(); refreshPatientsView();
 }
 
 // === PATIENT DETAIL ===
