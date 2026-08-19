@@ -2329,6 +2329,9 @@ function reapplyPatientFilter(){
     patientListData=allPatients.filter(p=>eduIds.has(p.institution_id));
   } else if(currentContextType==='vizhnitz'&&currentContextClassId){
     patientListData=allPatients.filter(p=>p.class_id===currentContextClassId);
+  } else if(currentContextType==='vizhnitz'){
+    const vIds=vizhnitzInstIds();
+    patientListData=allPatients.filter(p=>vIds.has(p.institution_id));
   } else if(currentContextType==='all'){
     patientListData=filterAllPatients(allPatientsFilter);
   } else if(currentContextInstitutionId){
@@ -2461,13 +2464,19 @@ function renderInstitutionFilter(){
     el.style.display='none';
     ps.style.display='block';
     cf.style.display='block';
-    // Show classes for vizhnitz institution
-    const vizInst = allInstitutions.find(i=>i.type==='vizhnitz')||allInstitutions.find(i=>i.name&&(i.name.includes('ויזניץ')||i.name.toLowerCase().includes('vizhnitz')));
-    const vizClasses = vizInst ? allClasses.filter(c=>c.institution_id===vizInst.id) : [];
+    // כל מוסדות ויזניץ, לא רק הראשון — אחרת כיתות של מוסד כפול נעלמות
+    const vizIds = vizhnitzInstIds();
+    const vizClasses = allClasses.filter(c=>vizIds.has(c.institution_id));
+    const vizPatients = allPatients.filter(p=>vizIds.has(p.institution_id));
+    const noClassCount = vizPatients.filter(p=>!p.class_id).length;
+    const cnt = id => vizPatients.filter(p=>p.class_id===id).length;
     document.getElementById('patients-list-title').innerHTML = `<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> ויזניץ – בחר כיתה`;
     document.getElementById('patients-tbody').innerHTML = `<tr><td colspan="6"><div style="padding:20px"><div style="display:flex;flex-wrap:wrap;gap:10px">
-      ${vizClasses.map(c=>`<button class="cat-btn" style="min-width:120px" onclick="selectVizhnitzClass('${c.id}','${c.name}')"><span class="ci"><i data-lucide="building"></i></span><span>${c.name}</span></button>`).join('')}
+      ${vizClasses.map(c=>`<button class="cat-btn" style="min-width:120px" onclick="selectVizhnitzClass('${c.id}','${c.name}')"><span class="ci"><i data-lucide="building"></i></span><span>${c.name}</span><span style="font-size:11px;color:var(--g500)">${cnt(c.id)} תלמידים</span></button>`).join('')}
+      <button class="cat-btn" style="min-width:120px" onclick="selectVizhnitzAll()"><span class="ci"><i data-lucide="users"></i></span><span>כל התלמידים</span><span style="font-size:11px;color:var(--g500)">${vizPatients.length}</span></button>
+      ${noClassCount>0?`<button class="cat-btn" style="min-width:120px;border-color:var(--amber)" onclick="selectVizhnitzNoClass()"><span class="ci"><i data-lucide="alert-circle"></i></span><span>ללא כיתה</span><span style="font-size:11px;color:var(--g500)">${noClassCount} תלמידים</span></button>`:''}
     </div></div></td></tr>`;
+    if(window.lucide) lucide.createIcons();
     return;
   }
 
@@ -2530,6 +2539,28 @@ function selectCategory(cat){
     allPatientsFilter='all';
     renderInstitutionFilter();
   }
+}
+
+function vizhnitzInstIds(){
+  const ids=new Set(allInstitutions.filter(i=>i.type==='vizhnitz').map(i=>i.id));
+  if(ids.size===0) allInstitutions.filter(i=>i.name&&(i.name.includes('ויזניץ')||i.name.toLowerCase().includes('vizhnitz'))).forEach(i=>ids.add(i.id));
+  return ids;
+}
+function selectVizhnitzAll(){
+  patientView='patients-list';
+  const ids=vizhnitzInstIds();
+  patientListData=allPatients.filter(p=>ids.has(p.institution_id));
+  patientListTitle='ויזניץ · כל התלמידים'; patientListBackFn='backToVizhnitz';
+  currentContextClassId=null;
+  renderInstitutionFilter();
+}
+function selectVizhnitzNoClass(){
+  patientView='patients-list';
+  const ids=vizhnitzInstIds();
+  patientListData=allPatients.filter(p=>ids.has(p.institution_id)&&!p.class_id);
+  patientListTitle='ויזניץ · ללא כיתה'; patientListBackFn='backToVizhnitz';
+  currentContextClassId=null;
+  renderInstitutionFilter();
 }
 
 function selectVizhnitzClass(classId, className){
@@ -2609,8 +2640,16 @@ async function createPatient(){
   if(!name) return toast('נא להכניס שם','error');
   const affiliation=document.getElementById('np-affiliation').value||'general';
   const ctxDefaults={education:'משרד החינוך',clinic:'קליניקה',vizhnitz:'ויזניץ'};
-  const instName=document.getElementById('np-institution').value||ctxDefaults[affiliation]||'';
-  const institution_id=await findOrCreateInstitution(instName,affiliation);
+  const typedInst=document.getElementById('np-institution').value.trim();
+  let institution_id;
+  if(typedInst){
+    institution_id=await findOrCreateInstitution(typedInst,affiliation);
+  }else{
+    // בלי שם מוסד — להיצמד למוסד קיים מאותו סוג, אחרת נוצר מוסד כפול
+    // והתלמיד נופל תחת מוסד אחר מזה שבו מוצגות הכיתות
+    const existing=allInstitutions.find(i=>(i.type||'general')===affiliation);
+    institution_id=existing?existing.id:await findOrCreateInstitution(ctxDefaults[affiliation]||'',affiliation);
+  }
   const folderType=document.getElementById('np-folder-type').value||null;
   const body={name,phone:document.getElementById('np-phone').value,identity_number:document.getElementById('np-id').value,address:document.getElementById('np-address').value,parents:document.getElementById('np-parents').value,institution_id,class_id:document.getElementById('np-class').value||null,folder_type:folderType,debt:0,paid:0,remaining:0};
   let r=await sbInsert('patients',body);
@@ -6859,14 +6898,27 @@ function populateSelects(){
 }
 
 function updateNpClassOptions(){
-  const affEl=document.getElementById('np-affiliation');
   const clsEl=document.getElementById('np-class');
   if(!clsEl) return;
-  // תמיד להציג את כל הכיתות כדי שבחירה תמיד תתאפשר
-  const sorted=[...allClasses].sort((a,b)=>{const ai=CLASS_ORDER.indexOf(a.name),bi=CLASS_ORDER.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
-  const seen=new Set();
-  const unique=sorted.filter(c=>{if(seen.has(c.name))return false;seen.add(c.name);return true;});
-  clsEl.innerHTML='<option value="">-- ללא --</option>'+unique.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  const prev=clsEl.value;
+  // כל הכיתות זמינות תמיד, אך מקובצות לפי מוסד. איחוד לפי שם היה ממזג
+  // "כיתה ג" של שני מוסדות לאפשרות אחת ושומר את class_id של המוסד הלא נכון,
+  // ואז התלמיד לא הופיע תחת המוסד שאליו שויך.
+  const sortCls=arr=>[...arr].sort((a,b)=>{const ai=CLASS_ORDER.indexOf(a.name),bi=CLASS_ORDER.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
+  const byInst=new Map();
+  allClasses.forEach(c=>{
+    const key=c.institution_id||'';
+    if(!byInst.has(key)) byInst.set(key,[]);
+    byInst.get(key).push(c);
+  });
+  let html='<option value="">-- ללא --</option>';
+  [...byInst.entries()].forEach(([instId,list])=>{
+    const inst=allInstitutions.find(i=>i.id===instId);
+    const label=(inst?.name||'ללא מוסד').replace(/"/g,'&quot;');
+    html+=`<optgroup label="${label}">`+sortCls(list).map(c=>`<option value="${c.id}">${c.name}</option>`).join('')+'</optgroup>';
+  });
+  clsEl.innerHTML=html;
+  if(prev) clsEl.value=prev;
 }
 
 function openModal(id){ document.getElementById(id).style.display='flex'; populateSelects(); }
