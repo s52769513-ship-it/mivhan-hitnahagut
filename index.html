@@ -655,6 +655,14 @@ tr:last-child td{border-bottom:none}
               <div id="class-upgrade-status" style="margin-top:10px;font-size:13px"></div>
             </div>
 
+            <!-- Classes audit (read-only) -->
+            <div style="margin-bottom:20px;padding:14px;background:var(--g50);border-radius:8px;border:1px solid var(--g200)">
+              <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="list-tree"></i> בדיקת כיתות</div>
+              <p style="font-size:13px;color:var(--g600);margin-bottom:12px">מציג כל כיתה: לאיזה מוסד היא שייכת וכמה תלמידים משויכים אליה. תצוגה בלבד — לא משנה נתונים.</p>
+              <button class="btn btn-secondary" onclick="renderClassesAudit()"><i data-lucide="search"></i> הצג כיתות</button>
+              <div id="classes-audit" style="margin-top:12px"></div>
+            </div>
+
             <!-- Patient Folder Type -->
             <div style="margin-bottom:20px;padding:14px;background:var(--g50);border-radius:8px;border:1px solid var(--g200)">
               <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="tag"></i> סיווג תיקים</div>
@@ -2364,13 +2372,9 @@ function setAllPatientsFilter(f, btn){
 
 function setFolderTypeFilter(ftype, btn){
   allFolderTypeFilter=ftype;
-  const filtered=patientListData.filter(p=>{
-    if(ftype==='all') return true;
-    return p.folder_type===ftype;
-  });
   document.querySelectorAll('#folder-type-pills .pill').forEach(p=>p.classList.remove('active'));
-  btn.classList.add('active');
-  renderPatientsTable(filtered);
+  if(btn) btn.classList.add('active');
+  renderPatientsTable(patientListData);
   lucide.createIcons();
 }
 let patientView = 'main'; // 'main' | 'vizhnitz-classes' | 'education-institutions' | 'patients-list'
@@ -2478,13 +2482,15 @@ function renderInstitutionFilter(){
     const vizIds = vizhnitzInstIds();
     const vizClasses = allClasses.filter(c=>vizIds.has(c.institution_id));
     const vizPatients = allPatients.filter(p=>vizIds.has(p.institution_id));
-    const noClassCount = vizPatients.filter(p=>!p.class_id).length;
+    // גם תלמיד ששויך בטעות לכיתה של מוסד אחר נופל לכאן — אחרת הוא לא מופיע באף כיתה
+    const vizClassIds = new Set(vizClasses.map(c=>c.id));
+    const noClassCount = vizPatients.filter(p=>!p.class_id||!vizClassIds.has(p.class_id)).length;
     const cnt = id => vizPatients.filter(p=>p.class_id===id).length;
     document.getElementById('patients-list-title').innerHTML = `<button class="btn btn-secondary btn-sm" onclick="backToMain()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> ויזניץ – בחר כיתה`;
     document.getElementById('patients-tbody').innerHTML = `<tr><td colspan="6"><div style="padding:20px"><div style="display:flex;flex-wrap:wrap;gap:10px">
       ${vizClasses.map(c=>`<button class="cat-btn" style="min-width:120px" onclick="selectVizhnitzClass('${c.id}','${c.name}')"><span class="ci"><i data-lucide="building"></i></span><span>${c.name}</span><span style="font-size:11px;color:var(--g500)">${cnt(c.id)} תלמידים</span></button>`).join('')}
       <button class="cat-btn" style="min-width:120px" onclick="selectVizhnitzAll()"><span class="ci"><i data-lucide="users"></i></span><span>כל התלמידים</span><span style="font-size:11px;color:var(--g500)">${vizPatients.length}</span></button>
-      ${noClassCount>0?`<button class="cat-btn" style="min-width:120px;border-color:var(--amber)" onclick="selectVizhnitzNoClass()"><span class="ci"><i data-lucide="alert-circle"></i></span><span>ללא כיתה</span><span style="font-size:11px;color:var(--g500)">${noClassCount} תלמידים</span></button>`:''}
+      ${noClassCount>0?`<button class="cat-btn" style="min-width:120px;border-color:var(--amber)" onclick="selectVizhnitzNoClass()"><span class="ci"><i data-lucide="alert-circle"></i></span><span>לא משויכים לכיתה</span><span style="font-size:11px;color:var(--g500)">${noClassCount} תלמידים</span></button>`:''}
     </div></div></td></tr>`;
     if(window.lucide) lucide.createIcons();
     return;
@@ -2551,6 +2557,40 @@ function selectCategory(cat){
   }
 }
 
+// תצוגה בלבד: מיפוי מלא של הכיתות, כדי לזהות כפילויות וכיתות יתומות
+function renderClassesAudit(){
+  const box=document.getElementById('classes-audit'); if(!box) return;
+  const nameCount={};
+  allClasses.forEach(c=>{nameCount[c.name]=(nameCount[c.name]||0)+1;});
+  const rows=[...allClasses].sort((a,b)=>{
+    const ai=CLASS_ORDER.indexOf(a.name),bi=CLASS_ORDER.indexOf(b.name);
+    if(ai!==bi) return (ai<0?99:ai)-(bi<0?99:bi);
+    return (a.name||'').localeCompare(b.name||'','he');
+  }).map(c=>{
+    const inst=allInstitutions.find(i=>i.id===c.institution_id);
+    const students=allPatients.filter(p=>p.class_id===c.id).length;
+    const dup=nameCount[c.name]>1;
+    const instLabel=inst?`${inst.name} <span style="color:var(--g400)">(${inst.type||'general'})</span>`:'<span style="color:var(--red)">ללא מוסד</span>';
+    return `<tr>
+      <td style="padding:6px 10px;border:1px solid var(--g200);font-weight:600">${c.name}${dup?' <span style="font-size:11px;color:var(--amber)">כפול</span>':''}</td>
+      <td style="padding:6px 10px;border:1px solid var(--g200);font-size:13px">${instLabel}</td>
+      <td style="padding:6px 10px;border:1px solid var(--g200);font-size:13px;${students===0?'color:var(--g400)':''}">${students}</td>
+    </tr>`;
+  }).join('');
+  const dupNames=Object.entries(nameCount).filter(([,n])=>n>1).map(([n,c])=>`${n}×${c}`).join(' · ');
+  box.innerHTML=`
+    ${dupNames?`<div style="margin-bottom:10px;padding:8px 10px;background:var(--amber-light,#fef3c7);border-radius:6px;font-size:13px">שמות שמופיעים יותר מפעם אחת: ${dupNames}</div>`:'<div style="margin-bottom:10px;font-size:13px;color:var(--green)">אין כיתות כפולות</div>'}
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:var(--g100)">
+        <th style="padding:6px 10px;border:1px solid var(--g200);text-align:right">כיתה</th>
+        <th style="padding:6px 10px;border:1px solid var(--g200);text-align:right">מוסד</th>
+        <th style="padding:6px 10px;border:1px solid var(--g200);text-align:right">תלמידים</th>
+      </tr></thead><tbody>${rows||'<tr><td colspan="3" style="padding:10px">אין כיתות</td></tr>'}</tbody>
+    </table></div>
+    <div style="margin-top:8px;font-size:12px;color:var(--g500)">סה"כ ${allClasses.length} כיתות</div>`;
+  if(window.lucide) lucide.createIcons();
+}
+
 function vizhnitzInstIds(){
   const ids=new Set(allInstitutions.filter(i=>i.type==='vizhnitz').map(i=>i.id));
   if(ids.size===0) allInstitutions.filter(i=>i.name&&(i.name.includes('ויזניץ')||i.name.toLowerCase().includes('vizhnitz'))).forEach(i=>ids.add(i.id));
@@ -2567,8 +2607,9 @@ function selectVizhnitzAll(){
 function selectVizhnitzNoClass(){
   patientView='patients-list';
   const ids=vizhnitzInstIds();
-  patientListData=allPatients.filter(p=>ids.has(p.institution_id)&&!p.class_id);
-  patientListTitle='ויזניץ · ללא כיתה'; patientListBackFn='backToVizhnitz';
+  const vizClassIds=new Set(allClasses.filter(c=>ids.has(c.institution_id)).map(c=>c.id));
+  patientListData=allPatients.filter(p=>ids.has(p.institution_id)&&(!p.class_id||!vizClassIds.has(p.class_id)));
+  patientListTitle='ויזניץ · לא משויכים לכיתה'; patientListBackFn='backToVizhnitz';
   currentContextClassId=null;
   renderInstitutionFilter();
 }
@@ -2618,7 +2659,10 @@ function renderClassFilter(){ /* handled in renderInstitutionFilter now */ }
 function selectInstitution(id){ selectedInstitution=id; }
 function selectClass(id){ selectedClass=id; }
 
-function renderPatientsTable(patients){
+function renderPatientsTable(list){
+  // המסנן מוחל כאן ולא רק ב-setFolderTypeFilter, אחרת חזרה מתיק מטופל
+  // מציירת את הרשימה המלאה בזמן שהכפתור עדיין מסומן
+  const patients=allFolderTypeFilter==='all'?list:list.filter(p=>p.folder_type===allFolderTypeFilter);
   document.getElementById('patients-list-title').innerHTML=`<button class="btn btn-secondary btn-sm" onclick="${patientListBackFn}()" style="margin-left:10px"><i data-lucide="arrow-right"></i> חזרה</button> ${patientListTitle} <span style="font-size:13px;color:var(--g500)">(${patients.length})</span>`;
   const th=document.getElementById('patients-thead');
   if(th) th.style.display='none';
@@ -2766,7 +2810,7 @@ function renderPersonalTab(p){
           <div class="detail-row" style="grid-column:1/-1"><div class="detail-label">הורים / איש קשר</div><div class="detail-value"><input type="text" id="pf-parents" value="${p.parents||''}"></div></div>
           <div class="detail-row"><div class="detail-label">שיוך ל:</div><div class="detail-value"><select id="pf-affiliation" onchange="updatePfClassOptions()"><option value="">-- ללא --</option><option value="clinic" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='clinic'?'selected':''}>קליניקה</option><option value="vizhnitz" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='vizhnitz'?'selected':''}>ויזניץ</option><option value="education" ${allInstitutions.find(i=>i.id===p.institution_id)?.type==='education'?'selected':''}>משרד החינוך</option></select></div></div>
           <div class="detail-row"><div class="detail-label">מוסד</div><div class="detail-value"><input type="text" id="pf-inst" value="${allInstitutions.find(i=>i.id===p.institution_id)?.name||''}"></div></div>
-          <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class"><option value="">-- ללא --</option>${[...allClasses].sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);}).map(c=>`<option value="${c.id}" ${c.id===p.class_id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
+          <div class="detail-row"><div class="detail-label">כיתה</div><div class="detail-value"><select id="pf-class">${classOptionsHtml(p.class_id)}</select></div></div>
           <div class="detail-row"><div class="detail-label">סוג תיקייה</div><div class="detail-value"><select id="pf-folder-type"><option value="">-- בלי סיווג --</option><option value="consultation" ${p.folder_type==='consultation'?'selected':''}>ייעוץ</option><option value="full_process" ${p.folder_type==='full_process'?'selected':''}>תהליך שלם</option><option value="inactive" ${p.folder_type==='inactive'?'selected':''}>לא פעיל</option></select></div></div>
         </div>
       </div>
@@ -2789,13 +2833,13 @@ function updatePfClassOptions(){
   const aff=document.getElementById('pf-affiliation')?.value||'';
   const instInput=document.getElementById('pf-inst');
   const ctxDef={education:'משרד החינוך',clinic:'קליניקה',vizhnitz:'ויזניץ'};
-  if(aff&&ctxDef[aff]) instInput.value=ctxDef[aff];
-  // תמיד להציג את כל הכיתות כדי שבחירה תמיד תתאפשר
-  const classes=[...allClasses].sort((a,b)=>{const o=CLASS_ORDER;const ai=o.indexOf(a.name),bi=o.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
+  // רק אם השדה ריק — אחרת שינוי השיוך היה דורס שם מוסד קיים ומעביר את
+  // התלמיד למוסד אחר בשמירה
+  if(aff&&ctxDef[aff]&&instInput&&!instInput.value.trim()) instInput.value=ctxDef[aff];
   const sel=document.getElementById('pf-class');
   if(!sel) return;
   const cur=sel.value;
-  sel.innerHTML='<option value="">-- ללא --</option>'+classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  sel.innerHTML=classOptionsHtml(cur);
   if(cur) sel.value=cur;
 }
 
@@ -2804,8 +2848,14 @@ async function savePersonal(id){
   const paid=allPayments.filter(p=>p.patient_id===id).reduce((s,p)=>s+(p.amount||0),0);
   const pfAff=document.getElementById('pf-affiliation')?.value||'general';
   const ctxDef={education:'משרד החינוך',clinic:'קליניקה',vizhnitz:'ויזניץ'};
-  const pfInstName=document.getElementById('pf-inst')?.value||ctxDef[pfAff]||'';
-  const institution_id=await findOrCreateInstitution(pfInstName,pfAff);
+  const pfInstName=(document.getElementById('pf-inst')?.value||'').trim();
+  let institution_id;
+  if(pfInstName){
+    institution_id=await findOrCreateInstitution(pfInstName,pfAff);
+  }else{
+    const existing=allInstitutions.find(i=>(i.type||'general')===pfAff);
+    institution_id=existing?existing.id:await findOrCreateInstitution(ctxDef[pfAff]||'',pfAff);
+  }
   const body={name:document.getElementById('pf-name').value,identity_number:document.getElementById('pf-id').value,phone:document.getElementById('pf-phone').value,address:document.getElementById('pf-address').value,email:document.getElementById('pf-email').value,parents:document.getElementById('pf-parents').value,institution_id,class_id:document.getElementById('pf-class').value||null,folder_type:document.getElementById('pf-folder-type')?.value||null,debt,paid,remaining:Math.max(0,debt-paid)};
   let r=await sbUpdate('patients',id,body);
   // Fallback: if the folder_type column doesn't exist yet in the DB, retry without it
@@ -6907,13 +6957,10 @@ function populateSelects(){
   updateNpClassOptions();
 }
 
-function updateNpClassOptions(){
-  const clsEl=document.getElementById('np-class');
-  if(!clsEl) return;
-  const prev=clsEl.value;
-  // כל הכיתות זמינות תמיד, אך מקובצות לפי מוסד. איחוד לפי שם היה ממזג
-  // "כיתה ג" של שני מוסדות לאפשרות אחת ושומר את class_id של המוסד הלא נכון,
-  // ואז התלמיד לא הופיע תחת המוסד שאליו שויך.
+// אותו שם כיתה יכול להתקיים בכמה מוסדות. רשימה שטוחה מציגה כמה "ה" זהים
+// ואי אפשר לדעת של איזה מוסד, ולכן נשמר class_id של המוסד הלא נכון והתלמיד
+// לא מופיע תחת הכיתה שלו. הקיבוץ לפי מוסד פותר את זה.
+function classOptionsHtml(selectedId){
   const sortCls=arr=>[...arr].sort((a,b)=>{const ai=CLASS_ORDER.indexOf(a.name),bi=CLASS_ORDER.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi);});
   const byInst=new Map();
   allClasses.forEach(c=>{
@@ -6925,9 +6972,16 @@ function updateNpClassOptions(){
   [...byInst.entries()].forEach(([instId,list])=>{
     const inst=allInstitutions.find(i=>i.id===instId);
     const label=(inst?.name||'ללא מוסד').replace(/"/g,'&quot;');
-    html+=`<optgroup label="${label}">`+sortCls(list).map(c=>`<option value="${c.id}">${c.name}</option>`).join('')+'</optgroup>';
+    html+=`<optgroup label="${label}">`+sortCls(list).map(c=>`<option value="${c.id}" ${c.id===selectedId?'selected':''}>${c.name}</option>`).join('')+'</optgroup>';
   });
-  clsEl.innerHTML=html;
+  return html;
+}
+
+function updateNpClassOptions(){
+  const clsEl=document.getElementById('np-class');
+  if(!clsEl) return;
+  const prev=clsEl.value;
+  clsEl.innerHTML=classOptionsHtml(prev);
   if(prev) clsEl.value=prev;
 }
 
