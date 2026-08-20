@@ -655,6 +655,14 @@ tr:last-child td{border-bottom:none}
               <div id="class-upgrade-status" style="margin-top:10px;font-size:13px"></div>
             </div>
 
+            <!-- Classes audit (read-only) -->
+            <div style="margin-bottom:20px;padding:14px;background:var(--g50);border-radius:8px;border:1px solid var(--g200)">
+              <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="list-tree"></i> בדיקת כיתות</div>
+              <p style="font-size:13px;color:var(--g600);margin-bottom:12px">מציג כל כיתה: לאיזה מוסד היא שייכת וכמה תלמידים משויכים אליה. תצוגה בלבד — לא משנה נתונים.</p>
+              <button class="btn btn-secondary" onclick="renderClassesAudit()"><i data-lucide="search"></i> הצג כיתות</button>
+              <div id="classes-audit" style="margin-top:12px"></div>
+            </div>
+
             <!-- Patient Folder Type -->
             <div style="margin-bottom:20px;padding:14px;background:var(--g50);border-radius:8px;border:1px solid var(--g200)">
               <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="tag"></i> סיווג תיקים</div>
@@ -2547,6 +2555,40 @@ function selectCategory(cat){
     allPatientsFilter='all';
     renderInstitutionFilter();
   }
+}
+
+// תצוגה בלבד: מיפוי מלא של הכיתות, כדי לזהות כפילויות וכיתות יתומות
+function renderClassesAudit(){
+  const box=document.getElementById('classes-audit'); if(!box) return;
+  const nameCount={};
+  allClasses.forEach(c=>{nameCount[c.name]=(nameCount[c.name]||0)+1;});
+  const rows=[...allClasses].sort((a,b)=>{
+    const ai=CLASS_ORDER.indexOf(a.name),bi=CLASS_ORDER.indexOf(b.name);
+    if(ai!==bi) return (ai<0?99:ai)-(bi<0?99:bi);
+    return (a.name||'').localeCompare(b.name||'','he');
+  }).map(c=>{
+    const inst=allInstitutions.find(i=>i.id===c.institution_id);
+    const students=allPatients.filter(p=>p.class_id===c.id).length;
+    const dup=nameCount[c.name]>1;
+    const instLabel=inst?`${inst.name} <span style="color:var(--g400)">(${inst.type||'general'})</span>`:'<span style="color:var(--red)">ללא מוסד</span>';
+    return `<tr>
+      <td style="padding:6px 10px;border:1px solid var(--g200);font-weight:600">${c.name}${dup?' <span style="font-size:11px;color:var(--amber)">כפול</span>':''}</td>
+      <td style="padding:6px 10px;border:1px solid var(--g200);font-size:13px">${instLabel}</td>
+      <td style="padding:6px 10px;border:1px solid var(--g200);font-size:13px;${students===0?'color:var(--g400)':''}">${students}</td>
+    </tr>`;
+  }).join('');
+  const dupNames=Object.entries(nameCount).filter(([,n])=>n>1).map(([n,c])=>`${n}×${c}`).join(' · ');
+  box.innerHTML=`
+    ${dupNames?`<div style="margin-bottom:10px;padding:8px 10px;background:var(--amber-light,#fef3c7);border-radius:6px;font-size:13px">שמות שמופיעים יותר מפעם אחת: ${dupNames}</div>`:'<div style="margin-bottom:10px;font-size:13px;color:var(--green)">אין כיתות כפולות</div>'}
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:var(--g100)">
+        <th style="padding:6px 10px;border:1px solid var(--g200);text-align:right">כיתה</th>
+        <th style="padding:6px 10px;border:1px solid var(--g200);text-align:right">מוסד</th>
+        <th style="padding:6px 10px;border:1px solid var(--g200);text-align:right">תלמידים</th>
+      </tr></thead><tbody>${rows||'<tr><td colspan="3" style="padding:10px">אין כיתות</td></tr>'}</tbody>
+    </table></div>
+    <div style="margin-top:8px;font-size:12px;color:var(--g500)">סה"כ ${allClasses.length} כיתות</div>`;
+  if(window.lucide) lucide.createIcons();
 }
 
 function vizhnitzInstIds(){
