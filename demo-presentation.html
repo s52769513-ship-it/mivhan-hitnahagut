@@ -6,6 +6,8 @@
 <title>דמו מערכת מכון התנהגות - נתונים פיקטיביים</title>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap');
 
@@ -21,658 +23,204 @@
   --red-light: #FCEBEB;
   --amber: #854F0B;
   --amber-light: #FAEEDA;
-  --g50: #F8FAFC;
-  --g100: #F1F5F9;
-  --g200: #E2E8F0;
-  --g300: #CBD5E1;
-  --g400: #94A3B8;
-  --g500: #64748B;
-  --g600: #475569;
-  --g700: #334155;
-  --g800: #1E293B;
-  --g900: #0F172A;
-  --white: #fff;
-  --sw: 220px;
-  --hh: 60px;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: 'Rubik', sans-serif;
-  background: var(--g50);
-  color: var(--g800);
-  direction: rtl;
-  min-height: 100vh;
-}
-
-.app {
-  display: flex;
-  min-height: 100vh;
-}
-
-.sidebar {
-  width: var(--sw);
-  background: var(--blue);
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  z-index: 100;
-  overflow-y: auto;
-}
-
-.sidebar-logo {
-  padding: 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.sidebar-logo-text h1 {
-  font-size: 15px;
-  font-weight: 700;
-  color: white;
-  line-height: 1.2;
-}
-
-.sidebar-logo-text p {
-  font-size: 11px;
-  color: rgba(255,255,255,0.6);
-  margin-top: 1px;
-}
-
-.sidebar-nav {
-  padding: 10px 8px;
-  flex: 1;
-}
-
-.nav-section-title {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: rgba(255,255,255,0.4);
-  padding: 8px 8px 4px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: rgba(255,255,255,0.7);
-  font-size: 14px;
-  font-weight: 500;
-  transition: all .15s;
-  margin-bottom: 2px;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: right;
-  font-family: 'Rubik',sans-serif;
-}
-
-.nav-item:hover {
-  background: rgba(255,255,255,0.1);
-  color: white;
-}
-
-.nav-item.active {
-  background: rgba(255,255,255,0.2);
-  color: white;
-}
-
-.nav-item .ni {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-item .ni svg {
-  width: 18px;
-  height: 18px;
-  stroke: currentColor;
-  fill: none;
-}
-
-.demo-badge {
-  background: rgba(107, 191, 216, 0.2);
-  color: #4DA8C2;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 10px;
-  font-weight: 600;
-  margin-right: 4px;
-  display: inline-block;
-}
-
-.main {
-  margin-right: var(--sw);
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.topbar {
-  height: var(--hh);
-  background: white;
-  border-bottom: 1px solid var(--g200);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
-.topbar-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--g900);
-}
-
-.topbar-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: all .15s;
-  font-family: 'Rubik', sans-serif;
-}
-
-.btn-primary {
-  background: var(--blue2);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: var(--blue);
-}
-
-.btn-secondary {
-  background: white;
-  color: var(--g700);
-  border: 1px solid var(--g200);
-}
-
-.btn-secondary:hover {
-  background: var(--g50);
-}
-
-.content {
-  padding: 24px;
-  flex: 1;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid var(--g200);
-  padding: 18px;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: var(--g500);
-  margin-bottom: 6px;
-}
-
-.stat-value {
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--g900);
-}
-
-.stat-value.green {
-  color: var(--green);
-}
-
-.stat-value.red {
-  color: var(--red);
-}
-
-.stat-value.blue {
-  color: var(--blue2);
-}
-
-.stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 8px;
-}
-
-.stat-icon.blue {
-  background: var(--blue-light);
-}
-
-.stat-icon.green {
-  background: var(--green-light);
-}
-
-.stat-icon.red {
-  background: var(--red-light);
-}
-
-.stat-icon.amber {
-  background: var(--amber-light);
-}
-
-.stat-icon svg {
-  width: 20px;
-  height: 20px;
-  stroke: currentColor;
-  fill: none;
-}
-
-.card {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid var(--g200);
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-
-.card-header {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--g100);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.card-header h3 {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--g900);
-}
-
-.card-body {
-  padding: 20px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th {
-  background: var(--g50);
-  padding: 10px 14px;
-  text-align: right;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--g500);
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  border-bottom: 1px solid var(--g200);
-}
-
-td {
-  padding: 11px 14px;
-  font-size: 14px;
-  border-bottom: 1px solid var(--g100);
-  color: var(--g700);
-}
-
-tr:hover td {
-  background: var(--g50);
-  cursor: pointer;
-}
-
-tr:last-child td {
-  border-bottom: none;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.badge-green {
-  background: var(--green-light);
-  color: #0F6E56;
-}
-
-.badge-red {
-  background: var(--red-light);
-  color: var(--red);
-}
-
-.badge-blue {
-  background: var(--blue-light);
-  color: var(--blue);
-}
-
-.badge-amber {
-  background: var(--amber-light);
-  color: var(--amber);
-}
-
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: white;
-  flex-shrink: 0;
-}
-
-.avatar.blue {
-  background: var(--blue2);
-}
-
-.avatar.green {
-  background: var(--green);
-}
-
-.avatar.red {
-  background: var(--red);
-}
-
-.avatar.amber {
-  background: var(--amber);
-}
-
-.view {
-  display: none;
-}
-
-.view.active {
-  display: block;
-}
-
-.queue-grid {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.queue-card {
-  border-radius: 8px;
-  padding: 10px 16px;
-  border: 1px solid var(--g200);
-  background: white;
-  cursor: pointer;
-  transition: all .1s;
-  flex: 1;
-  min-width: 150px;
-  text-align: center;
-}
-
-.queue-card:hover {
-  background: var(--g50);
-}
-
-.queue-card.current {
-  border-color: var(--blue2);
-  background: var(--blue-light);
-}
-
-.queue-card-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--g400);
-  margin-bottom: 4px;
-}
-
-.queue-card.current .queue-card-label {
-  color: var(--blue2);
-}
-
-.queue-card-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--g900);
-}
-
-.queue-card-phone {
-  font-size: 11px;
-  color: var(--g500);
-  margin-top: 2px;
-}
-
-.modal-demo {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  padding: 20px;
-}
-
-.modal-demo.show {
-  display: flex;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 16px;
-  max-width: 520px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-}
-
-.modal-header {
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--g100);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.modal-header h2 {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--g900);
-}
-
-.modal-header .close {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: var(--g500);
-}
-
-.modal-body {
-  padding: 22px;
-}
-
-.modal-footer {
-  padding: 14px 24px;
-  border-top: 1px solid var(--g100);
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.form-group {
-  margin-bottom: 14px;
-}
-
-.form-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--g600);
-  margin-bottom: 5px;
-}
-
-.form-control {
-  width: 100%;
-  padding: 9px 12px;
-  border: 1px solid var(--g200);
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: 'Rubik', sans-serif;
-  color: var(--g800);
-  background: white;
-  direction: rtl;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: var(--blue2);
-  box-shadow: 0 0 0 3px rgba(24,95,165,.1);
-}
-
-.treatment-row {
-  background: white;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 8px;
-  border: 1px solid var(--g200);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.treatment-type {
-  font-weight: 500;
-  color: var(--g900);
-}
-
-.treatment-therapist {
-  font-size: 13px;
-  color: var(--g500);
-}
-
-.treatment-status {
-  font-size: 12px;
-}
-
-.chart-container {
-  position: relative;
-  height: 300px;
-  margin-bottom: 20px;
-}
-
-.tabs {
-  display: flex;
-  gap: 2px;
-  border-bottom: 1px solid var(--g200);
-  margin-bottom: 22px;
-}
-
-.tab-btn {
-  padding: 9px 14px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--g500);
-  border: none;
-  background: none;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  font-family: 'Rubik', sans-serif;
-  transition: all .15s;
-}
-
-.tab-btn:hover {
-  color: var(--g800);
-}
-
-.tab-btn.active {
-  color: var(--blue2);
-  border-bottom-color: var(--blue2);
-}
-
-.alert {
-  background: var(--blue-light);
-  border: 1px solid var(--blue);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
-  font-size: 13px;
-  color: var(--blue);
-}
-
-.alert.warning {
-  background: var(--amber-light);
-  border-color: var(--amber);
-  color: var(--amber);
-}
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--g900);
-  margin-bottom: 12px;
-  margin-top: 16px;
-}
-
-.sidebar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.05);
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.2);
-  border-radius: 3px;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.3);
-}
+  --purple: #7C3AED;
+  --purple-light: #F1E8FE;
+  --orange: #C2570B;
+  --orange-light: #FDEEDD;
+  --g50: #F8FAFC; --g100: #F1F5F9; --g200: #E2E8F0; --g300: #CBD5E1;
+  --g400: #94A3B8; --g500: #64748B; --g600: #475569; --g700: #334155;
+  --g800: #1E293B; --g900: #0F172A; --white: #fff;
+  --sw: 224px; --hh: 60px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Rubik',sans-serif;background:var(--g50);color:var(--g800);direction:rtl;min-height:100vh}
+.app{display:flex;min-height:100vh}
+.sidebar{width:var(--sw);background:var(--blue);position:fixed;top:0;right:0;bottom:0;display:flex;flex-direction:column;z-index:100;overflow-y:auto}
+.sidebar-logo{padding:16px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:12px}
+.sidebar-logo-text h1{font-size:15px;font-weight:700;color:white;line-height:1.2}
+.sidebar-logo-text p{font-size:11px;color:rgba(255,255,255,0.6);margin-top:1px}
+.sidebar-nav{padding:10px 8px;flex:1}
+.nav-section-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,0.4);padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,0.7);font-size:13.5px;font-weight:500;transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:right;font-family:'Rubik',sans-serif}
+.nav-item:hover{background:rgba(255,255,255,0.1);color:white}
+.nav-item.active{background:rgba(255,255,255,0.2);color:white}
+.nav-item.hidden-role{display:none}
+.nav-item .ni{width:18px;height:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.nav-item .ni svg{width:17px;height:17px;stroke:currentColor;fill:none}
+.admin-tag{margin-right:auto;font-size:9px;background:rgba(255,255,255,.15);padding:1px 5px;border-radius:4px;color:rgba(255,255,255,.55)}
+.demo-badge{background:rgba(107,191,216,.25);color:#8fd6ec;padding:2px 6px;border-radius:4px;font-size:9.5px;font-weight:700;margin-right:6px}
+.sidebar-foot{padding:12px;border-top:1px solid rgba(255,255,255,.1);font-size:10.5px;color:rgba(255,255,255,.35);line-height:1.5}
+
+.main{margin-right:var(--sw);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.impersonate-banner{background:var(--amber-light);border-bottom:2px solid var(--amber);padding:9px 24px;display:none;align-items:center;justify-content:space-between;font-size:13px;color:var(--amber);font-weight:600}
+.impersonate-banner.show{display:flex}
+.topbar{height:var(--hh);background:white;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50;gap:16px}
+.topbar-title{font-size:17px;font-weight:700;color:var(--g900);white-space:nowrap}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.viewas-wrap{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--g500)}
+.viewas-wrap select{font-family:'Rubik',sans-serif;font-size:12.5px;padding:6px 10px;border-radius:7px;border:1px solid var(--g200);background:white;color:var(--g700)}
+#clock-widget{text-align:left;line-height:1.25;font-family:'Rubik',sans-serif;flex-shrink:0}
+#clock-time{font-size:16px;font-weight:700;color:var(--blue);letter-spacing:.5px}
+#clock-date-he{font-size:10.5px;color:var(--g500)}
+#clock-date-en{font-size:10px;color:var(--g400)}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13.5px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:'Rubik',sans-serif}
+.btn svg{width:15px;height:15px}
+.btn-primary{background:var(--blue2);color:white}.btn-primary:hover{background:var(--blue)}
+.btn-secondary{background:white;color:var(--g700);border:1px solid var(--g200)}.btn-secondary:hover{background:var(--g50)}
+.btn-danger{background:var(--red-light);color:var(--red)}
+.btn-sm{padding:5px 11px;font-size:12.5px}
+.btn-ai{background:linear-gradient(135deg,#7C3AED,#4DA8C2);color:white}
+
+.content{padding:22px 24px;flex:1;max-width:1400px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:14px;margin-bottom:22px}
+.stat-card{background:white;border-radius:12px;border:1px solid var(--g200);padding:16px}
+.stat-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.stat-icon svg{width:18px;height:18px}
+.stat-icon.blue{background:var(--blue-light);color:var(--blue2)}
+.stat-icon.green{background:var(--green-light);color:var(--green)}
+.stat-icon.red{background:var(--red-light);color:var(--red)}
+.stat-icon.amber{background:var(--amber-light);color:var(--amber)}
+.stat-icon.purple{background:var(--purple-light);color:var(--purple)}
+.stat-label{font-size:12.5px;color:var(--g500);margin-bottom:4px}
+.stat-value{font-size:24px;font-weight:700;color:var(--g900)}
+.stat-value.green{color:var(--green)}.stat-value.red{color:var(--red)}.stat-value.blue{color:var(--blue2)}
+
+.card{background:white;border-radius:12px;border:1px solid var(--g200);overflow:hidden;margin-bottom:18px}
+.card-header{padding:13px 18px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-header h3{font-size:14.5px;font-weight:600;color:var(--g900)}
+.card-body{padding:18px}
+table{width:100%;border-collapse:collapse}
+th{background:var(--g50);padding:9px 13px;text-align:right;font-size:11.5px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--g200);white-space:nowrap}
+td{padding:10px 13px;font-size:13.5px;border-bottom:1px solid var(--g100);color:var(--g700)}
+tr:hover td{background:var(--g50);cursor:pointer}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.badge-green{background:var(--green-light);color:#0F6E56}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}
+.badge-purple{background:var(--purple-light);color:var(--purple)}
+.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:white;flex-shrink:0}
+.view{display:none}
+.view.active{display:block}
+.section-title{font-size:15px;font-weight:600;color:var(--g900);margin:18px 0 10px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.alert{background:var(--blue-light);border:1px solid var(--blue2);border-radius:8px;padding:11px 15px;margin-bottom:16px;font-size:12.5px;color:var(--blue)}
+.alert.warning{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
+.chart-container{position:relative;height:260px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--g200);margin-bottom:20px;overflow-x:auto}
+.tab-btn{padding:9px 14px;font-size:13.5px;font-weight:500;color:var(--g500);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:'Rubik',sans-serif;white-space:nowrap}
+.tab-btn.active{color:var(--blue2);border-bottom-color:var(--blue2)}
+
+/* category tiles */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px}
+.cat-tile{background:white;border:1px solid var(--g200);border-radius:12px;padding:20px 14px;text-align:center;cursor:pointer;transition:all .15s}
+.cat-tile:hover{border-color:var(--blue2);box-shadow:0 4px 14px rgba(12,58,95,.08)}
+.cat-tile.active{border-color:var(--blue2);background:var(--blue-light)}
+.cat-tile-icon{font-size:28px;margin-bottom:8px}
+.cat-tile-name{font-weight:700;color:var(--g900);font-size:13.5px;margin-bottom:3px}
+.cat-tile-count{font-size:11.5px;color:var(--g500)}
+
+/* patient detail */
+.pd-back{display:flex;align-items:center;gap:6px;color:var(--blue2);cursor:pointer;font-size:13px;font-weight:600;margin-bottom:14px}
+.pd-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;background:white;border:1px solid var(--g200);border-radius:12px;padding:16px 20px}
+.pd-avatar{width:56px;height:56px;border-radius:50%;background:var(--blue2);color:white;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;flex-shrink:0}
+.pd-info h2{font-size:17px;font-weight:700;color:var(--g900)}
+.pd-info .pd-sub{font-size:12.5px;color:var(--g500);margin-top:2px}
+.pd-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.pd-tab{padding:9px 16px;border-radius:10px;border:2px solid var(--g200);background:white;cursor:pointer;font-weight:600;font-size:12.5px;font-family:'Rubik',sans-serif;display:flex;align-items:center;gap:6px;color:var(--g500)}
+.pd-tab.on-blue.active{border-color:var(--blue2);background:var(--blue-light);color:var(--blue2)}
+.pd-tab.on-green.active{border-color:var(--green);background:var(--green-light);color:var(--green)}
+.pd-tab.on-purple.active{border-color:var(--purple);background:var(--purple-light);color:var(--purple)}
+.pd-tab.on-orange.active{border-color:var(--orange);background:var(--orange-light);color:var(--orange)}
+.pd-panel{display:none}
+.pd-panel.active{display:block}
+.subtabs{display:flex;gap:2px;margin-bottom:16px;flex-wrap:wrap;border-bottom:1px solid var(--g200)}
+.subtab-btn{padding:8px 13px;font-size:12.5px;border:none;background:none;cursor:pointer;color:var(--g500);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:'Rubik',sans-serif}
+.subtab-btn.active{color:var(--g900);border-bottom-color:var(--g800);font-weight:600}
+.subpanel{display:none}
+.subpanel.active{display:block}
+
+/* questionnaire form */
+.q-select-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.q-select-row button{padding:7px 14px;border-radius:8px;border:1px solid var(--g200);background:white;font-size:12.5px;cursor:pointer;font-family:'Rubik',sans-serif;color:var(--g600)}
+.q-select-row button.active{background:var(--blue2);color:white;border-color:var(--blue2)}
+.q-form-wrap{background:white;border:1px solid var(--g200);border-radius:12px;padding:26px 30px;max-width:780px}
+.q-form-head{text-align:center;padding-bottom:14px;border-bottom:2px solid var(--g100);margin-bottom:16px}
+.q-bh{font-size:11px;color:var(--g400);margin-bottom:2px}
+.q-form-head h2{font-size:18px;font-weight:700;color:var(--g900)}
+.q-form-head p{font-size:12px;color:var(--g500);margin-top:3px}
+.q-section{margin-bottom:16px}
+.q-section-title{font-weight:700;color:var(--blue2);margin-bottom:8px;font-size:13.5px;border-bottom:1px solid var(--g100);padding-bottom:4px}
+.q-question{margin-bottom:10px}
+.q-question label{font-size:12.5px;color:var(--g600);display:block;margin-bottom:4px;font-weight:500}
+.q-answer{background:var(--g50);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--g800);line-height:1.5}
+
+/* ABC table */
+.abc-wrap{overflow-x:auto}
+table.abc th,table.abc td{font-size:11.5px}
+table.abc td{vertical-align:top}
+
+/* permissions */
+.perm-cat{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border:1px solid var(--g200);border-radius:9px;margin-bottom:8px;background:white}
+.perm-cat-name{font-weight:600;font-size:13.5px;color:var(--g900);display:flex;align-items:center;gap:8px}
+.toggle{position:relative;width:38px;height:21px;background:var(--g300);border-radius:11px;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle-dot{position:absolute;top:2px;right:2px;width:17px;height:17px;background:white;border-radius:50%;transition:right .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.toggle.on .toggle-dot{right:19px}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--g100);border-radius:999px;padding:5px 11px;font-size:12px;margin:3px;color:var(--g700)}
+.pill .x{cursor:pointer;color:var(--g400);font-weight:700}
+
+/* report checklist */
+.report-check{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--g100);font-size:13.5px}
+.report-check input{width:16px;height:16px;accent-color:var(--blue2)}
+
+/* form */
+.form-group{margin-bottom:13px}
+.form-label{display:block;font-size:12.5px;font-weight:500;color:var(--g600);margin-bottom:5px}
+.form-control{width:100%;padding:8px 12px;border:1px solid var(--g200);border-radius:8px;font-size:13.5px;font-family:'Rubik',sans-serif;color:var(--g800);background:white;direction:rtl}
+.form-control:focus{outline:none;border-color:var(--blue2);box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* modal */
+.modal-demo{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+.modal-demo.show{display:flex}
+.modal-content{background:white;border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-content.wide{max-width:820px}
+.modal-header{padding:16px 22px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white}
+.modal-header h2{font-size:16px;font-weight:700;color:var(--g900)}
+.modal-header .close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--g500)}
+.modal-body{padding:20px}
+.modal-footer{padding:13px 22px;border-top:1px solid var(--g100);display:flex;gap:10px;justify-content:flex-end}
+
+/* queue */
+.queue-grid{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.queue-card{border-radius:9px;padding:10px 15px;border:1px solid var(--g200);background:white;flex:1;min-width:150px;text-align:center;position:relative}
+.queue-card.current{border-color:var(--blue2);background:var(--blue-light)}
+.queue-card-label{font-size:10px;font-weight:700;color:var(--g400);margin-bottom:4px}
+.queue-card.current .queue-card-label{color:var(--blue2)}
+.queue-card-name{font-size:13px;font-weight:700;color:var(--g900)}
+.queue-card-phone{font-size:11px;color:var(--g500);margin-top:2px}
+.queue-countdown{font-size:11px;color:var(--blue2);font-weight:700;margin-top:4px}
+
+/* toast */
+.toast{position:fixed;bottom:24px;left:24px;background:var(--g900);color:white;padding:12px 18px;border-radius:10px;font-size:13px;z-index:400;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* sound tester */
+.sound-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--g100)}
+.sound-row:last-child{border-bottom:none}
+
+.doc-card{border:1px solid var(--g200);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;background:white}
+.doc-icon{width:36px;height:36px;border-radius:8px;background:var(--blue-light);color:var(--blue2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+
+.sidebar::-webkit-scrollbar{width:5px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:3px}
+
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -680,693 +228,562 @@ tr:last-child td {
 <div class="app">
   <div class="sidebar">
     <div class="sidebar-logo">
-      <div style="width: 48px; height: 48px; border-radius: 10px; background: var(--blue-light); display: flex; align-items: center; justify-content: center;">
-        <span style="font-size: 24px;">🧠</span>
-      </div>
+      <div style="width:44px;height:44px;border-radius:10px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:22px;">🧠</div>
       <div class="sidebar-logo-text">
         <h1>מכון התנהגות</h1>
-        <p>מערכת ניהול</p>
+        <p>מערכת ניהול <span class="demo-badge">DEMO</span></p>
       </div>
     </div>
-
     <div class="sidebar-nav">
       <div class="nav-section-title">ראשי</div>
-      <button class="nav-item active" onclick="showView('dashboard')">
-        <span class="ni"><i class="lucide" data-lucide="grid-3x3"></i></span>
-        <span>לוח בקרה</span>
-        <span class="demo-badge">דמו</span>
-      </button>
+      <button class="nav-item active" data-nav onclick="showView('dashboard',this)"><span class="ni" data-i="layout-dashboard"></span><span>לוח בקרה</span></button>
+      <button class="nav-item" data-nav onclick="showView('patients',this)"><span class="ni" data-i="users"></span><span>מטופלים</span></button>
+      <button class="nav-item admin-only" data-nav onclick="showView('diary',this)"><span class="ni" data-i="calendar-days"></span><span>יומן</span></button>
+      <button class="nav-item admin-only" data-nav onclick="showView('appointments',this)"><span class="ni" data-i="calendar-clock"></span><span>פגישות</span></button>
 
-      <div class="nav-section-title" style="margin-top: 14px;">ניהול</div>
-      <button class="nav-item" onclick="showView('patients')">
-        <span class="ni"><i class="lucide" data-lucide="users"></i></span>
-        <span>חולים</span>
-      </button>
-      <button class="nav-item" onclick="showView('appointments')">
-        <span class="ni"><i class="lucide" data-lucide="calendar"></i></span>
-        <span>תורים</span>
-      </button>
-      <button class="nav-item" onclick="showView('treatments')">
-        <span class="ni"><i class="lucide" data-lucide="activity"></i></span>
-        <span>טיפולים</span>
-      </button>
-      <button class="nav-item" onclick="showView('notes')">
-        <span class="ni"><i class="lucide" data-lucide="file-text"></i></span>
-        <span>הערות</span>
-      </button>
+      <div class="nav-section-title">ניהול</div>
+      <button class="nav-item" data-nav onclick="showView('tasks',this)"><span class="ni" data-i="check-square"></span><span>משימות</span></button>
+      <button class="nav-item" data-nav onclick="showView('notes',this)"><span class="ni" data-i="rss"></span><span>עדכונים</span></button>
+      <button class="nav-item admin-only" data-nav onclick="showView('finances',this)"><span class="ni" data-i="wallet"></span><span>כספים</span><span class="admin-tag">מנהל</span></button>
 
-      <div class="nav-section-title" style="margin-top: 14px;">עסקי</div>
-      <button class="nav-item" onclick="showView('finances')">
-        <span class="ni"><i class="lucide" data-lucide="dollar-sign"></i></span>
-        <span>כספים</span>
-      </button>
-      <button class="nav-item" onclick="showView('reports')">
-        <span class="ni"><i class="lucide" data-lucide="bar-chart-3"></i></span>
-        <span>דוחות</span>
-      </button>
+      <div class="nav-section-title">ניתוח נתונים</div>
+      <button class="nav-item admin-only" data-nav onclick="showView('graphs',this)"><span class="ni" data-i="line-chart"></span><span>גרפים וניתוח</span><span class="admin-tag">מנהל</span></button>
 
-      <div class="nav-section-title" style="margin-top: 14px;">מערכת</div>
-      <button class="nav-item" onclick="showView('users')">
-        <span class="ni"><i class="lucide" data-lucide="shield"></i></span>
-        <span>משתמשים</span>
-      </button>
-      <button class="nav-item" onclick="showView('settings')">
-        <span class="ni"><i class="lucide" data-lucide="settings"></i></span>
-        <span>הגדרות</span>
-      </button>
+      <div class="nav-section-title">מערכת</div>
+      <button class="nav-item admin-only" data-nav onclick="showView('users',this)"><span class="ni" data-i="shield-check"></span><span>משתמשים</span><span class="admin-tag">מנהל</span></button>
+      <button class="nav-item admin-only" data-nav onclick="showView('settings',this)"><span class="ni" data-i="settings"></span><span>הגדרות</span><span class="admin-tag">מנהל</span></button>
     </div>
+    <div class="sidebar-foot">גרסת דמו · נתונים פיקטיביים<br>לצורך הצגה בלבד</div>
   </div>
 
   <div class="main">
+    <div class="impersonate-banner" id="impersonate-banner">
+      <span>👁 מצב הצגה כ: <b id="impersonate-name"></b> — כך בדיוק נראית המערכת עבור איש הצוות הזה</span>
+      <button class="btn btn-sm btn-secondary" onclick="setViewAs('admin')">חזרה לתצוגת מנהל</button>
+    </div>
+
     <div class="topbar">
       <div class="topbar-title" id="topbar-title">לוח בקרה</div>
       <div class="topbar-actions">
-        <span style="font-size: 12px; color: var(--g500);">דמו עם נתונים פיקטיביים</span>
+        <div class="viewas-wrap">
+          תצוגה כ:
+          <select id="viewas-select" onchange="setViewAs(this.value)">
+            <option value="admin">מנהל/ת מערכת</option>
+            <option value="rachel">גב' רחלי סיון (מטפלת)</option>
+            <option value="natasha">גב' נטשה בוציקו (מטפלת)</option>
+          </select>
+        </div>
+        <div id="clock-widget">
+          <div id="clock-time">14:32</div>
+          <div id="clock-date-he">ג' באלול תשפ"ו</div>
+          <div id="clock-date-en">06.09.2026</div>
+        </div>
       </div>
     </div>
 
     <div class="content">
 
-      <!-- Dashboard View -->
+      <!-- ================= DASHBOARD ================= -->
       <div id="view-dashboard" class="view active">
-        <div class="alert">
-          🎬 זו מצגת דמו עם נתונים פיקטיביים בלבד. לחץ על הקטגוריות בתפריט הצד לעיון בכל החלקים של המערכת.
-        </div>
+        <div class="alert">🎬 זו מצגת דמו עם נתונים פיקטיביים בלבד, המדגימה את מלוא היכולות של המערכת. נסה את התפריט מימין ואת "תצוגה כ:" למעלה כדי לראות הרשאות שונות.</div>
 
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon blue">
-              <i class="lucide" data-lucide="users"></i>
-            </div>
-            <div class="stat-label">חולים פעילים</div>
-            <div class="stat-value blue">47</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon green">
-              <i class="lucide" data-lucide="calendar"></i>
-            </div>
-            <div class="stat-label">תורים היום</div>
-            <div class="stat-value green">12</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon amber">
-              <i class="lucide" data-lucide="alert-circle"></i>
-            </div>
-            <div class="stat-label">טיפולים בתהליך</div>
-            <div class="stat-value">28</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon green">
-              <i class="lucide" data-lucide="check-circle"></i>
-            </div>
-            <div class="stat-label">טיפולים שהסתיימו</div>
-            <div class="stat-value green">164</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h3>התורים הקרובים</h3>
-            <button class="btn btn-primary btn-sm" onclick="showModal('newAppointment')">
-              <i class="lucide" data-lucide="plus"></i>
-              תור חדש
-            </button>
-          </div>
-          <div class="card-body">
-            <div class="queue-grid">
-              <div class="queue-card current">
-                <div class="queue-card-label">🔴 בטיפול כרגע</div>
-                <div class="queue-card-name">דוד כהן</div>
-                <div class="queue-card-phone">050-1234567</div>
-              </div>
-              <div class="queue-card">
-                <div class="queue-card-label">⏭️ בתור הבא</div>
-                <div class="queue-card-name">מרים לוי</div>
-                <div class="queue-card-phone">050-7654321</div>
-              </div>
-              <div class="queue-card">
-                <div class="queue-card-label">⏳ בהמתנה</div>
-                <div class="queue-card-name">יוסי סילברשטיין</div>
-                <div class="queue-card-phone">053-9876543</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid-2">
-          <div class="card">
-            <div class="card-header">
-              <h3>טיפולים קרובים</h3>
-            </div>
-            <div class="card-body">
-              <div class="treatment-row">
-                <div>
-                  <div class="treatment-type">רגעות מודעות</div>
-                  <div class="treatment-therapist">גב' רחלי סיון</div>
-                </div>
-                <span class="badge badge-green">קרוב</span>
-              </div>
-              <div class="treatment-row">
-                <div>
-                  <div class="treatment-type">CBT - טיפול קוגניטיבי</div>
-                  <div class="treatment-therapist">د"ר אברהם לוי</div>
-                </div>
-                <span class="badge badge-green">קרוב</span>
-              </div>
-              <div class="treatment-row">
-                <div>
-                  <div class="treatment-type">תרפיה עיסוקית</div>
-                  <div class="treatment-therapist">גב' נטשה בוציקו</div>
-                </div>
-                <span class="badge badge-amber">הערה</span>
-              </div>
-            </div>
+        <div id="dashboard-admin">
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-label">מטופלים פעילים</div><div class="stat-value blue">47</div></div>
+            <div class="stat-card"><div class="stat-icon green">📅</div><div class="stat-label">פגישות היום</div><div class="stat-value green">12</div></div>
+            <div class="stat-card"><div class="stat-icon amber">💰</div><div class="stat-label">הכנסות צפויות החודש</div><div class="stat-value">₪45,800</div></div>
+            <div class="stat-card"><div class="stat-icon red">⚠️</div><div class="stat-label">יתרת חוב</div><div class="stat-value red">₪8,900</div></div>
           </div>
 
           <div class="card">
-            <div class="card-header">
-              <h3>פעילות אחרונה</h3>
-            </div>
+            <div class="card-header"><h3>🔴 תור פעיל עכשיו</h3><span class="badge badge-blue">מתעדכן אוטומטית</span></div>
             <div class="card-body">
-              <div style="font-size: 13px; line-height: 1.8; color: var(--g700);">
-                <div style="margin-bottom: 8px;">✓ רוזיטה יוסופוב - הרשמה חדשה</div>
-                <div style="margin-bottom: 8px;">✓ תום בר - עודכן קובץ טיפול</div>
-                <div style="margin-bottom: 8px;">✓ סלימה אחמד - סיום טיפול</div>
-                <div style="margin-bottom: 8px;">✓ יעקב שלום - טיפול משתתף</div>
-                <div>✓ משה וולקובסקי - הערה חדשה</div>
+              <div class="queue-grid">
+                <div class="queue-card"><div class="queue-card-label">⬅ הקודם</div><div class="queue-card-name">רוזיטה יוסופוב</div><div class="queue-card-phone">052-5555555</div></div>
+                <div class="queue-card current"><div class="queue-card-label">⬤ מטופל נוכחי</div><div class="queue-card-name">דוד כהן</div><div class="queue-card-phone">050-1234567</div></div>
+                <div class="queue-card"><div class="queue-card-label">הבא ➡</div><div class="queue-card-name">מרים לוי</div><div class="queue-card-phone">050-7654321</div><div class="queue-countdown" id="queue-countdown">בעוד 18 דקות</div></div>
               </div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><h3>פגישות היום</h3></div>
+              <div class="card-body" style="padding:8px 18px;">
+                <table><tbody>
+                  <tr><td>14:00</td><td>רוזיטה יוסופוב</td><td><span class="badge badge-green">הגיע/ה</span></td></tr>
+                  <tr><td>14:30</td><td>דוד כהן</td><td><span class="badge badge-blue">בטיפול</span></td></tr>
+                  <tr><td>15:00</td><td>מרים לוי</td><td><span class="badge badge-amber">ממתין/ה</span></td></tr>
+                  <tr><td>16:00</td><td>יוסי סילברשטיין</td><td><span class="badge badge-amber">ממתין/ה</span></td></tr>
+                </tbody></table>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>משימות להיום</h3></div>
+              <div class="card-body" style="padding:8px 18px;">
+                <table><tbody>
+                  <tr><td>מילוי שאלון FOBS</td><td>אברומי גולדשטיין</td><td><span class="badge badge-red">באיחור</span></td></tr>
+                  <tr><td>עדכון תוכנית טיפול</td><td>דוד כהן</td><td><span class="badge badge-amber">היום</span></td></tr>
+                  <tr><td>שיחת טלפון עם הורים</td><td>מרים לוי</td><td><span class="badge badge-amber">היום</span></td></tr>
+                </tbody></table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="dashboard-user" style="display:none">
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-label">המטופלים שלי</div><div class="stat-value blue">6</div></div>
+            <div class="stat-card"><div class="stat-icon amber">✅</div><div class="stat-label">משימות פתוחות</div><div class="stat-value">4</div></div>
+            <div class="stat-card"><div class="stat-icon green">📅</div><div class="stat-label">פגישות היום</div><div class="stat-value green">3</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>המטופלים שלי</h3></div>
+            <div class="card-body" style="padding:8px 18px;">
+              <table><tbody>
+                <tr onclick="openPatient(2)"><td><span class="avatar" style="background:var(--green)">מל</span></td><td>מרים לוי</td><td>ויזניץ - בית ספר בנות</td></tr>
+                <tr onclick="openPatient(6)"><td><span class="avatar" style="background:var(--crimson)">אג</span></td><td>אברומי גולדשטיין</td><td>ויזניץ תלמוד תורה</td></tr>
+              </tbody></table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>המשימות שלי <button class="btn btn-primary btn-sm" onclick="toast('בגרסת המלאה: פתיחת טופס משימה חדשה')">+ משימה חדשה</button></h3></div>
+            <div class="card-body" style="padding:8px 18px;">
+              <table><tbody>
+                <tr><td>מילוי שאלון FOBS</td><td>אברומי גולדשטיין</td><td><span class="badge badge-red">באיחור</span></td></tr>
+                <tr><td>תצפית ABC בכיתה</td><td>מרים לוי</td><td><span class="badge badge-amber">היום</span></td></tr>
+              </tbody></table>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Patients View -->
+      <!-- ================= PATIENTS (categories -> list -> detail) ================= -->
       <div id="view-patients" class="view">
-        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">ניהול חולים</h2>
-          <button class="btn btn-primary" onclick="showModal('newPatient')">
-            <i class="lucide" data-lucide="plus"></i>
-            חולה חדש
-          </button>
+        <div id="patients-list-wrap">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h2 style="font-size:19px;font-weight:600;">מטופלים</h2>
+            <button class="btn btn-primary" onclick="toast('בגרסה המלאה: טופס הוספת מטופל חדש')"><span class="ni" data-i="plus"></span>מטופל חדש</button>
+          </div>
+
+          <div class="cat-grid" id="cat-grid"></div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3 id="patients-list-title">כל המטופלים</h3>
+              <input class="form-control" style="max-width:220px" placeholder="חיפוש מטופל..." oninput="filterPatients(this.value)">
+            </div>
+            <div class="card-body" style="padding:0">
+              <table>
+                <thead><tr><th>שם</th><th>מוסד / כיתה</th><th>סוג תיק</th><th>יתרת חוב</th><th></th></tr></thead>
+                <tbody id="patients-tbody"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
-        <div class="card">
-          <div class="card-body">
-            <table>
-              <thead>
-                <tr>
-                  <th>שם</th>
-                  <th>טלפון</th>
-                  <th>תעודת זהות</th>
-                  <th>גיל</th>
-                  <th>סטטוס</th>
-                  <th></th>
-                </tr>
-              </thead>
+        <!-- ===== Patient detail ===== -->
+        <div id="patient-detail-wrap" style="display:none">
+          <div class="pd-back" onclick="closePatient()">→ חזרה לרשימת המטופלים</div>
+          <div class="pd-head">
+            <div class="pd-avatar" id="pd-avatar">דכ</div>
+            <div class="pd-info">
+              <h2 id="pd-name">דוד כהן</h2>
+              <div class="pd-sub" id="pd-sub">ת.ז 123456789 · טלפון 050-1234567 · קליניקה מרכזית · תיק: תהליך שלם</div>
+            </div>
+          </div>
+
+          <div class="pd-tabs">
+            <button class="pd-tab on-blue active" onclick="switchPdTab('clinical',this)">📁 תיק קליני</button>
+            <button class="pd-tab on-green" onclick="switchPdTab('data',this)">📊 איסוף נתונים</button>
+            <button class="pd-tab on-purple" onclick="switchPdTab('plan',this)">🎯 תוכנית התערבות</button>
+            <button class="pd-tab on-orange" onclick="switchPdTab('report',this)">📄 דוחות</button>
+          </div>
+
+          <!-- Tab 1: Clinical file -->
+          <div class="pd-panel active" id="pdp-clinical">
+            <div class="subtabs">
+              <button class="subtab-btn active" onclick="switchSub('cl','details',this)">פרטים אישיים</button>
+              <button class="subtab-btn" onclick="switchSub('cl','appts',this)">פגישות</button>
+              <button class="subtab-btn" onclick="switchSub('cl','pay',this)">תשלומים</button>
+              <button class="subtab-btn" onclick="switchSub('cl','tasks',this)">משימות</button>
+              <button class="subtab-btn" onclick="switchSub('cl','updates',this)">עדכונים</button>
+              <button class="subtab-btn" onclick="switchSub('cl','mail',this)">מיילים</button>
+            </div>
+            <div class="subpanel active" id="cl-details">
+              <div class="form-grid">
+                <div class="form-group"><label class="form-label">שם מלא</label><input class="form-control" value="דוד כהן" readonly></div>
+                <div class="form-group"><label class="form-label">ת.ז.</label><input class="form-control" value="123456789" readonly></div>
+                <div class="form-group"><label class="form-label">טלפון</label><input class="form-control" value="050-1234567" readonly></div>
+                <div class="form-group"><label class="form-label">אימייל</label><input class="form-control" value="david.cohen@example.com" readonly></div>
+                <div class="form-group"><label class="form-label">כתובת</label><input class="form-control" value="רחוב הרצל 12, אשקלון" readonly></div>
+                <div class="form-group"><label class="form-label">איש קשר / הורה</label><input class="form-control" value="משפחת כהן - 052-1112233" readonly></div>
+                <div class="form-group"><label class="form-label">שיוך למסגרת</label><input class="form-control" value="קליניקה מרכזית" readonly></div>
+                <div class="form-group"><label class="form-label">סוג תיקייה</label><input class="form-control" value="תהליך שלם" readonly></div>
+              </div>
+              <div class="section-title">סיכום כספי (מחושב אוטומטית מפגישות ותשלומים)</div>
+              <div class="stats-grid">
+                <div class="stat-card"><div class="stat-label">סה"כ חוב</div><div class="stat-value">₪2,800</div></div>
+                <div class="stat-card"><div class="stat-label">שולם</div><div class="stat-value green">₪2,450</div></div>
+                <div class="stat-card"><div class="stat-label">יתרה</div><div class="stat-value red">₪350</div></div>
+              </div>
+            </div>
+            <div class="subpanel" id="cl-appts">
+              <table><thead><tr><th>תאריך</th><th>שעה</th><th>מחיר</th><th>הגיע/ה</th></tr></thead>
               <tbody>
-                <tr>
-                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar blue">דכ</div> <span>דוד כהן</span></div></td>
-                  <td>050-1234567</td>
-                  <td>123456789</td>
-                  <td>34</td>
-                  <td><span class="badge badge-green">פעיל</span></td>
-                  <td><button class="btn btn-secondary btn-sm" onclick="showModal('viewPatient')">צפייה</button></td>
-                </tr>
-                <tr>
-                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar green">מל</div> <span>מרים לוי</span></div></td>
-                  <td>050-7654321</td>
-                  <td>987654321</td>
-                  <td>28</td>
-                  <td><span class="badge badge-green">פעיל</span></td>
-                  <td><button class="btn btn-secondary btn-sm" onclick="showModal('viewPatient')">צפייה</button></td>
-                </tr>
-                <tr>
-                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar amber">יס</div> <span>יוסי סילברשטיין</span></div></td>
-                  <td>053-9876543</td>
-                  <td>456789123</td>
-                  <td>45</td>
-                  <td><span class="badge badge-green">פעיל</span></td>
-                  <td><button class="btn btn-secondary btn-sm" onclick="showModal('viewPatient')">צפייה</button></td>
-                </tr>
-                <tr>
-                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar" style="background: #9D4EDD;">רי</div> <span>רוזיטה יוסופוב</span></div></td>
-                  <td>052-5555555</td>
-                  <td>321654987</td>
-                  <td>52</td>
-                  <td><span class="badge badge-blue">חדש</span></td>
-                  <td><button class="btn btn-secondary btn-sm" onclick="showModal('viewPatient')">צפייה</button></td>
-                </tr>
-                <tr>
-                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar red">סא</div> <span>סלימה אחמד</span></div></td>
-                  <td>051-2222222</td>
-                  <td>789123456</td>
-                  <td>38</td>
-                  <td><span class="badge badge-red">הושלם</span></td>
-                  <td><button class="btn btn-secondary btn-sm" onclick="showModal('viewPatient')">צפייה</button></td>
-                </tr>
-              </tbody>
-            </table>
+                <tr><td>06/09/2026</td><td>14:30</td><td>₪350</td><td><span class="badge badge-green">כן</span></td></tr>
+                <tr><td>30/08/2026</td><td>14:30</td><td>₪350</td><td><span class="badge badge-green">כן</span></td></tr>
+                <tr><td>23/08/2026</td><td>14:30</td><td>₪350</td><td><span class="badge badge-red">לא</span></td></tr>
+              </tbody></table>
+            </div>
+            <div class="subpanel" id="cl-pay">
+              <table><thead><tr><th>תאריך</th><th>סכום</th><th>אמצעי תשלום</th></tr></thead>
+              <tbody>
+                <tr><td>30/08/2026</td><td style="color:var(--green);font-weight:600">₪350</td><td>ביט</td></tr>
+                <tr><td>01/08/2026</td><td style="color:var(--green);font-weight:600">₪1,400</td><td>העברה בנקאית</td></tr>
+                <tr><td>05/07/2026</td><td style="color:var(--green);font-weight:600">₪700</td><td>כרטיס אשראי</td></tr>
+              </tbody></table>
+            </div>
+            <div class="subpanel" id="cl-tasks">
+              <table><thead><tr><th>משימה</th><th>תאריך יעד</th><th>סטטוס</th></tr></thead>
+              <tbody>
+                <tr><td>עדכון תוכנית טיפול</td><td>06/09/2026</td><td><span class="badge badge-amber">היום</span></td></tr>
+                <tr><td>שליחת דוח להורים</td><td>01/09/2026</td><td><span class="badge badge-green">בוצע</span></td></tr>
+              </tbody></table>
+            </div>
+            <div class="subpanel" id="cl-updates">
+              <div style="font-size:13px;line-height:1.9">
+                <div>🗨 <b>ד"ר אברהם לוי</b> · 05/09/2026 — חולה מראה שיפור משמעותי בתסמיני חרדה</div>
+                <div>🗨 <b>מזכירות</b> · 02/09/2026 — עודכן פרטי קשר טלפוני</div>
+              </div>
+            </div>
+            <div class="subpanel" id="cl-mail">
+              <div class="alert">🔗 מחובר ל-Gmail: clinic.davidcohen@gmail.com</div>
+              <table><thead><tr><th>נושא</th><th>מאת/אל</th><th>תאריך</th></tr></thead>
+              <tbody>
+                <tr><td>סיכום פגישה שבועית</td><td>אל: משפחת כהן</td><td>05/09/2026</td></tr>
+                <tr><td>Re: שאלה לגבי התור הבא</td><td>מאת: משפחת כהן</td><td>04/09/2026</td></tr>
+              </tbody></table>
+            </div>
+          </div>
+
+          <!-- Tab 2: Data collection -->
+          <div class="pd-panel" id="pdp-data">
+            <div class="subtabs">
+              <button class="subtab-btn active" onclick="switchSub('dt','bg',this)">רקע</button>
+              <button class="subtab-btn" onclick="switchSub('dt','docs',this)">מסמכים רפואיים</button>
+              <button class="subtab-btn" onclick="switchSub('dt','quest',this)">שאלונים</button>
+              <button class="subtab-btn" onclick="switchSub('dt','abc',this)">תצפיות ABC</button>
+            </div>
+            <div class="subpanel active" id="dt-bg">
+              <div class="q-answer" style="max-width:700px">
+                דוד הינו נער בן 34... (רקע כללי לדוגמה) מציג קשיי ויסות רגשי בעיקר בסביבות לחוצות, עם היסטוריה של טיפול תרופתי קל. הרקע המשפחתי תומך, קיימת מוטיבציה גבוהה לשינוי.
+              </div>
+              <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="toast('בגרסה המלאה: עריכת טקסט עשיר (Bold/Italic/כותרות)')">✏️ ערוך רקע</button>
+            </div>
+            <div class="subpanel" id="dt-docs">
+              <div class="doc-grid">
+                <div class="doc-card"><div class="doc-icon">📄</div><div><div style="font-weight:600;font-size:13px">אבחון פסיכולוגי.pdf</div><div style="font-size:11px;color:var(--g500)">12/05/2026</div></div></div>
+                <div class="doc-card"><div class="doc-icon">📄</div><div><div style="font-weight:600;font-size:13px">חוות דעת רפואית.pdf</div><div style="font-size:11px;color:var(--g500)">03/06/2026</div></div></div>
+                <div class="doc-card"><div class="doc-icon">🖼️</div><div><div style="font-weight:600;font-size:13px">צילום מסמך ועדה.jpg</div><div style="font-size:11px;color:var(--g500)">20/07/2026</div></div></div>
+              </div>
+              <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="toast('בגרסה המלאה: גרירת קבצים להעלאה')">📤 העלה מסמך</button>
+            </div>
+            <div class="subpanel" id="dt-quest">
+              <div class="q-select-row">
+                <button class="active" onclick="switchQ('parent',this)">שאלון הורים</button>
+                <button onclick="switchQ('staff',this)">שאלון צוות</button>
+                <button onclick="switchQ('fba',this)">FBA - הערכה פונקציונלית</button>
+                <button onclick="switchQ('fobs',this)">שאלון פוב"ס</button>
+              </div>
+              <div id="q-content"></div>
+            </div>
+            <div class="subpanel" id="dt-abc">
+              <div class="alert">תצפית התנהגותית לפי מודל A-B-C (נסיבות – התנהגות – תוצאה)</div>
+              <div class="form-grid" style="margin-bottom:14px">
+                <div class="form-group"><label class="form-label">מלמד/ת</label><input class="form-control" value="גב' רחלי סיון" readonly></div>
+                <div class="form-group"><label class="form-label">שיעור</label><input class="form-control" value="חשבון" readonly></div>
+                <div class="form-group"><label class="form-label">תאריך</label><input class="form-control" value="03/09/2026" readonly></div>
+                <div class="form-group"><label class="form-label">שעת תצפית</label><input class="form-control" value="10:00-10:45" readonly></div>
+              </div>
+              <div class="abc-wrap">
+              <table class="abc">
+                <thead><tr><th>#</th><th>נסיבות (A)</th><th>התנהגות (B)</th><th>תוצאה (C)</th><th>הערות</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>בקשה לעבור למשימה חדשה</td><td>סירוב מילולי, הרמת קול</td><td>הוצאה זמנית מהכיתה</td><td>-</td></tr>
+                  <tr><td>2</td><td>ישיבה ליד חבר רועש</td><td>קושי בריכוז, קימה מהכיסא</td><td>הזזת מקום ישיבה</td><td>שיפור מיידי</td></tr>
+                  <tr><td>3</td><td>מטלה קבוצתית</td><td>שיתוף פעולה טוב</td><td>חיזוק חיובי מהמורה</td><td>התנהגות מטרה!</td></tr>
+                </tbody>
+              </table>
+              </div>
+              <div class="section-title" style="margin-top:14px">סיכום תצפית</div>
+              <div class="q-answer">נצפתה מגמת שיפור בהתנהגות שיתופית כאשר ניתנה מסגרת ברורה ותמיכה חברתית. מומלץ להמשיך ולחזק מצבים דומים.</div>
+            </div>
+          </div>
+
+          <!-- Tab 3: Intervention plan -->
+          <div class="pd-panel" id="pdp-plan">
+            <div class="subtabs">
+              <button class="subtab-btn active" onclick="switchSub('pl','goals',this)">תוכנית טיפול</button>
+              <button class="subtab-btn" onclick="switchSub('pl','tank',this)">טנ"ק</button>
+              <button class="subtab-btn" onclick="switchSub('pl','progress',this)">התקדמות</button>
+              <button class="subtab-btn" onclick="switchSub('pl','graphs',this)">גרפי התנהגות</button>
+              <button class="subtab-btn" onclick="switchSub('pl','docs2',this)">מסמכי תוכנית</button>
+            </div>
+            <div class="subpanel active" id="pl-goals">
+              <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+                <button class="btn btn-ai btn-sm" onclick="toast('בגרסה המלאה: עוזר AI מנסח מטרת SMART מלאה')">✨ נסח מטרה עם AI</button>
+              </div>
+              <div class="card" style="margin-bottom:10px"><div class="card-body">
+                <b>מטרה 1 (SMART):</b> הפחתת התפרצויות זעם במהלך שיעור בכיתה מ-5 אירועים בשבוע ל-1 אירוע בשבוע, תוך 8 שבועות, באמצעות אימון ויסות רגשי וחיזוקים חיוביים.
+                <div style="margin-top:6px"><span class="badge badge-green">בתהליך · 60%</span></div>
+              </div></div>
+              <div class="card"><div class="card-body">
+                <b>מטרה 2 (SMART):</b> הגברת קשר עין ותקשורת מילולית יזומה עם בני גיל, מפעם אחד ליום לשלוש פעמים ביום, תוך 6 שבועות.
+                <div style="margin-top:6px"><span class="badge badge-blue">בתהליך · 35%</span></div>
+              </div></div>
+            </div>
+            <div class="subpanel" id="pl-tank">
+              <div class="alert">טנ"ק - טופס ניהול קליינטים: תכנון התערבות מובנה</div>
+              <div class="q-question"><label>רקע על הילד</label><div class="q-answer">ילד תקשורתי, נהנה מפעילות גופנית, קושי עיקרי בוויסות תסכול.</div></div>
+              <div class="q-question"><label>חזון (לאן שואפים להגיע)</label><div class="q-answer">תפקוד עצמאי במסגרת הכיתתית ללא צורך בליווי צמוד.</div></div>
+              <div class="q-question"><label>יכולות קיימות</label><div class="q-answer">שפה תקינה, יכולת קוגניטיבית תקינה, מוטיבציה גבוהה לחיזוקים חברתיים.</div></div>
+              <div class="q-question"><label>תוכנית פעולה</label><div class="q-answer">שיטת "כרטיסיית ויסות" + חיזוק מיידי כל 15 דקות של התנהגות רצויה.</div></div>
+              <button class="btn btn-secondary btn-sm">📄 הצג טופס מלא (26 שדות)</button>
+            </div>
+            <div class="subpanel" id="pl-progress">
+              <div class="grid-3">
+                <div class="card"><div class="card-header"><h3>נוכחות</h3></div><div class="card-body"><div class="chart-container" style="height:180px"><canvas id="chart-attendance"></canvas></div></div></div>
+                <div class="card"><div class="card-header"><h3>מגמה חודשית</h3></div><div class="card-body"><div class="chart-container" style="height:180px"><canvas id="chart-monthly-mini"></canvas></div></div></div>
+                <div class="card"><div class="card-header"><h3>משימות שהושלמו</h3></div><div class="card-body"><div class="chart-container" style="height:180px"><canvas id="chart-tasks-mini"></canvas></div></div></div>
+              </div>
+            </div>
+            <div class="subpanel" id="pl-graphs">
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+                <div>
+                  <button class="btn btn-ai btn-sm" onclick="toast('בגרסה המלאה: ה-AI בונה גרף שלם אוטומטית')">✨ בנה עם AI</button>
+                  <button class="btn btn-secondary btn-sm" onclick="toast('בגרסה המלאה: שליפת נתונים אוטומטית מתצפיות ABC')">📥 משוך נתונים מתצפיות</button>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="toast('בגרסה המלאה: יצירת גרף התנהגות חדש')">+ גרף חדש</button>
+              </div>
+              <div class="card">
+                <div class="card-header"><h3>גרף: התפרצויות זעם - תדירות שבועית</h3><span class="badge badge-purple">Baseline → Intervention</span></div>
+                <div class="card-body"><div class="chart-container"><canvas id="chart-behavior"></canvas></div></div>
+              </div>
+            </div>
+            <div class="subpanel" id="pl-docs2">
+              <div class="doc-grid">
+                <div class="doc-card"><div class="doc-icon">📋</div><div><div style="font-weight:600;font-size:13px">תוכנית התערבות מלאה.pdf</div><div style="font-size:11px;color:var(--g500)">10/07/2026</div></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 4: Reports -->
+          <div class="pd-panel" id="pdp-report">
+            <div class="card">
+              <div class="card-header"><h3>הפקת דוח קליני מלא</h3></div>
+              <div class="card-body">
+                <p style="font-size:13px;color:var(--g500);margin-bottom:12px">בחר את הסעיפים שברצונך לכלול בדוח, ולחץ "הפק PDF" ליצירת מסמך מלא לצורך שיתוף עם הורים / גורמים מקצועיים.</p>
+                <div id="report-checks">
+                  <label class="report-check"><input type="checkbox" checked> פרטים אישיים</label>
+                  <label class="report-check"><input type="checkbox" checked> רקע</label>
+                  <label class="report-check"><input type="checkbox" checked> שאלונים</label>
+                  <label class="report-check"><input type="checkbox" checked> תצפיות ABC</label>
+                  <label class="report-check"><input type="checkbox" checked> מטרות טיפול</label>
+                  <label class="report-check"><input type="checkbox"> מסמכי תוכנית התערבות</label>
+                  <label class="report-check"><input type="checkbox" checked> גרפי התנהגות</label>
+                  <label class="report-check"><input type="checkbox"> נספח א׳ - מסמכים רפואיים</label>
+                  <label class="report-check"><input type="checkbox"> נספח ב׳ - פגישות</label>
+                  <label class="report-check"><input type="checkbox"> נספח ג׳ - עדכונים</label>
+                  <label class="report-check"><input type="checkbox"> נספח ד׳ - משימות</label>
+                  <label class="report-check"><input type="checkbox"> נספח ה׳ - כספים ותשלומים</label>
+                </div>
+                <div style="margin-top:16px;display:flex;gap:10px">
+                  <button class="btn btn-secondary" onclick="previewReport()">👁 תצוגה מקדימה</button>
+                  <button class="btn btn-primary" onclick="exportReportPDF()">📄 הפק PDF</button>
+                </div>
+              </div>
+            </div>
+            <div id="report-preview" style="display:none" class="card"><div class="card-body" id="report-preview-body"></div></div>
           </div>
         </div>
       </div>
 
-      <!-- Appointments View -->
+      <!-- ================= DIARY ================= -->
+      <div id="view-diary" class="view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="font-size:19px;font-weight:600">יומן - ספטמבר 2026</h2>
+          <button class="btn btn-primary" onclick="toast('בגרסה המלאה: קביעת פגישה חדשה')">+ פגישה חדשה</button>
+        </div>
+        <div class="card"><div class="card-body">
+          <div class="alert">📅 לוח שנה חודשי מלא, כולל תאריכים עבריים, חגים ומועדים, וסימון ויזואלי של פגישות שהתקיימו (ירוק) מול מתוכננות.</div>
+          <table><thead><tr><th>יום</th><th>תאריך</th><th>פגישות</th></tr></thead>
+          <tbody>
+            <tr><td>ראשון</td><td>06/09 · ג' אלול</td><td><span class="badge badge-green">3 פגישות</span></td></tr>
+            <tr><td>שני</td><td>07/09 · ד' אלול</td><td><span class="badge badge-blue">5 פגישות</span></td></tr>
+            <tr><td>שלישי</td><td>08/09 · ה' אלול</td><td><span class="badge badge-blue">4 פגישות</span></td></tr>
+            <tr><td>רביעי</td><td>09/09 · ו' אלול</td><td style="color:var(--g400)">אין פגישות</td></tr>
+          </tbody></table>
+        </div></div>
+      </div>
+
+      <!-- ================= APPOINTMENTS ================= -->
       <div id="view-appointments" class="view">
-        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">תורים</h2>
-          <button class="btn btn-primary" onclick="showModal('newAppointment')">
-            <i class="lucide" data-lucide="plus"></i>
-            תור חדש
-          </button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="font-size:19px;font-weight:600">פגישות</h2>
+          <button class="btn btn-primary" onclick="toast('בגרסה המלאה: תור חדש')">+ תור חדש</button>
         </div>
-
-        <div class="tabs">
-          <button class="tab-btn active" onclick="switchTab('apt-all')">כל התורים</button>
-          <button class="tab-btn" onclick="switchTab('apt-today')">היום</button>
-          <button class="tab-btn" onclick="switchTab('apt-week')">השבוע</button>
-          <button class="tab-btn" onclick="switchTab('apt-completed')">הושלמו</button>
-        </div>
-
-        <div class="card">
-          <div class="card-body">
-            <table>
-              <thead>
-                <tr>
-                  <th>חולה</th>
-                  <th>סוג טיפול</th>
-                  <th>מטפל</th>
-                  <th>תאריך/שעה</th>
-                  <th>סטטוס</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>דוד כהן</td>
-                  <td>טיפול פסיכולוגי</td>
-                  <td>ד"ר אברהם לוי</td>
-                  <td>06/09/2026 14:30</td>
-                  <td><span class="badge badge-green">בטיפול</span></td>
-                  <td><button class="btn btn-secondary btn-sm">עריכה</button></td>
-                </tr>
-                <tr>
-                  <td>מרים לוי</td>
-                  <td>רגעות מודעות</td>
-                  <td>גב' רחלי סיון</td>
-                  <td>06/09/2026 15:00</td>
-                  <td><span class="badge badge-blue">בהמתנה</span></td>
-                  <td><button class="btn btn-secondary btn-sm">עריכה</button></td>
-                </tr>
-                <tr>
-                  <td>יוסי סילברשטיין</td>
-                  <td>ייעוץ משפחתי</td>
-                  <td>ד"ר נירה אהרוני</td>
-                  <td>06/09/2026 16:00</td>
-                  <td><span class="badge badge-blue">בהמתנה</span></td>
-                  <td><button class="btn btn-secondary btn-sm">עריכה</button></td>
-                </tr>
-                <tr>
-                  <td>רוזיטה יוסופוב</td>
-                  <td>הערכה התחלתית</td>
-                  <td>גב' נטשה בוציקו</td>
-                  <td>07/09/2026 10:00</td>
-                  <td><span class="badge badge-amber">מתוכנן</span></td>
-                  <td><button class="btn btn-secondary btn-sm">עריכה</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <div class="card"><div class="card-body" style="padding:0">
+          <table><thead><tr><th>מטופל</th><th>תאריך</th><th>שעה</th><th>מחיר</th><th>הגיע/ה</th></tr></thead>
+          <tbody>
+            <tr><td>דוד כהן</td><td>06/09/2026</td><td>14:30</td><td>₪350</td><td><span class="badge badge-green">כן</span></td></tr>
+            <tr><td>מרים לוי</td><td>06/09/2026</td><td>15:00</td><td>₪300</td><td><span class="badge badge-amber">טרם</span></td></tr>
+            <tr><td>יוסי סילברשטיין</td><td>06/09/2026</td><td>16:00</td><td>₪350</td><td><span class="badge badge-amber">טרם</span></td></tr>
+            <tr><td>רוזיטה יוסופוב</td><td>07/09/2026</td><td>10:00</td><td>₪400</td><td><span class="badge badge-amber">טרם</span></td></tr>
+          </tbody></table>
+        </div></div>
       </div>
 
-      <!-- Treatments View -->
-      <div id="view-treatments" class="view">
-        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">טיפולים</h2>
-          <button class="btn btn-primary" onclick="showModal('newTreatment')">
-            <i class="lucide" data-lucide="plus"></i>
-            טיפול חדש
-          </button>
-        </div>
-
-        <div class="tabs">
-          <button class="tab-btn active">בתהליך</button>
-          <button class="tab-btn">הושלמו</button>
-          <button class="tab-btn">הוקפאו</button>
-        </div>
-
-        <div class="card">
-          <div class="card-body">
-            <table>
-              <thead>
-                <tr>
-                  <th>חולה</th>
-                  <th>סוג טיפול</th>
-                  <th>מטפל</th>
-                  <th>התחלה</th>
-                  <th>התקדמות</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>דוד כהן</td>
-                  <td>CBT - טיפול קוגניטיבי</td>
-                  <td>ד"ר אברהם לוי</td>
-                  <td>15/06/2026</td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                      <div style="width: 50px; height: 6px; background: var(--g200); border-radius: 3px; overflow: hidden;">
-                        <div style="width: 75%; height: 100%; background: var(--green);"></div>
-                      </div>
-                      <span style="font-size: 12px; color: var(--g500);">75%</span>
-                    </div>
-                  </td>
-                  <td><button class="btn btn-secondary btn-sm">צפייה</button></td>
-                </tr>
-                <tr>
-                  <td>מרים לוי</td>
-                  <td>טיפול באנקסיטי</td>
-                  <td>ד"ר נירה אהרוני</td>
-                  <td>01/07/2026</td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                      <div style="width: 50px; height: 6px; background: var(--g200); border-radius: 3px; overflow: hidden;">
-                        <div style="width: 50%; height: 100%; background: var(--blue2);"></div>
-                      </div>
-                      <span style="font-size: 12px; color: var(--g500);">50%</span>
-                    </div>
-                  </td>
-                  <td><button class="btn btn-secondary btn-sm">צפייה</button></td>
-                </tr>
-                <tr>
-                  <td>יוסי סילברשטיין</td>
-                  <td>טרומה וטיפול EMDR</td>
-                  <td>גב' רחלי סיון</td>
-                  <td>20/07/2026</td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                      <div style="width: 50px; height: 6px; background: var(--g200); border-radius: 3px; overflow: hidden;">
-                        <div style="width: 30%; height: 100%; background: var(--amber);"></div>
-                      </div>
-                      <span style="font-size: 12px; color: var(--g500);">30%</span>
-                    </div>
-                  </td>
-                  <td><button class="btn btn-secondary btn-sm">צפייה</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Notes View -->
-      <div id="view-notes" class="view">
-        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">הערות וניתוחים</h2>
-          <button class="btn btn-primary" onclick="showModal('newNote')">
-            <i class="lucide" data-lucide="plus"></i>
-            הערה חדשה
-          </button>
-        </div>
-
-        <div class="card">
-          <div class="card-body">
-            <table>
-              <thead>
-                <tr>
-                  <th>תאריך</th>
-                  <th>חולה</th>
-                  <th>סוג</th>
-                  <th>כותב</th>
-                  <th>תיאור קצר</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>06/09/2026</td>
-                  <td>דוד כהן</td>
-                  <td><span class="badge badge-green">התקדמות</span></td>
-                  <td>ד"ר אברהם לוי</td>
-                  <td>חולה מראה שיפור משמעותי בתסמינים</td>
-                  <td><button class="btn btn-secondary btn-sm">קרא</button></td>
-                </tr>
-                <tr>
-                  <td>05/09/2026</td>
-                  <td>מרים לוי</td>
-                  <td><span class="badge badge-blue">הערה קלינית</span></td>
-                  <td>ד"ר נירה אהרוני</td>
-                  <td>דיון על תוכנית טיפול לאורך מועד</td>
-                  <td><button class="btn btn-secondary btn-sm">קרא</button></td>
-                </tr>
-                <tr>
-                  <td>04/09/2026</td>
-                  <td>יוסי סילברשטיין</td>
-                  <td><span class="badge badge-amber">זהירות</span></td>
-                  <td>גב' רחלי סיון</td>
-                  <td>צורך בעיון נוסף במצב האישי</td>
-                  <td><button class="btn btn-secondary btn-sm">קרא</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Finances View -->
-      <div id="view-finances" class="view">
-        <div style="margin-bottom: 20px;">
-          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">ניהול כספים</h2>
-        </div>
-
+      <!-- ================= TASKS ================= -->
+      <div id="view-tasks" class="view">
+        <h2 style="font-size:19px;font-weight:600;margin-bottom:16px">משימות</h2>
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon green">
-              <i class="lucide" data-lucide="trending-up"></i>
-            </div>
-            <div class="stat-label">הכנסה החודש</div>
-            <div class="stat-value green">₪45,800</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon blue">
-              <i class="lucide" data-lucide="dollar-sign"></i>
-            </div>
-            <div class="stat-label">הכנסה קצובה</div>
-            <div class="stat-value blue">₪165,300</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon amber">
-              <i class="lucide" data-lucide="alert-circle"></i>
-            </div>
-            <div class="stat-label">חוובים פתוחים</div>
-            <div class="stat-value">₪8,900</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon red">
-              <i class="lucide" data-lucide="trending-down"></i>
-            </div>
-            <div class="stat-label">הוצאות</div>
-            <div class="stat-value red">₪12,200</div>
-          </div>
+          <div class="stat-card"><div class="stat-label">סה"כ</div><div class="stat-value">28</div></div>
+          <div class="stat-card"><div class="stat-label">להיום</div><div class="stat-value blue">6</div></div>
+          <div class="stat-card"><div class="stat-label">באיחור</div><div class="stat-value red">3</div></div>
+          <div class="stat-card"><div class="stat-label">בוצעו</div><div class="stat-value green">19</div></div>
         </div>
+        <div class="tabs">
+          <button class="tab-btn active">הכל</button><button class="tab-btn">היום</button><button class="tab-btn">באיחור</button><button class="tab-btn">בוצע</button>
+        </div>
+        <div class="card"><div class="card-body" style="padding:0">
+          <table><thead><tr><th>משימה</th><th>מטופל</th><th>תאריך יעד</th><th>סטטוס</th></tr></thead>
+          <tbody>
+            <tr><td>מילוי שאלון FOBS</td><td>אברומי גולדשטיין</td><td>04/09/2026</td><td><span class="badge badge-red">באיחור</span></td></tr>
+            <tr><td>עדכון תוכנית טיפול</td><td>דוד כהן</td><td>06/09/2026</td><td><span class="badge badge-amber">היום</span></td></tr>
+            <tr><td>תצפית ABC בכיתה</td><td>מרים לוי</td><td>06/09/2026</td><td><span class="badge badge-amber">היום</span></td></tr>
+            <tr><td>שיחת סיכום עם הורים</td><td>יוסי סילברשטיין</td><td>01/09/2026</td><td><span class="badge badge-green">בוצע</span></td></tr>
+          </tbody></table>
+        </div></div>
+      </div>
 
-        <div class="card">
-          <div class="card-header">
-            <h3>תשלומים אחרונים</h3>
+      <!-- ================= NOTES / UPDATES FEED ================= -->
+      <div id="view-notes" class="view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="font-size:19px;font-weight:600">עדכונים משותפים</h2>
+          <select class="form-control" style="max-width:200px"><option>כל המטופלים</option><option>דוד כהן</option><option>מרים לוי</option></select>
+        </div>
+        <div class="alert">💬 פיד חוצה-מטופלים עבור כלל הצוות המשויך לאותו תיק — כשעדכון נכתב, שאר הצוות מקבל התראה בזמן אמת.</div>
+        <div class="card"><div class="card-body">
+          <div style="font-size:13.5px;line-height:2.1">
+            <div>🗨 <b>ד"ר אברהם לוי</b> על <b>דוד כהן</b> · 06/09/2026 — חולה מראה שיפור משמעותי בתסמיני חרדה, ממליץ להמשיך קצב נוכחי.</div>
+            <div>🗨 <b>גב' רחלי סיון</b> על <b>מרים לוי</b> · 05/09/2026 — נצפתה ירידה בהתנהגות ההימנעות בכיתה.</div>
+            <div>🗨 <b>גב' נטשה בוציקו</b> על <b>אברומי גולדשטיין</b> · 04/09/2026 — יש לתאם שיחה עם ההורים בנוגע להתקדמות.</div>
           </div>
-          <div class="card-body">
-            <table>
-              <thead>
-                <tr>
-                  <th>תאריך</th>
-                  <th>חולה</th>
-                  <th>תיאור</th>
-                  <th>סכום</th>
-                  <th>סטטוס</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>06/09/2026</td>
-                  <td>דוד כהן</td>
-                  <td>תשלום טיפול שבועי</td>
-                  <td style="color: var(--green); font-weight: 600;">₪350</td>
-                  <td><span class="badge badge-green">שולם</span></td>
-                </tr>
-                <tr>
-                  <td>05/09/2026</td>
-                  <td>מרים לוי</td>
-                  <td>תשלום ראשוני</td>
-                  <td style="color: var(--green); font-weight: 600;">₪500</td>
-                  <td><span class="badge badge-green">שולם</span></td>
-                </tr>
-                <tr>
-                  <td>04/09/2026</td>
-                  <td>יוסי סילברשטיין</td>
-                  <td>תשלום עיון נוסף</td>
-                  <td style="color: var(--red); font-weight: 600;">₪250</td>
-                  <td><span class="badge badge-amber">בהמתנה</span></td>
-                </tr>
-              </tbody>
-            </table>
+        </div></div>
+      </div>
+
+      <!-- ================= FINANCES (admin) ================= -->
+      <div id="view-finances" class="view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="font-size:19px;font-weight:600">ניהול כספים</h2>
+          <select class="form-control" style="max-width:140px"><option>2026</option><option>2025</option></select>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">צפוי החודש</div><div class="stat-value blue">₪45,800</div></div>
+          <div class="stat-card"><div class="stat-label">נגבה בפועל</div><div class="stat-value green">₪36,900</div></div>
+          <div class="stat-card"><div class="stat-label">יתרת חוב</div><div class="stat-value red">₪8,900</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card"><div class="card-header"><h3>הכנסות לפי חודש</h3></div><div class="card-body"><div class="chart-container"><canvas id="chart-finance-monthly"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><h3>צפוי מול נגבה</h3></div><div class="card-body"><div class="chart-container"><canvas id="chart-finance-vs"></canvas></div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>חייבים מובילים</h3></div>
+          <div class="card-body" style="padding:0">
+            <table><thead><tr><th>מטופל</th><th>חוב</th><th>שולם</th><th>יתרה</th></tr></thead>
+            <tbody>
+              <tr><td>דוד כהן</td><td>₪2,800</td><td>₪2,450</td><td style="color:var(--red);font-weight:600">₪350</td></tr>
+              <tr><td>יוסי סילברשטיין</td><td>₪1,750</td><td>₪1,300</td><td style="color:var(--red);font-weight:600">₪450</td></tr>
+              <tr><td>סלימה אחמד</td><td>₪2,100</td><td>₪1,600</td><td style="color:var(--red);font-weight:600">₪500</td></tr>
+            </tbody></table>
           </div>
         </div>
       </div>
 
-      <!-- Reports View -->
-      <div id="view-reports" class="view">
-        <div style="margin-bottom: 20px;">
-          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">דוחות וניתוחים</h2>
+      <!-- ================= GRAPHS / ANALYTICS (admin) ================= -->
+      <div id="view-graphs" class="view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="font-size:19px;font-weight:600">גרפים וניתוח נתונים</h2>
+          <button class="btn btn-primary" onclick="toast('בגרסה המלאה: בחירת שלב תהליך, סוג נתונים וטווח תאריכים')">+ גרף חדש</button>
         </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h3>התפלגות חולים לפי סוג טיפול</h3>
-          </div>
-          <div class="card-body">
-            <div class="chart-container">
-              <canvas id="treatmentChart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h3>טיפולים בחודשים האחרונים</h3>
-          </div>
-          <div class="card-body">
-            <div class="chart-container">
-              <canvas id="monthlyChart"></canvas>
-            </div>
-          </div>
+        <div class="grid-2">
+          <div class="card"><div class="card-header"><h3>התפלגות מטופלים לפי מסגרת</h3></div><div class="card-body"><div class="chart-container"><canvas id="chart-dist"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><h3>סה"כ טיפולים לאורך זמן</h3></div><div class="card-body"><div class="chart-container"><canvas id="chart-total"></canvas></div></div></div>
         </div>
       </div>
 
-      <!-- Users View -->
+      <!-- ================= USERS (admin) ================= -->
       <div id="view-users" class="view">
-        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">ניהול משתמשים</h2>
-          <button class="btn btn-primary" onclick="showModal('newUser')">
-            <i class="lucide" data-lucide="plus"></i>
-            משתמש חדש
-          </button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2 style="font-size:19px;font-weight:600">ניהול משתמשים והרשאות</h2>
+          <button class="btn btn-primary" onclick="toast('בגרסה המלאה: הוספת משתמש חדש')">+ משתמש חדש</button>
         </div>
-
-        <div class="card">
-          <div class="card-body">
-            <table>
-              <thead>
-                <tr>
-                  <th>שם</th>
-                  <th>אימייל</th>
-                  <th>תפקיד</th>
-                  <th>סטטוס</th>
-                  <th>הצטרפות</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar blue">דל</div> <span>ד"ר אברהם לוי</span></div></td>
-                  <td>abraham@clinic.org</td>
-                  <td><span class="badge badge-blue">מנהל</span></td>
-                  <td><span class="badge badge-green">פעיל</span></td>
-                  <td>01/06/2026</td>
-                  <td><button class="btn btn-secondary btn-sm">ערוך</button></td>
-                </tr>
-                <tr>
-                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar green">רס</div> <span>גב' רחלי סיון</span></div></td>
-                  <td>rachel@clinic.org</td>
-                  <td><span class="badge badge-green">מטפל</span></td>
-                  <td><span class="badge badge-green">פעיל</span></td>
-                  <td>05/06/2026</td>
-                  <td><button class="btn btn-secondary btn-sm">ערוך</button></td>
-                </tr>
-                <tr>
-                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar amber">נב</div> <span>גב' נטשה בוציקו</span></div></td>
-                  <td>natasha@clinic.org</td>
-                  <td><span class="badge badge-amber">מטפל</span></td>
-                  <td><span class="badge badge-green">פעיל</span></td>
-                  <td>10/06/2026</td>
-                  <td><button class="btn btn-secondary btn-sm">ערוך</button></td>
-                </tr>
-                <tr>
-                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar" style="background: #9D4EDD;">נא</div> <span>ד"ר נירה אהרוני</span></div></td>
-                  <td>nira@clinic.org</td>
-                  <td><span class="badge" style="background: #E0D8FF; color: #5A3FA6;">רכז ניהול</span></td>
-                  <td><span class="badge badge-green">פעיל</span></td>
-                  <td>15/06/2026</td>
-                  <td><button class="btn btn-secondary btn-sm">ערוך</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <div class="card"><div class="card-body" style="padding:0">
+          <table><thead><tr><th>שם</th><th>אימייל</th><th>תפקיד</th><th>מטופלים משויכים</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><span class="avatar" style="background:var(--blue2)">אל</span> ד"ר אברהם לוי</td><td>abraham@clinic.org</td><td><span class="badge badge-blue">מנהל</span></td><td>הכל</td><td><button class="btn btn-secondary btn-sm" onclick="showModal('permissions')">הרשאות</button></td></tr>
+            <tr><td><span class="avatar" style="background:var(--green)">רס</span> גב' רחלי סיון</td><td>rachel@clinic.org</td><td><span class="badge badge-green">מטפלת</span></td><td>6 מטופלים</td><td><button class="btn btn-secondary btn-sm" onclick="showModal('permissions')">הרשאות</button></td></tr>
+            <tr><td><span class="avatar" style="background:var(--amber)">נב</span> גב' נטשה בוציקו</td><td>natasha@clinic.org</td><td><span class="badge badge-green">מטפלת</span></td><td>4 מטופלים</td><td><button class="btn btn-secondary btn-sm" onclick="showModal('permissions')">הרשאות</button></td></tr>
+          </tbody></table>
+        </div></div>
       </div>
 
-      <!-- Settings View -->
+      <!-- ================= SETTINGS (admin) ================= -->
       <div id="view-settings" class="view">
-        <div style="margin-bottom: 20px;">
-          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">הגדרות מערכת</h2>
-        </div>
+        <h2 style="font-size:19px;font-weight:600;margin-bottom:16px">הגדרות מערכת</h2>
 
         <div class="card">
-          <div class="card-header">
-            <h3>הגדרות כלליות</h3>
-          </div>
+          <div class="card-header"><h3>📧 חיבור Gmail</h3></div>
           <div class="card-body">
-            <div class="form-group">
-              <label class="form-label">שם המוסד</label>
-              <input type="text" class="form-control" value="מכון התנהגות - דרום">
-            </div>
-            <div class="form-group">
-              <label class="form-label">כתובת</label>
-              <input type="text" class="form-control" value="רחוב הנשיא 42, אשקלון">
-            </div>
-            <div class="form-group">
-              <label class="form-label">טלפון</label>
-              <input type="text" class="form-control" value="08-6250000">
-            </div>
-            <div class="form-group">
-              <label class="form-label">אימייל</label>
-              <input type="email" class="form-control" value="info@clinic.org">
-            </div>
+            <p style="font-size:13px;color:var(--g500);margin-bottom:10px">שליחה וקבלה של מיילים ישירות מתוך תיק המטופל.</p>
+            <div id="gmail-status" class="alert">🔌 לא מחובר</div>
+            <button class="btn btn-primary btn-sm" onclick="connectGmail()">התחבר עם Google</button>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-header">
-            <h3>הגדרות טיפולים</h3>
-          </div>
+          <div class="card-header"><h3>🤖 חיבור AI (עוזר SMART וגרפי התנהגות)</h3></div>
           <div class="card-body">
-            <div class="form-group">
-              <label class="form-label">משך טיפול ברירת מחדל (דקות)</label>
-              <input type="number" class="form-control" value="50">
-            </div>
-            <div class="form-group">
-              <label class="form-label">עלות טיפול רגיל</label>
-              <input type="number" class="form-control" value="350">
-            </div>
-            <div class="form-group">
-              <label class="form-label">היזהר: אפשר הודעות על תורים חדשים</label>
-              <select class="form-control">
-                <option>כן</option>
-                <option>לא</option>
-              </select>
-            </div>
+            <div class="form-group"><label class="form-label">מפתח API</label><input class="form-control" type="password" value="sk-••••••••••••••••••••"></div>
+            <button class="btn btn-secondary btn-sm" onclick="toast('החיבור תקין ✓ (דמו)')">בדוק חיבור</button>
           </div>
         </div>
 
-        <div style="margin-top: 20px; text-align: center;">
-          <button class="btn btn-primary">
-            <i class="lucide" data-lucide="save"></i>
-            שמור שינויים
-          </button>
-          <button class="btn btn-secondary" style="margin-right: 10px;">
-            <i class="lucide" data-lucide="x"></i>
-            בטל
-          </button>
+        <div class="card">
+          <div class="card-header"><h3>🔔 צלילי התראה</h3></div>
+          <div class="card-body">
+            <div class="sound-row"><span>התראת פגישה מתקרבת</span><button class="btn btn-secondary btn-sm" onclick="playTone(660)">▶ נגן</button></div>
+            <div class="sound-row"><span>התראת משימה</span><button class="btn btn-secondary btn-sm" onclick="playTone(440)">▶ נגן</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>🏫 כלי ניהול מסגרות</h3></div>
+          <div class="card-body">
+            <div class="sound-row"><span>שדרוג כיתה שנתי - ויזניץ (כלל התלמידים עולים כיתה)</span><button class="btn btn-secondary btn-sm" onclick="toast('פעולה מבוצעת רק לאחר אישור מנהל (דמו)')">בצע שדרוג</button></div>
+            <div class="sound-row"><span>העברת תיקי "פוניבז" הישנים לקטגוריה כללית</span><button class="btn btn-secondary btn-sm" onclick="toast('פעולה מבוצעת רק לאחר אישור מנהל (דמו)')">בצע העברה</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>🏢 פרטי המוסד</h3></div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">שם המוסד</label><input class="form-control" value="מכון התנהגות - דרום"></div>
+              <div class="form-group"><label class="form-label">טלפון</label><input class="form-control" value="08-6250000"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1374,345 +791,382 @@ tr:last-child td {
   </div>
 </div>
 
-<!-- Modals -->
-<div id="modal-newAppointment" class="modal-demo">
+<!-- permissions modal -->
+<div id="modal-permissions" class="modal-demo">
   <div class="modal-content">
-    <div class="modal-header">
-      <h2>תור חדש</h2>
-      <button class="close" onclick="closeModal('newAppointment')">×</button>
-    </div>
+    <div class="modal-header"><h2>הרשאות - גב' רחלי סיון</h2><button class="close" onclick="closeModal('permissions')">×</button></div>
     <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">חולה</label>
-        <select class="form-control">
-          <option>דוד כהן</option>
-          <option>מרים לוי</option>
-          <option>יוסי סילברשטיין</option>
-        </select>
+      <div class="section-title" style="margin-top:0">גישה לפי קטגוריה</div>
+      <div class="perm-cat"><span class="perm-cat-name">🏥 קליניקה</span><div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-dot"></div></div></div>
+      <div class="perm-cat"><span class="perm-cat-name">📖 ויזניץ</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-dot"></div></div></div>
+      <div class="perm-cat"><span class="perm-cat-name">🏫 משרד החינוך</span><div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-dot"></div></div></div>
+      <div class="perm-cat"><span class="perm-cat-name">📁 כללי</span><div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-dot"></div></div></div>
+      <div class="section-title">מטופלים ספציפיים</div>
+      <div>
+        <span class="pill">מרים לוי <span class="x" onclick="this.parentElement.remove()">×</span></span>
+        <span class="pill">אברומי גולדשטיין <span class="x" onclick="this.parentElement.remove()">×</span></span>
       </div>
-      <div class="form-group">
-        <label class="form-label">תאריך ושעה</label>
-        <input type="datetime-local" class="form-control">
-      </div>
-      <div class="form-group">
-        <label class="form-label">סוג טיפול</label>
-        <select class="form-control">
-          <option>טיפול פסיכולוגי</option>
-          <option>רגעות מודעות</option>
-          <option>ייעוץ משפחתי</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">מטפל</label>
-        <select class="form-control">
-          <option>ד"ר אברהם לוי</option>
-          <option>גב' רחלי סיון</option>
-          <option>ד"ר נירה אהרוני</option>
-        </select>
-      </div>
+      <input class="form-control" style="margin-top:10px" placeholder="חפש והוסף מטופל...">
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('newAppointment')">בטל</button>
-      <button class="btn btn-primary">שמור תור</button>
+      <button class="btn btn-secondary" onclick="closeModal('permissions')">בטל</button>
+      <button class="btn btn-primary" onclick="closeModal('permissions');toast('הרשאות נשמרו (דמו)')">שמור הרשאות</button>
     </div>
   </div>
 </div>
 
-<div id="modal-newPatient" class="modal-demo">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>חולה חדש</h2>
-      <button class="close" onclick="closeModal('newPatient')">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">שם מלא</label>
-        <input type="text" class="form-control" placeholder="הכנס שם">
-      </div>
-      <div class="form-group">
-        <label class="form-label">תעודת זהות</label>
-        <input type="text" class="form-control" placeholder="הכנס מספר זהות">
-      </div>
-      <div class="form-group">
-        <label class="form-label">טלפון</label>
-        <input type="tel" class="form-control" placeholder="050-0000000">
-      </div>
-      <div class="form-group">
-        <label class="form-label">גיל</label>
-        <input type="number" class="form-control" placeholder="הכנס גיל">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('newPatient')">בטל</button>
-      <button class="btn btn-primary">הוסף חולה</button>
-    </div>
-  </div>
-</div>
-
-<div id="modal-viewPatient" class="modal-demo">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>פרטי חולה</h2>
-      <button class="close" onclick="closeModal('viewPatient')">×</button>
-    </div>
-    <div class="modal-body">
-      <div style="display: flex; gap: 16px; margin-bottom: 16px;">
-        <div class="avatar" style="width: 60px; height: 60px; font-size: 20px; background: var(--blue2);">דכ</div>
-        <div>
-          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">דוד כהן</h3>
-          <p style="font-size: 13px; color: var(--g500); margin-bottom: 2px;">תעודת זהות: 123456789</p>
-          <p style="font-size: 13px; color: var(--g500);">גיל: 34</p>
-        </div>
-      </div>
-      <div class="section-title">פרטים אישיים</div>
-      <div class="form-group">
-        <label class="form-label">טלפון</label>
-        <input type="tel" class="form-control" value="050-1234567" readonly>
-      </div>
-      <div class="form-group">
-        <label class="form-label">סטטוס</label>
-        <input type="text" class="form-control" value="פעיל" readonly>
-      </div>
-      <div class="section-title">טיפולים פעילים</div>
-      <div class="treatment-row">
-        <div>
-          <div class="treatment-type">CBT - טיפול קוגניטיבי</div>
-          <div class="treatment-therapist">ד"ר אברהם לוי</div>
-        </div>
-        <span class="badge badge-green">בתהליך</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="modal-newTreatment" class="modal-demo">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>טיפול חדש</h2>
-      <button class="close" onclick="closeModal('newTreatment')">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">חולה</label>
-        <select class="form-control">
-          <option>בחר חולה</option>
-          <option>דוד כהן</option>
-          <option>מרים לוי</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">סוג טיפול</label>
-        <select class="form-control">
-          <option>בחר סוג</option>
-          <option>טיפול פסיכולוגי</option>
-          <option>CBT</option>
-          <option>רגעות מודעות</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">תאריך התחלה</label>
-        <input type="date" class="form-control">
-      </div>
-      <div class="form-group">
-        <label class="form-label">מטפל אחראי</label>
-        <select class="form-control">
-          <option>בחר מטפל</option>
-          <option>ד"ר אברהם לוי</option>
-          <option>גב' רחלי סיון</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('newTreatment')">בטל</button>
-      <button class="btn btn-primary">הוסף טיפול</button>
-    </div>
-  </div>
-</div>
-
-<div id="modal-newNote" class="modal-demo">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>הערה חדשה</h2>
-      <button class="close" onclick="closeModal('newNote')">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">חולה</label>
-        <select class="form-control">
-          <option>בחר חולה</option>
-          <option>דוד כהן</option>
-          <option>מרים לוי</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">סוג הערה</label>
-        <select class="form-control">
-          <option>הערה קלינית</option>
-          <option>התקדמות</option>
-          <option>זהירות</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">תוכן</label>
-        <textarea class="form-control" style="min-height: 100px; resize: vertical;"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('newNote')">בטל</button>
-      <button class="btn btn-primary">שמור הערה</button>
-    </div>
-  </div>
-</div>
-
-<div id="modal-newUser" class="modal-demo">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>משתמש חדש</h2>
-      <button class="close" onclick="closeModal('newUser')">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">שם מלא</label>
-        <input type="text" class="form-control">
-      </div>
-      <div class="form-group">
-        <label class="form-label">אימייל</label>
-        <input type="email" class="form-control">
-      </div>
-      <div class="form-group">
-        <label class="form-label">תפקיד</label>
-        <select class="form-control">
-          <option>מטפל</option>
-          <option>מנהל</option>
-          <option>רכז ניהול</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">סיסמה</label>
-        <input type="password" class="form-control">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('newUser')">בטל</button>
-      <button class="btn btn-primary">הוסף משתמש</button>
-    </div>
-  </div>
-</div>
+<div class="toast" id="toast"></div>
 
 <script>
-lucide.createIcons();
+lucide.createIcons ? null : null;
 
-function showView(viewName) {
-  const views = document.querySelectorAll('.view');
-  views.forEach(v => v.classList.remove('active'));
-
-  const view = document.getElementById('view-' + viewName);
-  if (view) view.classList.add('active');
-
-  const navItems = document.querySelectorAll('.nav-item');
-  navItems.forEach(item => item.classList.remove('active'));
-  event.target.closest('.nav-item').classList.add('active');
-
-  const titles = {
-    'dashboard': 'לוח בקרה',
-    'patients': 'ניהול חולים',
-    'appointments': 'תורים',
-    'treatments': 'טיפולים',
-    'notes': 'הערות וניתוחים',
-    'finances': 'ניהול כספים',
-    'reports': 'דוחות וניתוחים',
-    'users': 'ניהול משתמשים',
-    'settings': 'הגדרות מערכת'
-  };
-
-  document.getElementById('topbar-title').textContent = titles[viewName] || 'מערכת';
-
-  if (viewName === 'reports') {
-    setTimeout(() => drawCharts(), 100);
-  }
-}
-
-function showModal(modalName) {
-  const modal = document.getElementById('modal-' + modalName);
-  if (modal) modal.classList.add('show');
-}
-
-function closeModal(modalName) {
-  const modal = document.getElementById('modal-' + modalName);
-  if (modal) modal.classList.remove('show');
-}
-
-function switchTab(tabName) {
-  event.target.parentNode.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  event.target.classList.add('active');
-}
-
-function drawCharts() {
-  const treatmentCtx = document.getElementById('treatmentChart');
-  if (treatmentCtx && !window.treatmentChartInstance) {
-    window.treatmentChartInstance = new Chart(treatmentCtx, {
-      type: 'doughnut',
-      data: {
-        labels: ['טיפול פסיכולוגי', 'רגעות מודעות', 'ייעוץ משפחתי', 'CBT', 'EMDR'],
-        datasets: [{
-          data: [15, 12, 10, 8, 6],
-          backgroundColor: [
-            '#185FA5',
-            '#1D9E75',
-            '#4DA8C2',
-            '#854F0B',
-            '#8B1A4A'
-          ]
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom', labels: { font: { family: "'Rubik', sans-serif" } } }
-        }
-      }
-    });
-  }
-
-  const monthlyCtx = document.getElementById('monthlyChart');
-  if (monthlyCtx && !window.monthlyChartInstance) {
-    window.monthlyChartInstance = new Chart(monthlyCtx, {
-      type: 'line',
-      data: {
-        labels: ['יוני', 'יולי', 'אוגוסט', 'ספטמבר'],
-        datasets: [{
-          label: 'טיפולים',
-          data: [28, 35, 42, 48],
-          borderColor: '#185FA5',
-          backgroundColor: 'rgba(24, 95, 165, 0.1)',
-          fill: true,
-          tension: 0.4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { font: { family: "'Rubik', sans-serif" } } }
-        },
-        scales: {
-          y: { beginAtZero: true }
-        }
-      }
-    });
-  }
-}
-
-// Close modal when clicking outside
-document.addEventListener('click', function(event) {
-  if (event.target.classList.contains('modal-demo')) {
-    event.target.classList.remove('show');
-  }
+/* ---------- icons ---------- */
+document.querySelectorAll('[data-i]').forEach(el=>{
+  el.innerHTML = '';
 });
+function mountIcons(){
+  document.querySelectorAll('.ni[data-i]').forEach(el=>{
+    const name = el.getAttribute('data-i');
+    el.innerHTML = `<i data-lucide="${name}"></i>`;
+  });
+  lucide.createIcons();
+}
 
-// Initialize
-lucide.createIcons();
+/* ---------- data ---------- */
+const CATS = [
+  {key:'clinic', name:'קליניקה', icon:'🏥'},
+  {key:'vizhnitz', name:'ויזניץ', icon:'📖'},
+  {key:'education', name:'משרד החינוך', icon:'🏫'},
+  {key:'general', name:'כללי', icon:'📁'},
+];
+const PATIENTS = [
+  {id:1, name:'דוד כהן', cat:'clinic', inst:'קליניקה מרכזית', cls:'', folder:'תהליך שלם', debt:350, color:'var(--blue2)'},
+  {id:2, name:'מרים לוי', cat:'vizhnitz', inst:'ויזניץ - בית ספר בנות', cls:'ה', folder:'תהליך שלם', debt:0, color:'var(--green)'},
+  {id:3, name:'יוסי סילברשטיין', cat:'education', inst:'בית ספר יסודי ממלכתי', cls:'ג', folder:'ייעוץ', debt:450, color:'var(--amber)'},
+  {id:4, name:'רוזיטה יוסופוב', cat:'clinic', inst:'קליניקה מרכזית', cls:'', folder:'תהליך שלם', debt:0, color:'#9D4EDD'},
+  {id:5, name:'סלימה אחמד', cat:'general', inst:'מוסד עצמאי', cls:'', folder:'לא פעיל', debt:500, color:'var(--red)'},
+  {id:6, name:'אברומי גולדשטיין', cat:'vizhnitz', inst:'ויזניץ תלמוד תורה', cls:'ב', folder:'תהליך שלם', debt:0, color:'var(--crimson)'},
+];
+let activeCat = null;
+let currentRole = 'admin';
+
+function initials(name){ return name.trim().split(' ').slice(0,2).map(w=>w[0]).join(''); }
+
+function renderCategoryTiles(){
+  const wrap = document.getElementById('cat-grid');
+  wrap.innerHTML = CATS.map(c=>{
+    const count = PATIENTS.filter(p=>p.cat===c.key).length;
+    return `<div class="cat-tile ${activeCat===c.key?'active':''}" onclick="toggleCat('${c.key}')">
+      <div class="cat-tile-icon">${c.icon}</div>
+      <div class="cat-tile-name">${c.name}</div>
+      <div class="cat-tile-count">${count} מטופלים</div>
+    </div>`;
+  }).join('');
+}
+function toggleCat(key){ activeCat = (activeCat===key) ? null : key; renderCategoryTiles(); renderPatientTable(); }
+function renderPatientTable(filterText){
+  const title = document.getElementById('patients-list-title');
+  title.textContent = activeCat ? (CATS.find(c=>c.key===activeCat).name + ' - רשימת מטופלים') : 'כל המטופלים';
+  let list = PATIENTS.filter(p=> !activeCat || p.cat===activeCat);
+  if(filterText) list = list.filter(p=>p.name.includes(filterText));
+  document.getElementById('patients-tbody').innerHTML = list.map(p=>`
+    <tr onclick="openPatient(${p.id})">
+      <td><div style="display:flex;align-items:center;gap:9px"><span class="avatar" style="background:${p.color}">${initials(p.name)}</span>${p.name}</div></td>
+      <td>${p.inst}${p.cls?(' · כיתה '+p.cls):''}</td>
+      <td><span class="badge ${p.folder==='תהליך שלם'?'badge-green':p.folder==='ייעוץ'?'badge-blue':'badge-red'}">${p.folder}</span></td>
+      <td style="${p.debt>0?'color:var(--red);font-weight:600':'color:var(--green)'}">${p.debt>0? '₪'+p.debt : 'ללא חוב'}</td>
+      <td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openPatient(${p.id})">פתח תיק</button></td>
+    </tr>`).join('');
+}
+function filterPatients(v){ renderPatientTable(v); }
+
+function openPatient(id){
+  const p = PATIENTS.find(x=>x.id===id);
+  document.getElementById('patients-list-wrap').style.display='none';
+  document.getElementById('patient-detail-wrap').style.display='block';
+  document.getElementById('pd-avatar').textContent = initials(p.name);
+  document.getElementById('pd-avatar').style.background = p.color;
+  document.getElementById('pd-name').textContent = p.name;
+  document.getElementById('pd-sub').textContent = `${p.inst}${p.cls?(' · כיתה '+p.cls):''} · תיק: ${p.folder}`;
+  switchPdTab('clinical', document.querySelector('.pd-tab.on-blue'));
+  showView('patients', document.querySelector('[onclick*="patients"]'));
+}
+function closePatient(){
+  document.getElementById('patients-list-wrap').style.display='block';
+  document.getElementById('patient-detail-wrap').style.display='none';
+}
+
+function switchPdTab(name, el){
+  document.querySelectorAll('.pd-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.pd-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pdp-'+name).classList.add('active');
+  if(name==='data') setTimeout(()=>renderQuestionnaire('parent'),10);
+  if(name==='plan') setTimeout(drawMiniCharts,10);
+}
+function switchSub(group, name, el){
+  el.parentElement.querySelectorAll('.subtab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  el.closest('.pd-panel').querySelectorAll('.subpanel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(group+'-'+name).classList.add('active');
+  if(group==='pl' && name==='progress') setTimeout(drawMiniCharts,10);
+  if(group==='pl' && name==='graphs') setTimeout(drawBehaviorChart,10);
+}
+
+/* questionnaires */
+const QUESTIONNAIRES = {
+  parent: {title:'שאלון הורים', sub:'מולא ע"י ההורה/אפוטרופוס', qs:[
+    ['מהי הבעיה המרכזית שבגללה פניתם?', 'התפרצויות זעם תכופות בסביבה הביתית והלימודית, קושי בקבלת "לא".'],
+    ['מהי ההתנהגות הרצויה שהייתם רוצים לראות?', 'יכולת להביע תסכול במילים, קבלת גבולות ללא התפרצות.'],
+    ['דרגו את חומרת הבעיה מ-1 עד 10', '7 - משפיעה על התפקוד היומיומי'],
+    ['האם קיימת אבחנה קודמת?', 'ADHD - אובחן לפני שנתיים'],
+    ['מהם הדברים שהילד/ה אוהב/ת (מחזקים)?', 'משחקי מחשב, זמן מסך, שוקולד, שבחים מהוריו'],
+  ]},
+  staff: {title:'שאלון צוות', sub:'מולא ע"י איש/אשת הצוות החינוכי', qs:[
+    ['תיאור התמיכה הקיימת כיום בכיתה', 'סייעת צמודה 3 שעות ביום, ישיבה בקדמת הכיתה'],
+    ['דגלים אדומים שזוהו', 'קושי במעברים בין פעילויות, רגישות לרעש'],
+    ['תגובת הצוות למצבי משבר', 'הרחקה זמנית לפינת רגיעה, שיחה אישית'],
+  ]},
+  fba: {title:'הערכה פונקציונלית קונסטרוקטיבית (FBA)', sub:'ראיון מובנה עם הילד/ה - 5 שלבים', qs:[
+    ['חזון - מה היית רוצה שיהיה אחרת?', '"שלא יצעקו עליי בכיתה כשאני מתעצבן"'],
+    ['משאבים - במה את/ה טוב/ה?', '"אני טוב בציור ובכדורגל"'],
+    ['ניתוח פונקציה - מתי זה הכי קורה?', '"כשמבקשים ממני לעצור באמצע משחק"'],
+  ]},
+  fobs: {title:'שאלון פוב"ס - סולם דירוג חברתי-התנהגותי', sub:'דירוג 0-4 בקטגוריות מרכזיות', qs:[
+    ['תפקוד חברתי - יוזם קשר עם בני גיל', 'דירוג: 2/4'],
+    ['תפקוד התנהגותי-אקדמי - השלמת מטלות', 'דירוג: 1/4'],
+    ['תפקוד סנסורי - רגישות לגירויים', 'דירוג: 3/4'],
+  ]},
+};
+function renderQuestionnaire(key){
+  const q = QUESTIONNAIRES[key];
+  document.getElementById('q-content').innerHTML = `
+    <div class="q-form-wrap" id="q-print-area">
+      <div class="q-form-head">
+        <div class="q-bh">ב"ה</div>
+        <h2>${q.title}</h2>
+        <p>${q.sub} · מטופל: דוד כהן</p>
+      </div>
+      <div class="q-section">
+        <div class="q-section-title">שאלות</div>
+        ${q.qs.map(([label,ans])=>`<div class="q-question"><label>${label}</label><div class="q-answer">${ans}</div></div>`).join('')}
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="exportQuestionnairePDF()">📄 ייצוא PDF</button>
+  `;
+}
+function switchQ(key, el){
+  el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderQuestionnaire(key);
+}
+
+/* nav */
+function showView(name, el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const titles = {dashboard:'לוח בקרה',patients:'מטופלים',diary:'יומן',appointments:'פגישות',tasks:'משימות',notes:'עדכונים משותפים',finances:'ניהול כספים',graphs:'גרפים וניתוח נתונים',users:'ניהול משתמשים והרשאות',settings:'הגדרות מערכת'};
+  document.getElementById('topbar-title').textContent = titles[name] || 'מערכת';
+  if(name==='finances') setTimeout(drawFinanceCharts,10);
+  if(name==='graphs') setTimeout(drawAnalyticsCharts,10);
+}
+
+/* view-as / roles */
+function setViewAs(role){
+  currentRole = role;
+  document.getElementById('viewas-select').value = role;
+  const banner = document.getElementById('impersonate-banner');
+  const names = {rachel:'גב\' רחלי סיון', natasha:'גב\' נטשה בוציקו'};
+  if(role==='admin'){
+    banner.classList.remove('show');
+    document.querySelectorAll('.admin-only').forEach(n=>n.classList.remove('hidden-role'));
+    document.getElementById('dashboard-admin').style.display='block';
+    document.getElementById('dashboard-user').style.display='none';
+  } else {
+    document.getElementById('impersonate-name').textContent = names[role];
+    banner.classList.add('show');
+    document.querySelectorAll('.admin-only').forEach(n=>n.classList.add('hidden-role'));
+    document.getElementById('dashboard-admin').style.display='none';
+    document.getElementById('dashboard-user').style.display='block';
+    showView('dashboard', document.querySelector('.nav-item'));
+  }
+}
+
+/* modals */
+function showModal(name){ document.getElementById('modal-'+name).classList.add('show'); }
+function closeModal(name){ document.getElementById('modal-'+name).classList.remove('show'); }
+document.addEventListener('click', e=>{ if(e.target.classList.contains('modal-demo')) e.target.classList.remove('show'); });
+
+/* toast */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+/* gmail demo */
+function connectGmail(){
+  document.getElementById('gmail-status').outerHTML = '<div class="alert">✅ מחובר: clinic.demo@gmail.com</div>';
+  toast('התחברות לדמו הושלמה');
+}
+
+/* sound - real webaudio beep */
+function playTone(freq){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.5);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime+0.5);
+  }catch(e){}
+}
+
+/* PDF export - real, using html2canvas + jsPDF */
+function exportQuestionnairePDF(){
+  const el = document.getElementById('q-print-area');
+  if(!el) return;
+  toast('מייצר PDF...');
+  html2canvas(el, {scale:2}).then(canvas=>{
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','pt','a4');
+    const w = pdf.internal.pageSize.getWidth();
+    const h = canvas.height * w / canvas.width;
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, w, h);
+    pdf.save('שאלון-דמו.pdf');
+  });
+}
+function previewReport(){
+  const checks = Array.from(document.querySelectorAll('#report-checks input:checked')).map(c=>c.parentElement.textContent.trim());
+  document.getElementById('report-preview').style.display='block';
+  document.getElementById('report-preview-body').innerHTML = `
+    <div id="report-print-area" style="max-width:700px;padding:10px">
+      <div style="text-align:center;border-bottom:2px solid #eee;padding-bottom:10px;margin-bottom:14px">
+        <div style="font-size:11px;color:#999">ב"ה</div>
+        <h2 style="font-size:18px">דוח קליני - דוד כהן</h2>
+        <p style="font-size:12px;color:#777">הופק בתאריך 06/09/2026 (דמו)</p>
+      </div>
+      ${checks.map(c=>`<div style="margin-bottom:10px"><b style="color:#185FA5">${c}</b><div style="font-size:12px;color:#555;margin-top:3px">תוכן לדוגמה עבור סעיף "${c}" - נתונים פיקטיביים לצורך הדגמה בלבד.</div></div>`).join('')}
+    </div>`;
+}
+function exportReportPDF(){
+  previewReport();
+  setTimeout(()=>{
+    const el = document.getElementById('report-print-area');
+    toast('מייצר PDF...');
+    html2canvas(el,{scale:2}).then(canvas=>{
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p','pt','a4');
+      const w = pdf.internal.pageSize.getWidth();
+      const h = canvas.height * w / canvas.width;
+      pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,w,h);
+      pdf.save('דוח-קליני-דמו.pdf');
+    });
+  }, 50);
+}
+
+/* ---------- charts ---------- */
+let charts = {};
+function killChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+function ctx(id){ const c=document.getElementById(id); return c ? c.getContext('2d') : null; }
+
+function drawMiniCharts(){
+  if(!charts['chart-attendance']){
+    const c = ctx('chart-attendance');
+    if(c) charts['chart-attendance'] = new Chart(c,{type:'doughnut',data:{labels:['הגיע','לא הגיע'],datasets:[{data:[85,15],backgroundColor:['#1D9E75','#E2E8F0']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  }
+  if(!charts['chart-monthly-mini']){
+    const c = ctx('chart-monthly-mini');
+    if(c) charts['chart-monthly-mini'] = new Chart(c,{type:'line',data:{labels:['יונ','יול','אוג','ספט'],datasets:[{data:[40,55,60,75],borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,.1)',fill:true,tension:.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  }
+  if(!charts['chart-tasks-mini']){
+    const c = ctx('chart-tasks-mini');
+    if(c) charts['chart-tasks-mini'] = new Chart(c,{type:'bar',data:{labels:['יונ','יול','אוג','ספט'],datasets:[{data:[3,5,4,6],backgroundColor:'#4DA8C2'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  }
+}
+
+function phaseLinePlugin(splitIndex, label1, label2){
+  return {
+    id: 'phaseLine_'+splitIndex+label1,
+    afterDraw(chart){
+      const {ctx, chartArea:{top,bottom}, scales:{x}} = chart;
+      const xPos = x.getPixelForValue(splitIndex);
+      ctx.save();
+      ctx.strokeStyle = '#94A3B8';
+      ctx.setLineDash([5,4]);
+      ctx.beginPath(); ctx.moveTo(xPos, top); ctx.lineTo(xPos, bottom); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#7C3AED';
+      ctx.font = '11px Rubik, sans-serif';
+      ctx.fillText(label1, x.getPixelForValue(0)+4, top+14);
+      ctx.fillText(label2, xPos+6, top+14);
+      ctx.restore();
+    }
+  };
+}
+function drawBehaviorChart(){
+  if(charts['chart-behavior']) return;
+  const c = ctx('chart-behavior');
+  if(!c) return;
+  charts['chart-behavior'] = new Chart(c,{
+    type:'line',
+    data:{
+      labels:['שבוע 1','שבוע 2','שבוע 3','שבוע 4','שבוע 5','שבוע 6','שבוע 7','שבוע 8'],
+      datasets:[
+        {label:'מס\' התפרצויות בשבוע', data:[5,6,5,4,3,2,1,1], borderColor:'#8B1A4A', backgroundColor:'rgba(139,26,74,.08)', fill:true, tension:.3, pointRadius:4},
+        {label:'יעד', data:[1,1,1,1,1,1,1,1], borderColor:'#1D9E75', borderDash:[6,4], pointRadius:0}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}},
+    plugins:[phaseLinePlugin(3,'Baseline','Intervention')]
+  });
+}
+
+function drawFinanceCharts(){
+  if(!charts['chart-finance-monthly']){
+    const c = ctx('chart-finance-monthly');
+    if(c) charts['chart-finance-monthly']=new Chart(c,{type:'bar',data:{labels:['מאי','יונ','יול','אוג','ספט'],datasets:[{data:[38000,41000,39500,44200,45800],backgroundColor:'#185FA5'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  }
+  if(!charts['chart-finance-vs']){
+    const c = ctx('chart-finance-vs');
+    if(c) charts['chart-finance-vs']=new Chart(c,{type:'line',data:{labels:['מאי','יונ','יול','אוג','ספט'],datasets:[
+      {label:'צפוי',data:[40000,42000,41000,45000,45800],borderColor:'#94A3B8',borderDash:[5,4]},
+      {label:'נגבה',data:[36000,39000,37500,40000,36900],borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,.1)',fill:true}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  }
+}
+function drawAnalyticsCharts(){
+  if(!charts['chart-dist']){
+    const c = ctx('chart-dist');
+    if(c) charts['chart-dist']=new Chart(c,{type:'pie',data:{labels:['קליניקה','ויזניץ','משרד החינוך','כללי'],datasets:[{data:[18,15,9,5],backgroundColor:['#185FA5','#1D9E75','#4DA8C2','#854F0B']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  }
+  if(!charts['chart-total']){
+    const c = ctx('chart-total');
+    if(c) charts['chart-total']=new Chart(c,{type:'line',data:{labels:['אפר','מאי','יונ','יול','אוג','ספט'],datasets:[{data:[110,125,130,142,155,164],borderColor:'#7C3AED',backgroundColor:'rgba(124,58,237,.1)',fill:true,tension:.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  }
+}
+
+/* clock */
+function tickClock(){
+  const now = new Date();
+  document.getElementById('clock-time').textContent = now.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('clock-date-en').textContent = now.toLocaleDateString('en-GB');
+}
+setInterval(tickClock, 30000);
+
+/* init */
+mountIcons();
+renderCategoryTiles();
+renderPatientTable();
+tickClock();
 </script>
 </body>
 </html>
