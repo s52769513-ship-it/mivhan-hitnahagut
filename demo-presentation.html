@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>דמו מערכת מכון התנהגות - נתונים פיקטיביים</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --blue: #0C3A5F;
+  --blue2: #185FA5;
+  --blue-light: #E6F1FB;
+  --teal: #4DA8C2;
+  --crimson: #8B1A4A;
+  --green: #1D9E75;
+  --green-light: #EAF3DE;
+  --red: #A32D2D;
+  --red-light: #FCEBEB;
+  --amber: #854F0B;
+  --amber-light: #FAEEDA;
+  --g50: #F8FAFC;
+  --g100: #F1F5F9;
+  --g200: #E2E8F0;
+  --g300: #CBD5E1;
+  --g400: #94A3B8;
+  --g500: #64748B;
+  --g600: #475569;
+  --g700: #334155;
+  --g800: #1E293B;
+  --g900: #0F172A;
+  --white: #fff;
+  --sw: 220px;
+  --hh: 60px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Rubik', sans-serif;
+  background: var(--g50);
+  color: var(--g800);
+  direction: rtl;
+  min-height: 100vh;
+}
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: var(--sw);
+  background: var(--blue);
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-logo-text h1 {
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  line-height: 1.2;
+}
+
+.sidebar-logo-text p {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  margin-top: 1px;
+}
+
+.sidebar-nav {
+  padding: 10px 8px;
+  flex: 1;
+}
+
+.nav-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: rgba(255,255,255,0.4);
+  padding: 8px 8px 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all .15s;
+  margin-bottom: 2px;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: right;
+  font-family: 'Rubik',sans-serif;
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+
+.nav-item.active {
+  background: rgba(255,255,255,0.2);
+  color: white;
+}
+
+.nav-item .ni {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-item .ni svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+}
+
+.demo-badge {
+  background: rgba(107, 191, 216, 0.2);
+  color: #4DA8C2;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-right: 4px;
+  display: inline-block;
+}
+
+.main {
+  margin-right: var(--sw);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.topbar {
+  height: var(--hh);
+  background: white;
+  border-bottom: 1px solid var(--g200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--g900);
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all .15s;
+  font-family: 'Rubik', sans-serif;
+}
+
+.btn-primary {
+  background: var(--blue2);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--blue);
+}
+
+.btn-secondary {
+  background: white;
+  color: var(--g700);
+  border: 1px solid var(--g200);
+}
+
+.btn-secondary:hover {
+  background: var(--g50);
+}
+
+.content {
+  padding: 24px;
+  flex: 1;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--g200);
+  padding: 18px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--g500);
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--g900);
+}
+
+.stat-value.green {
+  color: var(--green);
+}
+
+.stat-value.red {
+  color: var(--red);
+}
+
+.stat-value.blue {
+  color: var(--blue2);
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.stat-icon.blue {
+  background: var(--blue-light);
+}
+
+.stat-icon.green {
+  background: var(--green-light);
+}
+
+.stat-icon.red {
+  background: var(--red-light);
+}
+
+.stat-icon.amber {
+  background: var(--amber-light);
+}
+
+.stat-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--g200);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--g100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--g900);
+}
+
+.card-body {
+  padding: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: var(--g50);
+  padding: 10px 14px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--g500);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  border-bottom: 1px solid var(--g200);
+}
+
+td {
+  padding: 11px 14px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--g100);
+  color: var(--g700);
+}
+
+tr:hover td {
+  background: var(--g50);
+  cursor: pointer;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-green {
+  background: var(--green-light);
+  color: #0F6E56;
+}
+
+.badge-red {
+  background: var(--red-light);
+  color: var(--red);
+}
+
+.badge-blue {
+  background: var(--blue-light);
+  color: var(--blue);
+}
+
+.badge-amber {
+  background: var(--amber-light);
+  color: var(--amber);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.avatar.blue {
+  background: var(--blue2);
+}
+
+.avatar.green {
+  background: var(--green);
+}
+
+.avatar.red {
+  background: var(--red);
+}
+
+.avatar.amber {
+  background: var(--amber);
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+.queue-grid {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.queue-card {
+  border-radius: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--g200);
+  background: white;
+  cursor: pointer;
+  transition: all .1s;
+  flex: 1;
+  min-width: 150px;
+  text-align: center;
+}
+
+.queue-card:hover {
+  background: var(--g50);
+}
+
+.queue-card.current {
+  border-color: var(--blue2);
+  background: var(--blue-light);
+}
+
+.queue-card-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--g400);
+  margin-bottom: 4px;
+}
+
+.queue-card.current .queue-card-label {
+  color: var(--blue2);
+}
+
+.queue-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--g900);
+}
+
+.queue-card-phone {
+  font-size: 11px;
+  color: var(--g500);
+  margin-top: 2px;
+}
+
+.modal-demo {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+
+.modal-demo.show {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--g100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--g900);
+}
+
+.modal-header .close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--g500);
+}
+
+.modal-body {
+  padding: 22px;
+}
+
+.modal-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--g100);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--g600);
+  margin-bottom: 5px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--g200);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Rubik', sans-serif;
+  color: var(--g800);
+  background: white;
+  direction: rtl;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--blue2);
+  box-shadow: 0 0 0 3px rgba(24,95,165,.1);
+}
+
+.treatment-row {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 1px solid var(--g200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.treatment-type {
+  font-weight: 500;
+  color: var(--g900);
+}
+
+.treatment-therapist {
+  font-size: 13px;
+  color: var(--g500);
+}
+
+.treatment-status {
+  font-size: 12px;
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+  margin-bottom: 20px;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--g200);
+  margin-bottom: 22px;
+}
+
+.tab-btn {
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--g500);
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-family: 'Rubik', sans-serif;
+  transition: all .15s;
+}
+
+.tab-btn:hover {
+  color: var(--g800);
+}
+
+.tab-btn.active {
+  color: var(--blue2);
+  border-bottom-color: var(--blue2);
+}
+
+.alert {
+  background: var(--blue-light);
+  border: 1px solid var(--blue);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--blue);
+}
+
+.alert.warning {
+  background: var(--amber-light);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--g900);
+  margin-bottom: 12px;
+  margin-top: 16px;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.3);
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div style="width: 48px; height: 48px; border-radius: 10px; background: var(--blue-light); display: flex; align-items: center; justify-content: center;">
+        <span style="font-size: 24px;">🧠</span>
+      </div>
+      <div class="sidebar-logo-text">
+        <h1>מכון התנהגות</h1>
+        <p>מערכת ניהול</p>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section-title">ראשי</div>
+      <button class="nav-item active" onclick="showView('dashboard')">
+        <span class="ni"><i class="lucide" data-lucide="grid-3x3"></i></span>
+        <span>לוח בקרה</span>
+        <span class="demo-badge">דמו</span>
+      </button>
+
+      <div class="nav-section-title" style="margin-top: 14px;">ניהול</div>
+      <button class="nav-item" onclick="showView('patients')">
+        <span class="ni"><i class="lucide" data-lucide="users"></i></span>
+        <span>חולים</span>
+      </button>
+      <button class="nav-item" onclick="showView('appointments')">
+        <span class="ni"><i class="lucide" data-lucide="calendar"></i></span>
+        <span>תורים</span>
+      </button>
+      <button class="nav-item" onclick="showView('treatments')">
+        <span class="ni"><i class="lucide" data-lucide="activity"></i></span>
+        <span>טיפולים</span>
+      </button>
+      <button class="nav-item" onclick="showView('notes')">
+        <span class="ni"><i class="lucide" data-lucide="file-text"></i></span>
+        <span>הערות</span>
+      </button>
+
+      <div class="nav-section-title" style="margin-top: 14px;">עסקי</div>
+      <button class="nav-item" onclick="showView('finances')">
+        <span class="ni"><i class="lucide" data-lucide="dollar-sign"></i></span>
+        <span>כספים</span>
+      </button>
+      <button class="nav-item" onclick="showView('reports')">
+        <span class="ni"><i class="lucide" data-lucide="bar-chart-3"></i></span>
+        <span>דוחות</span>
+      </button>
+
+      <div class="nav-section-title" style="margin-top: 14px;">מערכת</div>
+      <button class="nav-item" onclick="showView('users')">
+        <span class="ni"><i class="lucide" data-lucide="shield"></i></span>
+        <span>משתמשים</span>
+      </button>
+      <button class="nav-item" onclick="showView('settings')">
+        <span class="ni"><i class="lucide" data-lucide="settings"></i></span>
+        <span>הגדרות</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">לוח בקרה</div>
+      <div class="topbar-actions">
+        <span style="font-size: 12px; color: var(--g500);">דמו עם נתונים פיקטיביים</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Dashboard View -->
+      <div id="view-dashboard" class="view active">
+        <div class="alert">
+          🎬 זו מצגת דמו עם נתונים פיקטיביים בלבד. לחץ על הקטגוריות בתפריט הצד לעיון בכל החלקים של המערכת.
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon blue">
+              <i class="lucide" data-lucide="users"></i>
+            </div>
+            <div class="stat-label">חולים פעילים</div>
+            <div class="stat-value blue">47</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">
+              <i class="lucide" data-lucide="calendar"></i>
+            </div>
+            <div class="stat-label">תורים היום</div>
+            <div class="stat-value green">12</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon amber">
+              <i class="lucide" data-lucide="alert-circle"></i>
+            </div>
+            <div class="stat-label">טיפולים בתהליך</div>
+            <div class="stat-value">28</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">
+              <i class="lucide" data-lucide="check-circle"></i>
+            </div>
+            <div class="stat-label">טיפולים שהסתיימו</div>
+            <div class="stat-value green">164</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>התורים הקרובים</h3>
+            <button class="btn btn-primary btn-sm" onclick="showModal('newAppointment')">
+              <i class="lucide" data-lucide="plus"></i>
+              תור חדש
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="queue-grid">
+              <div class="queue-card current">
+                <div class="queue-card-label">🔴 בטיפול כרגע</div>
+                <div class="queue-card-name">דוד כהן</div>
+                <div class="queue-card-phone">050-1234567</div>
+              </div>
+              <div class="queue-card">
+                <div class="queue-card-label">⏭️ בתור הבא</div>
+                <div class="queue-card-name">מרים לוי</div>
+                <div class="queue-card-phone">050-7654321</div>
+              </div>
+              <div class="queue-card">
+                <div class="queue-card-label">⏳ בהמתנה</div>
+                <div class="queue-card-name">יוסי סילברשטיין</div>
+                <div class="queue-card-phone">053-9876543</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <h3>טיפולים קרובים</h3>
+            </div>
+            <div class="card-body">
+              <div class="treatment-row">
+                <div>
+                  <div class="treatment-type">רגעות מודעות</div>
+                  <div class="treatment-therapist">גב' רחלי סיון</div>
+                </div>
+                <span class="badge badge-green">קרוב</span>
+              </div>
+              <div class="treatment-row">
+                <div>
+                  <div class="treatment-type">CBT - טיפול קוגניטיבי</div>
+                  <div class="treatment-therapist">د"ר אברהם לוי</div>
+                </div>
+                <span class="badge badge-green">קרוב</span>
+              </div>
+              <div class="treatment-row">
+                <div>
+                  <div class="treatment-type">תרפיה עיסוקית</div>
+                  <div class="treatment-therapist">גב' נטשה בוציקו</div>
+                </div>
+                <span class="badge badge-amber">הערה</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>פעילות אחרונה</h3>
+            </div>
+            <div class="card-body">
+              <div style="font-size: 13px; line-height: 1.8; color: var(--g700);">
+                <div style="margin-bottom: 8px;">✓ רוזיטה יוסופוב - הרשמה חדשה</div>
+                <div style="margin-bottom: 8px;">✓ תום בר - עודכן קובץ טיפול</div>
+                <div style="margin-bottom: 8px;">✓ סלימה אחמד - סיום טיפול</div>
+                <div style="margin-bottom: 8px;">✓ יעקב שלום - טיפול משתתף</div>
+                <div>✓ משה וולקובסקי - הערה חדשה</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Patients View -->
+      <div id="view-patients" class="view">
+        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">ניהול חולים</h2>
+          <button class="btn btn-primary" onclick="showModal('newPatient')">
+            <i class="lucide" data-lucide="plus"></i>
+            חולה חדש
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>שם</th>
+                  <th>טלפון</th>
+                  <th>תעודת זהות</th>
+                  <th>גיל</th>
+                  <th>סטטוס</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar blue">דכ</div> <span>דוד כהן</span></div></td>
+                  <td>050-1234567</td>
+                  <td>123456789</td>
+                  <td>34</td>
+                  <td><span class="badge badge-green">פעיל</span></td>
+                  <td><button class="btn btn-secondary btn-sm" onclick="showModal('viewPatient')">צפייה</button></td>
+                </tr>
+                <tr>
+                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar green">מל</div> <span>מרים לוי</span></div></td>
+                  <td>050-7654321</td>
+                  <td>987654321</td>
+                  <td>28</td>
+                  <td><span class="badge badge-green">פעיל</span></td>
+                  <td><button class="btn btn-secondary btn-sm" onclick="showModal('viewPatient')">צפייה</button></td>
+                </tr>
+                <tr>
+                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar amber">יס</div> <span>יוסי סילברשטיין</span></div></td>
+                  <td>053-9876543</td>
+                  <td>456789123</td>
+                  <td>45</td>
+                  <td><span class="badge badge-green">פעיל</span></td>
+                  <td><button class="btn btn-secondary btn-sm" onclick="showModal('viewPatient')">צפייה</button></td>
+                </tr>
+                <tr>
+                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar" style="background: #9D4EDD;">רי</div> <span>רוזיטה יוסופוב</span></div></td>
+                  <td>052-5555555</td>
+                  <td>321654987</td>
+                  <td>52</td>
+                  <td><span class="badge badge-blue">חדש</span></td>
+                  <td><button class="btn btn-secondary btn-sm" onclick="showModal('viewPatient')">צפייה</button></td>
+                </tr>
+                <tr>
+                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar red">סא</div> <span>סלימה אחמד</span></div></td>
+                  <td>051-2222222</td>
+                  <td>789123456</td>
+                  <td>38</td>
+                  <td><span class="badge badge-red">הושלם</span></td>
+                  <td><button class="btn btn-secondary btn-sm" onclick="showModal('viewPatient')">צפייה</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointments View -->
+      <div id="view-appointments" class="view">
+        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">תורים</h2>
+          <button class="btn btn-primary" onclick="showModal('newAppointment')">
+            <i class="lucide" data-lucide="plus"></i>
+            תור חדש
+          </button>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('apt-all')">כל התורים</button>
+          <button class="tab-btn" onclick="switchTab('apt-today')">היום</button>
+          <button class="tab-btn" onclick="switchTab('apt-week')">השבוע</button>
+          <button class="tab-btn" onclick="switchTab('apt-completed')">הושלמו</button>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>חולה</th>
+                  <th>סוג טיפול</th>
+                  <th>מטפל</th>
+                  <th>תאריך/שעה</th>
+                  <th>סטטוס</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>דוד כהן</td>
+                  <td>טיפול פסיכולוגי</td>
+                  <td>ד"ר אברהם לוי</td>
+                  <td>06/09/2026 14:30</td>
+                  <td><span class="badge badge-green">בטיפול</span></td>
+                  <td><button class="btn btn-secondary btn-sm">עריכה</button></td>
+                </tr>
+                <tr>
+                  <td>מרים לוי</td>
+                  <td>רגעות מודעות</td>
+                  <td>גב' רחלי סיון</td>
+                  <td>06/09/2026 15:00</td>
+                  <td><span class="badge badge-blue">בהמתנה</span></td>
+                  <td><button class="btn btn-secondary btn-sm">עריכה</button></td>
+                </tr>
+                <tr>
+                  <td>יוסי סילברשטיין</td>
+                  <td>ייעוץ משפחתי</td>
+                  <td>ד"ר נירה אהרוני</td>
+                  <td>06/09/2026 16:00</td>
+                  <td><span class="badge badge-blue">בהמתנה</span></td>
+                  <td><button class="btn btn-secondary btn-sm">עריכה</button></td>
+                </tr>
+                <tr>
+                  <td>רוזיטה יוסופוב</td>
+                  <td>הערכה התחלתית</td>
+                  <td>גב' נטשה בוציקו</td>
+                  <td>07/09/2026 10:00</td>
+                  <td><span class="badge badge-amber">מתוכנן</span></td>
+                  <td><button class="btn btn-secondary btn-sm">עריכה</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Treatments View -->
+      <div id="view-treatments" class="view">
+        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">טיפולים</h2>
+          <button class="btn btn-primary" onclick="showModal('newTreatment')">
+            <i class="lucide" data-lucide="plus"></i>
+            טיפול חדש
+          </button>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active">בתהליך</button>
+          <button class="tab-btn">הושלמו</button>
+          <button class="tab-btn">הוקפאו</button>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>חולה</th>
+                  <th>סוג טיפול</th>
+                  <th>מטפל</th>
+                  <th>התחלה</th>
+                  <th>התקדמות</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>דוד כהן</td>
+                  <td>CBT - טיפול קוגניטיבי</td>
+                  <td>ד"ר אברהם לוי</td>
+                  <td>15/06/2026</td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <div style="width: 50px; height: 6px; background: var(--g200); border-radius: 3px; overflow: hidden;">
+                        <div style="width: 75%; height: 100%; background: var(--green);"></div>
+                      </div>
+                      <span style="font-size: 12px; color: var(--g500);">75%</span>
+                    </div>
+                  </td>
+                  <td><button class="btn btn-secondary btn-sm">צפייה</button></td>
+                </tr>
+                <tr>
+                  <td>מרים לוי</td>
+                  <td>טיפול באנקסיטי</td>
+                  <td>ד"ר נירה אהרוני</td>
+                  <td>01/07/2026</td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <div style="width: 50px; height: 6px; background: var(--g200); border-radius: 3px; overflow: hidden;">
+                        <div style="width: 50%; height: 100%; background: var(--blue2);"></div>
+                      </div>
+                      <span style="font-size: 12px; color: var(--g500);">50%</span>
+                    </div>
+                  </td>
+                  <td><button class="btn btn-secondary btn-sm">צפייה</button></td>
+                </tr>
+                <tr>
+                  <td>יוסי סילברשטיין</td>
+                  <td>טרומה וטיפול EMDR</td>
+                  <td>גב' רחלי סיון</td>
+                  <td>20/07/2026</td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <div style="width: 50px; height: 6px; background: var(--g200); border-radius: 3px; overflow: hidden;">
+                        <div style="width: 30%; height: 100%; background: var(--amber);"></div>
+                      </div>
+                      <span style="font-size: 12px; color: var(--g500);">30%</span>
+                    </div>
+                  </td>
+                  <td><button class="btn btn-secondary btn-sm">צפייה</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes View -->
+      <div id="view-notes" class="view">
+        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">הערות וניתוחים</h2>
+          <button class="btn btn-primary" onclick="showModal('newNote')">
+            <i class="lucide" data-lucide="plus"></i>
+            הערה חדשה
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>תאריך</th>
+                  <th>חולה</th>
+                  <th>סוג</th>
+                  <th>כותב</th>
+                  <th>תיאור קצר</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>06/09/2026</td>
+                  <td>דוד כהן</td>
+                  <td><span class="badge badge-green">התקדמות</span></td>
+                  <td>ד"ר אברהם לוי</td>
+                  <td>חולה מראה שיפור משמעותי בתסמינים</td>
+                  <td><button class="btn btn-secondary btn-sm">קרא</button></td>
+                </tr>
+                <tr>
+                  <td>05/09/2026</td>
+                  <td>מרים לוי</td>
+                  <td><span class="badge badge-blue">הערה קלינית</span></td>
+                  <td>ד"ר נירה אהרוני</td>
+                  <td>דיון על תוכנית טיפול לאורך מועד</td>
+                  <td><button class="btn btn-secondary btn-sm">קרא</button></td>
+                </tr>
+                <tr>
+                  <td>04/09/2026</td>
+                  <td>יוסי סילברשטיין</td>
+                  <td><span class="badge badge-amber">זהירות</span></td>
+                  <td>גב' רחלי סיון</td>
+                  <td>צורך בעיון נוסף במצב האישי</td>
+                  <td><button class="btn btn-secondary btn-sm">קרא</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Finances View -->
+      <div id="view-finances" class="view">
+        <div style="margin-bottom: 20px;">
+          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">ניהול כספים</h2>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon green">
+              <i class="lucide" data-lucide="trending-up"></i>
+            </div>
+            <div class="stat-label">הכנסה החודש</div>
+            <div class="stat-value green">₪45,800</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue">
+              <i class="lucide" data-lucide="dollar-sign"></i>
+            </div>
+            <div class="stat-label">הכנסה קצובה</div>
+            <div class="stat-value blue">₪165,300</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon amber">
+              <i class="lucide" data-lucide="alert-circle"></i>
+            </div>
+            <div class="stat-label">חוובים פתוחים</div>
+            <div class="stat-value">₪8,900</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">
+              <i class="lucide" data-lucide="trending-down"></i>
+            </div>
+            <div class="stat-label">הוצאות</div>
+            <div class="stat-value red">₪12,200</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>תשלומים אחרונים</h3>
+          </div>
+          <div class="card-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>תאריך</th>
+                  <th>חולה</th>
+                  <th>תיאור</th>
+                  <th>סכום</th>
+                  <th>סטטוס</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>06/09/2026</td>
+                  <td>דוד כהן</td>
+                  <td>תשלום טיפול שבועי</td>
+                  <td style="color: var(--green); font-weight: 600;">₪350</td>
+                  <td><span class="badge badge-green">שולם</span></td>
+                </tr>
+                <tr>
+                  <td>05/09/2026</td>
+                  <td>מרים לוי</td>
+                  <td>תשלום ראשוני</td>
+                  <td style="color: var(--green); font-weight: 600;">₪500</td>
+                  <td><span class="badge badge-green">שולם</span></td>
+                </tr>
+                <tr>
+                  <td>04/09/2026</td>
+                  <td>יוסי סילברשטיין</td>
+                  <td>תשלום עיון נוסף</td>
+                  <td style="color: var(--red); font-weight: 600;">₪250</td>
+                  <td><span class="badge badge-amber">בהמתנה</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reports View -->
+      <div id="view-reports" class="view">
+        <div style="margin-bottom: 20px;">
+          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">דוחות וניתוחים</h2>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>התפלגות חולים לפי סוג טיפול</h3>
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <canvas id="treatmentChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>טיפולים בחודשים האחרונים</h3>
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <canvas id="monthlyChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users View -->
+      <div id="view-users" class="view">
+        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">ניהול משתמשים</h2>
+          <button class="btn btn-primary" onclick="showModal('newUser')">
+            <i class="lucide" data-lucide="plus"></i>
+            משתמש חדש
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>שם</th>
+                  <th>אימייל</th>
+                  <th>תפקיד</th>
+                  <th>סטטוס</th>
+                  <th>הצטרפות</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar blue">דל</div> <span>ד"ר אברהם לוי</span></div></td>
+                  <td>abraham@clinic.org</td>
+                  <td><span class="badge badge-blue">מנהל</span></td>
+                  <td><span class="badge badge-green">פעיל</span></td>
+                  <td>01/06/2026</td>
+                  <td><button class="btn btn-secondary btn-sm">ערוך</button></td>
+                </tr>
+                <tr>
+                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar green">רס</div> <span>גב' רחלי סיון</span></div></td>
+                  <td>rachel@clinic.org</td>
+                  <td><span class="badge badge-green">מטפל</span></td>
+                  <td><span class="badge badge-green">פעיל</span></td>
+                  <td>05/06/2026</td>
+                  <td><button class="btn btn-secondary btn-sm">ערוך</button></td>
+                </tr>
+                <tr>
+                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar amber">נב</div> <span>גב' נטשה בוציקו</span></div></td>
+                  <td>natasha@clinic.org</td>
+                  <td><span class="badge badge-amber">מטפל</span></td>
+                  <td><span class="badge badge-green">פעיל</span></td>
+                  <td>10/06/2026</td>
+                  <td><button class="btn btn-secondary btn-sm">ערוך</button></td>
+                </tr>
+                <tr>
+                  <td><div style="display: flex; align-items: center; gap: 10px;"><div class="avatar" style="background: #9D4EDD;">נא</div> <span>ד"ר נירה אהרוני</span></div></td>
+                  <td>nira@clinic.org</td>
+                  <td><span class="badge" style="background: #E0D8FF; color: #5A3FA6;">רכז ניהול</span></td>
+                  <td><span class="badge badge-green">פעיל</span></td>
+                  <td>15/06/2026</td>
+                  <td><button class="btn btn-secondary btn-sm">ערוך</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings View -->
+      <div id="view-settings" class="view">
+        <div style="margin-bottom: 20px;">
+          <h2 style="font-size: 20px; font-weight: 600; color: var(--g900);">הגדרות מערכת</h2>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>הגדרות כלליות</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">שם המוסד</label>
+              <input type="text" class="form-control" value="מכון התנהגות - דרום">
+            </div>
+            <div class="form-group">
+              <label class="form-label">כתובת</label>
+              <input type="text" class="form-control" value="רחוב הנשיא 42, אשקלון">
+            </div>
+            <div class="form-group">
+              <label class="form-label">טלפון</label>
+              <input type="text" class="form-control" value="08-6250000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">אימייל</label>
+              <input type="email" class="form-control" value="info@clinic.org">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>הגדרות טיפולים</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">משך טיפול ברירת מחדל (דקות)</label>
+              <input type="number" class="form-control" value="50">
+            </div>
+            <div class="form-group">
+              <label class="form-label">עלות טיפול רגיל</label>
+              <input type="number" class="form-control" value="350">
+            </div>
+            <div class="form-group">
+              <label class="form-label">היזהר: אפשר הודעות על תורים חדשים</label>
+              <select class="form-control">
+                <option>כן</option>
+                <option>לא</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;">
+          <button class="btn btn-primary">
+            <i class="lucide" data-lucide="save"></i>
+            שמור שינויים
+          </button>
+          <button class="btn btn-secondary" style="margin-right: 10px;">
+            <i class="lucide" data-lucide="x"></i>
+            בטל
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div id="modal-newAppointment" class="modal-demo">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>תור חדש</h2>
+      <button class="close" onclick="closeModal('newAppointment')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">חולה</label>
+        <select class="form-control">
+          <option>דוד כהן</option>
+          <option>מרים לוי</option>
+          <option>יוסי סילברשטיין</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">תאריך ושעה</label>
+        <input type="datetime-local" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">סוג טיפול</label>
+        <select class="form-control">
+          <option>טיפול פסיכולוגי</option>
+          <option>רגעות מודעות</option>
+          <option>ייעוץ משפחתי</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">מטפל</label>
+        <select class="form-control">
+          <option>ד"ר אברהם לוי</option>
+          <option>גב' רחלי סיון</option>
+          <option>ד"ר נירה אהרוני</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('newAppointment')">בטל</button>
+      <button class="btn btn-primary">שמור תור</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-newPatient" class="modal-demo">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>חולה חדש</h2>
+      <button class="close" onclick="closeModal('newPatient')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">שם מלא</label>
+        <input type="text" class="form-control" placeholder="הכנס שם">
+      </div>
+      <div class="form-group">
+        <label class="form-label">תעודת זהות</label>
+        <input type="text" class="form-control" placeholder="הכנס מספר זהות">
+      </div>
+      <div class="form-group">
+        <label class="form-label">טלפון</label>
+        <input type="tel" class="form-control" placeholder="050-0000000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">גיל</label>
+        <input type="number" class="form-control" placeholder="הכנס גיל">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('newPatient')">בטל</button>
+      <button class="btn btn-primary">הוסף חולה</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-viewPatient" class="modal-demo">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>פרטי חולה</h2>
+      <button class="close" onclick="closeModal('viewPatient')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+        <div class="avatar" style="width: 60px; height: 60px; font-size: 20px; background: var(--blue2);">דכ</div>
+        <div>
+          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">דוד כהן</h3>
+          <p style="font-size: 13px; color: var(--g500); margin-bottom: 2px;">תעודת זהות: 123456789</p>
+          <p style="font-size: 13px; color: var(--g500);">גיל: 34</p>
+        </div>
+      </div>
+      <div class="section-title">פרטים אישיים</div>
+      <div class="form-group">
+        <label class="form-label">טלפון</label>
+        <input type="tel" class="form-control" value="050-1234567" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">סטטוס</label>
+        <input type="text" class="form-control" value="פעיל" readonly>
+      </div>
+      <div class="section-title">טיפולים פעילים</div>
+      <div class="treatment-row">
+        <div>
+          <div class="treatment-type">CBT - טיפול קוגניטיבי</div>
+          <div class="treatment-therapist">ד"ר אברהם לוי</div>
+        </div>
+        <span class="badge badge-green">בתהליך</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-newTreatment" class="modal-demo">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>טיפול חדש</h2>
+      <button class="close" onclick="closeModal('newTreatment')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">חולה</label>
+        <select class="form-control">
+          <option>בחר חולה</option>
+          <option>דוד כהן</option>
+          <option>מרים לוי</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">סוג טיפול</label>
+        <select class="form-control">
+          <option>בחר סוג</option>
+          <option>טיפול פסיכולוגי</option>
+          <option>CBT</option>
+          <option>רגעות מודעות</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">תאריך התחלה</label>
+        <input type="date" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">מטפל אחראי</label>
+        <select class="form-control">
+          <option>בחר מטפל</option>
+          <option>ד"ר אברהם לוי</option>
+          <option>גב' רחלי סיון</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('newTreatment')">בטל</button>
+      <button class="btn btn-primary">הוסף טיפול</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-newNote" class="modal-demo">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>הערה חדשה</h2>
+      <button class="close" onclick="closeModal('newNote')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">חולה</label>
+        <select class="form-control">
+          <option>בחר חולה</option>
+          <option>דוד כהן</option>
+          <option>מרים לוי</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">סוג הערה</label>
+        <select class="form-control">
+          <option>הערה קלינית</option>
+          <option>התקדמות</option>
+          <option>זהירות</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">תוכן</label>
+        <textarea class="form-control" style="min-height: 100px; resize: vertical;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('newNote')">בטל</button>
+      <button class="btn btn-primary">שמור הערה</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-newUser" class="modal-demo">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>משתמש חדש</h2>
+      <button class="close" onclick="closeModal('newUser')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">שם מלא</label>
+        <input type="text" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">אימייל</label>
+        <input type="email" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">תפקיד</label>
+        <select class="form-control">
+          <option>מטפל</option>
+          <option>מנהל</option>
+          <option>רכז ניהול</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">סיסמה</label>
+        <input type="password" class="form-control">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('newUser')">בטל</button>
+      <button class="btn btn-primary">הוסף משתמש</button>
+    </div>
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+function showView(viewName) {
+  const views = document.querySelectorAll('.view');
+  views.forEach(v => v.classList.remove('active'));
+
+  const view = document.getElementById('view-' + viewName);
+  if (view) view.classList.add('active');
+
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(item => item.classList.remove('active'));
+  event.target.closest('.nav-item').classList.add('active');
+
+  const titles = {
+    'dashboard': 'לוח בקרה',
+    'patients': 'ניהול חולים',
+    'appointments': 'תורים',
+    'treatments': 'טיפולים',
+    'notes': 'הערות וניתוחים',
+    'finances': 'ניהול כספים',
+    'reports': 'דוחות וניתוחים',
+    'users': 'ניהול משתמשים',
+    'settings': 'הגדרות מערכת'
+  };
+
+  document.getElementById('topbar-title').textContent = titles[viewName] || 'מערכת';
+
+  if (viewName === 'reports') {
+    setTimeout(() => drawCharts(), 100);
+  }
+}
+
+function showModal(modalName) {
+  const modal = document.getElementById('modal-' + modalName);
+  if (modal) modal.classList.add('show');
+}
+
+function closeModal(modalName) {
+  const modal = document.getElementById('modal-' + modalName);
+  if (modal) modal.classList.remove('show');
+}
+
+function switchTab(tabName) {
+  event.target.parentNode.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function drawCharts() {
+  const treatmentCtx = document.getElementById('treatmentChart');
+  if (treatmentCtx && !window.treatmentChartInstance) {
+    window.treatmentChartInstance = new Chart(treatmentCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['טיפול פסיכולוגי', 'רגעות מודעות', 'ייעוץ משפחתי', 'CBT', 'EMDR'],
+        datasets: [{
+          data: [15, 12, 10, 8, 6],
+          backgroundColor: [
+            '#185FA5',
+            '#1D9E75',
+            '#4DA8C2',
+            '#854F0B',
+            '#8B1A4A'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { family: "'Rubik', sans-serif" } } }
+        }
+      }
+    });
+  }
+
+  const monthlyCtx = document.getElementById('monthlyChart');
+  if (monthlyCtx && !window.monthlyChartInstance) {
+    window.monthlyChartInstance = new Chart(monthlyCtx, {
+      type: 'line',
+      data: {
+        labels: ['יוני', 'יולי', 'אוגוסט', 'ספטמבר'],
+        datasets: [{
+          label: 'טיפולים',
+          data: [28, 35, 42, 48],
+          borderColor: '#185FA5',
+          backgroundColor: 'rgba(24, 95, 165, 0.1)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { font: { family: "'Rubik', sans-serif" } } }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+  if (event.target.classList.contains('modal-demo')) {
+    event.target.classList.remove('show');
+  }
+});
+
+// Initialize
+lucide.createIcons();
+</script>
+</body>
+</html>
