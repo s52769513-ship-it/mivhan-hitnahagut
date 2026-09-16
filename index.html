@@ -7100,7 +7100,7 @@ async function exportAllDataOldSystem() {
 
     const today = new Date().toISOString().slice(0, 10);
 
-    const [instRes, clsRes, patRes, aptRes, taskRes, noteRes, payRes, obsRes, goalRes, qRes] = await Promise.all([
+    const [instRes, clsRes, patRes, aptRes, taskRes, noteRes, payRes, obsRes, goalRes, qRes, graphRes] = await Promise.all([
       sb('institutions', '?select=*'),
       sb('classes', '?select=*'),
       sb('patients', '?select=*'),
@@ -7110,10 +7110,11 @@ async function exportAllDataOldSystem() {
       sb('payments', '?select=*'),
       sb('observations', '?select=*'),
       sb('treatment_goals', '?select=*'),
-      sb('questionnaires', '?select=*')
+      sb('questionnaires', '?select=*'),
+      sb('saved_graphs', '?select=*')
     ]);
 
-    const firstErr = [instRes, clsRes, patRes, aptRes, taskRes, noteRes, payRes, obsRes, goalRes, qRes].find(r => r.error);
+    const firstErr = [instRes, clsRes, patRes, aptRes, taskRes, noteRes, payRes, obsRes, goalRes, qRes, graphRes].find(r => r.error);
     if (firstErr) throw new Error(firstErr.error);
 
     const institutions = (instRes.data || []).map(i => ({
@@ -7219,10 +7220,14 @@ async function exportAllDataOldSystem() {
       };
     }).filter(q => q.patient_id);
 
+    const graphs = (graphRes.data || []).map(g => ({
+      id: g.id, name: g.name, graph_type: g.graph_type, filters: g.filters || {}
+    }));
+
     const data = {
       exportDate: new Date().toISOString(),
       exportVersion: 1,
-      institutions, classes, patients, appointments, tasks, notes, payments, observations, goals, questionnaires
+      institutions, classes, patients, appointments, tasks, notes, payments, observations, goals, questionnaires, graphs
     };
 
     const json = JSON.stringify(data, null, 2);
