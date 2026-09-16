@@ -7100,7 +7100,7 @@ async function exportAllDataOldSystem() {
 
     const today = new Date().toISOString().slice(0, 10);
 
-    const [instRes, clsRes, patRes, aptRes, taskRes, noteRes, payRes, obsRes, goalRes, qRes, graphRes] = await Promise.all([
+    const [instRes, clsRes, patRes, aptRes, taskRes, noteRes, payRes, obsRes, goalRes, qRes, graphRes, userRes, upRes, uiRes] = await Promise.all([
       sb('institutions', '?select=*'),
       sb('classes', '?select=*'),
       sb('patients', '?select=*'),
@@ -7111,11 +7111,20 @@ async function exportAllDataOldSystem() {
       sb('observations', '?select=*'),
       sb('treatment_goals', '?select=*'),
       sb('questionnaires', '?select=*'),
-      sb('saved_graphs', '?select=*')
+      sb('saved_graphs', '?select=*'),
+      sb('user_profiles', '?select=*'),
+      sb('user_patients', '?select=*'),
+      sb('user_institutions', '?select=*')
     ]);
 
     const firstErr = [instRes, clsRes, patRes, aptRes, taskRes, noteRes, payRes, obsRes, goalRes, qRes, graphRes].find(r => r.error);
     if (firstErr) throw new Error(firstErr.error);
+    // Staff accounts are a nice-to-have, not core data — a permission error
+    // fetching them (e.g. this account isn't an admin) shouldn't block the
+    // rest of the export.
+    const users = userRes.error ? [] : (userRes.data || []);
+    const userPatients = upRes.error ? [] : (upRes.data || []);
+    const userInstitutions = uiRes.error ? [] : (uiRes.data || []);
 
     const institutions = (instRes.data || []).map(i => ({
       id: i.id, name: i.name, color: null, has_classes: true
@@ -7235,10 +7244,23 @@ async function exportAllDataOldSystem() {
       id: g.id, name: g.name, graph_type: g.graph_type, filters: g.filters || {}
     }));
 
+    // Staff accounts: this system's admin/user roles map to the new system's
+    // is_admin flag. Passwords can't be carried over (Supabase Auth, not a
+    // reversible hash) — the new system generates a fresh temporary one per
+    // account on import and reports it back so it can be handed out.
+    const staff = users.map(u => ({
+      id: u.id, email: u.email || null, name: u.display_name || (u.email ? u.email.split('@')[0] : 'משתמש'),
+      is_admin: u.role === 'admin'
+    })).filter(u => u.email);
+
+    const staffPatientAccess = userPatients.map(x => ({ staff_id: x.user_id, patient_id: x.patient_id }));
+    const staffInstitutionAccess = userInstitutions.map(x => ({ staff_id: x.user_id, institution_id: x.institution_id }));
+
     const data = {
       exportDate: new Date().toISOString(),
       exportVersion: 1,
-      institutions, classes, patients, appointments, tasks, notes, payments, observations, goals, questionnaires, graphs
+      institutions, classes, patients, appointments, tasks, notes, payments, observations, goals, questionnaires, graphs,
+      staff, staffPatientAccess, staffInstitutionAccess
     };
 
     const json = JSON.stringify(data, null, 2);
