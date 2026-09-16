@@ -671,6 +671,19 @@ tr:last-child td{border-bottom:none}
             </div>
           </div>
         </div>
+
+        <!-- Data Export/Import -->
+        <div class="card" style="max-width:560px;margin-bottom:20px">
+          <div class="card-header"><h3><i data-lucide="download"></i> גיבוי והעלאת נתונים</h3></div>
+          <div class="card-body">
+            <div style="margin-bottom:20px;padding:14px;background:var(--g50);border-radius:8px;border:1px solid var(--g200)">
+              <div style="font-weight:600;margin-bottom:10px;color:var(--blue)"><i data-lucide="download"></i> יצוא כל הנתונים</div>
+              <p style="font-size:13px;color:var(--g600);margin-bottom:12px">הורד קובץ JSON שיכיל את כל המטופלים, הפגישות, התשלומים, ההערות ועוד להעברה למערכת חדשה.</p>
+              <button class="btn btn-primary" onclick="exportAllDataOldSystem()"><i data-lucide="download"></i> ⬇️ יצא לקובץ JSON</button>
+              <div id="export-status" style="margin-top:10px;font-size:13px"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
 
@@ -7055,6 +7068,56 @@ function updateClock(){
 }
 updateClock();
 setInterval(updateClock,1000);
+
+// Export all data function
+async function exportAllDataOldSystem() {
+  try {
+    const status = document.getElementById('export-status');
+    status.innerHTML = '⏳ מייצא נתונים...';
+
+    // Fetch all data from Supabase
+    const [institutions, classes, patients, appointments, tasks, notes, payments, observations, goals, questionnaires] = await Promise.all([
+      sbFetch('institutions', 'GET'),
+      sbFetch('classes', 'GET'),
+      sbFetch('patients', 'GET'),
+      sbFetch('appointments', 'GET'),
+      sbFetch('tasks', 'GET'),
+      sbFetch('notes', 'GET'),
+      sbFetch('payments', 'GET'),
+      sbFetch('observations', 'GET'),
+      sbFetch('goals', 'GET'),
+      sbFetch('questionnaires', 'GET')
+    ]);
+
+    const data = {
+      exportDate: new Date().toISOString(),
+      exportVersion: 1,
+      institutions: institutions || [],
+      classes: classes || [],
+      patients: patients || [],
+      appointments: appointments || [],
+      tasks: tasks || [],
+      notes: notes || [],
+      payments: payments || [],
+      observations: observations || [],
+      goals: goals || [],
+      questionnaires: questionnaires || []
+    };
+
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mivhan-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    status.innerHTML = '✅ הנתונים יוצאו בהצלחה! ניתן להעלות אותו במערכת החדשה.';
+  } catch (err) {
+    document.getElementById('export-status').innerHTML = '❌ שגיאה: ' + err.message;
+  }
+}
 </script>
 
 </body>
