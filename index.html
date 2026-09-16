@@ -7069,39 +7069,142 @@ function updateClock(){
 updateClock();
 setInterval(updateClock,1000);
 
-// Export all data function
+// Export all data function — pulls from Supabase via sb() and remaps every
+// entity's fields to the shape the therapist-system importer expects
+// (snake_case, matching its own DB columns), since the two systems use
+// different schemas (e.g. appointments here use start_time/end_time instead
+// of date+time+duration, tasks use name/detail instead of title/details).
+function exportIsoToDateTimeDuration(startIso, endIso) {
+  if (!startIso) return { date: null, time: null, duration_minutes: 60 };
+  const start = new Date(startIso);
+  const pad = n => String(n).padStart(2, '0');
+  const date = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
+  const time = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
+  let duration_minutes = 60;
+  if (endIso) {
+    const end = new Date(endIso);
+    duration_minutes = Math.max(5, Math.round((end - start) / 60000));
+  }
+  return { date, time, duration_minutes };
+}
+
+function exportDateOnly(val) {
+  if (!val) return null;
+  return String(val).slice(0, 10);
+}
+
 async function exportAllDataOldSystem() {
   try {
     const status = document.getElementById('export-status');
     status.innerHTML = '⏳ מייצא נתונים...';
 
-    // Fetch all data from Supabase
-    const [institutions, classes, patients, appointments, tasks, notes, payments, observations, goals, questionnaires] = await Promise.all([
-      sbFetch('institutions', 'GET'),
-      sbFetch('classes', 'GET'),
-      sbFetch('patients', 'GET'),
-      sbFetch('appointments', 'GET'),
-      sbFetch('tasks', 'GET'),
-      sbFetch('notes', 'GET'),
-      sbFetch('payments', 'GET'),
-      sbFetch('observations', 'GET'),
-      sbFetch('goals', 'GET'),
-      sbFetch('questionnaires', 'GET')
+    const today = new Date().toISOString().slice(0, 10);
+
+    const [instRes, clsRes, patRes, aptRes, taskRes, noteRes, payRes, obsRes, goalRes, qRes] = await Promise.all([
+      sb('institutions', '?select=*'),
+      sb('classes', '?select=*'),
+      sb('patients', '?select=*'),
+      sb('appointments', '?select=*'),
+      sb('tasks', '?select=*'),
+      sb('notes', '?select=*'),
+      sb('payments', '?select=*'),
+      sb('observations', '?select=*'),
+      sb('treatment_goals', '?select=*'),
+      sb('questionnaires', '?select=*')
     ]);
+
+    const firstErr = [instRes, clsRes, patRes, aptRes, taskRes, noteRes, payRes, obsRes, goalRes, qRes].find(r => r.error);
+    if (firstErr) throw new Error(firstErr.error);
+
+    const institutions = (instRes.data || []).map(i => ({
+      id: i.id, name: i.name, color: null, has_classes: true
+    }));
+
+    const classes = (clsRes.data || []).map(c => ({
+      id: c.id, institution_id: c.institution_id, name: c.name, sort_order: 0
+    }));
+
+    const patients = (patRes.data || []).map(p => ({
+      id: p.id, name: p.name, phone: p.phone || null, parent_name: p.parents || null,
+      birth_date: null, address: p.address || null, institution_id: p.institution_id || null,
+      class_id: p.class_id || null, folder_type: p.folder_type || null,
+      background: null, session_price: 0
+    }));
+
+    const appointments = (aptRes.data || []).map(a => {
+      const { date, time, duration_minutes } = exportIsoToDateTimeDuration(a.start_time, a.end_time);
+      return {
+        id: a.id, patient_id: a.patient_id, title: a.name || null, date, time,
+        duration_minutes, price: a.price || 0, notes: a.description || null
+      };
+    }).filter(a => a.date);
+
+    const tasks = (taskRes.data || []).map(t => {
+      const decoded = (typeof decodeTaskDetail === 'function') ? decodeTaskDetail(t.detail) : { detail: t.detail };
+      return {
+        id: t.id, patient_id: t.patient_id || null, title: t.name || '(ללא שם)',
+        details: decoded.detail || null, due_date: t.due_date || null,
+        status: t.done ? 'done' : 'pending'
+      };
+    });
+
+    const notes = (noteRes.data || []).map(n => ({
+      id: n.id, patient_id: n.patient_id, content: n.content || '', shared: false
+    })).filter(n => n.patient_id && n.content);
+
+    const payments = (payRes.data || []).map(p => ({
+      id: p.id, patient_id: p.patient_id, amount: p.amount || 0,
+      date: exportDateOnly(p.date || p.created_at) || today,
+      method: p.method || null, notes: p.notes || null
+    })).filter(p => p.patient_id);
+
+    const observations = (obsRes.data || []).map(o => {
+      let parsed = null;
+      try { if (o.circumstance && o.circumstance.trim().startsWith('{')) parsed = JSON.parse(o.circumstance); } catch (e) {}
+      let antecedent = null, behavior = null, consequence = null;
+      if (parsed) {
+        const rows = parsed.rows || [];
+        antecedent = [parsed.teacher ? `מלמד: ${parsed.teacher}` : '', parsed.lesson ? `שיעור: ${parsed.lesson}` : '', ...rows.map(r => r.c)].filter(Boolean).join('\n') || null;
+        behavior = rows.map(r => r.b).filter(Boolean).join('\n') || null;
+        consequence = [...rows.map(r => r.o), parsed.summary].filter(Boolean).join('\n') || null;
+      }
+      return {
+        id: o.id, patient_id: o.patient_id, date: exportDateOnly(o.obs_date || o.created_at) || today,
+        antecedent: antecedent || o.circumstance || null, behavior: behavior || o.behavior || null,
+        consequence: consequence || o.outcome || null
+      };
+    }).filter(o => o.patient_id);
+
+    const goals = (goalRes.data || []).map(g => {
+      const parts = [];
+      if (g.description) parts.push(`תיאור: ${g.description}`);
+      if (g.functional_analysis) parts.push(`ניתוח פונקציונלי: ${g.functional_analysis}`);
+      if (g.hypothesis) parts.push(`השערה: ${g.hypothesis}`);
+      if (g.target) parts.push(`יעד: ${g.target}`);
+      if (g.behavioral_goal) parts.push(`מטרה התנהגותית: ${g.behavioral_goal}`);
+      if (g.path) parts.push(`דרך פעולה: ${g.path}`);
+      if (g.short_reinforcement) parts.push(`חיזוק קצר טווח: ${g.short_reinforcement}`);
+      if (g.long_reinforcement) parts.push(`חיזוק ארוך טווח: ${g.long_reinforcement}`);
+      if (g.responses) parts.push(`תגובות: ${g.responses}`);
+      return {
+        id: g.id, patient_id: g.patient_id, goal: parts.join('\n\n') || '(ללא תיאור)',
+        target_date: null, status: 'active', progress: 0
+      };
+    }).filter(g => g.patient_id);
+
+    const questionnaires = (qRes.data || []).map(q => {
+      const fields = (typeof Q_FIELDS !== 'undefined' && Q_FIELDS[q.q_type]) ? Q_FIELDS[q.q_type] : [];
+      const questions = fields.filter(f => f.type !== 'section').map(f => ({ id: f.id, label: f.label, type: f.type === 'textarea' ? 'textarea' : (f.type || 'text'), options: f.options }));
+      return {
+        id: q.id, patient_id: q.patient_id, title: q.title || (typeof Q_LABELS !== 'undefined' ? Q_LABELS[q.q_type] : null) || 'שאלון',
+        questions, answers: q.content || {}, status: 'completed'
+      };
+    }).filter(q => q.patient_id);
 
     const data = {
       exportDate: new Date().toISOString(),
       exportVersion: 1,
-      institutions: institutions || [],
-      classes: classes || [],
-      patients: patients || [],
-      appointments: appointments || [],
-      tasks: tasks || [],
-      notes: notes || [],
-      payments: payments || [],
-      observations: observations || [],
-      goals: goals || [],
-      questionnaires: questionnaires || []
+      institutions, classes, patients, appointments, tasks, notes, payments, observations, goals, questionnaires
     };
 
     const json = JSON.stringify(data, null, 2);
