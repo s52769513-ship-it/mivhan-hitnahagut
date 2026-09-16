@@ -7124,18 +7124,27 @@ async function exportAllDataOldSystem() {
       id: c.id, institution_id: c.institution_id, name: c.name, sort_order: 0
     }));
 
+    // this system's folder_type values (consultation/full_process/inactive) don't
+    // match the therapist system's (consultation/process/inactive) — translate.
+    const FOLDER_TYPE_MAP = { consultation: 'consultation', full_process: 'process', inactive: 'inactive' };
     const patients = (patRes.data || []).map(p => ({
       id: p.id, name: p.name, phone: p.phone || null, parent_name: p.parents || null,
       birth_date: null, address: p.address || null, institution_id: p.institution_id || null,
-      class_id: p.class_id || null, folder_type: p.folder_type || null,
+      class_id: p.class_id || null, folder_type: FOLDER_TYPE_MAP[p.folder_type] || p.folder_type || null,
       background: null, session_price: 0
     }));
 
     const appointments = (aptRes.data || []).map(a => {
       const { date, time, duration_minutes } = exportIsoToDateTimeDuration(a.start_time, a.end_time);
+      // this system's `arrived` is a plain boolean (defaults to false at
+      // creation, for both a not-yet-happened appointment and one where the
+      // patient genuinely didn't show), unlike the new system's tri-state
+      // attended (null=pending/true/false) — a past appointment still marked
+      // false is a real no-show, a future one is simply still pending.
+      const attended = a.arrived === true ? true : (date && date < today ? false : null);
       return {
         id: a.id, patient_id: a.patient_id, title: a.name || null, date, time,
-        duration_minutes, price: a.price || 0, notes: a.description || null
+        duration_minutes, price: a.price || 0, notes: a.description || null, attended
       };
     }).filter(a => a.date);
 
@@ -7193,10 +7202,19 @@ async function exportAllDataOldSystem() {
     }).filter(g => g.patient_id);
 
     const questionnaires = (qRes.data || []).map(q => {
-      const fields = (typeof Q_FIELDS !== 'undefined' && Q_FIELDS[q.q_type]) ? Q_FIELDS[q.q_type] : [];
+      // Q_FIELDS covers the parent/staff/functional/fobs questionnaire types;
+      // the intervention-plan form (טנ"ק) is a separate q_type='tank' with its
+      // own field list (TANK_FIELDS), not part of Q_FIELDS.
+      const fields = q.q_type === 'tank' && typeof TANK_FIELDS !== 'undefined'
+        ? TANK_FIELDS
+        : (typeof Q_FIELDS !== 'undefined' && Q_FIELDS[q.q_type]) ? Q_FIELDS[q.q_type] : [];
       const questions = fields.filter(f => f.type !== 'section').map(f => ({ id: f.id, label: f.label, type: f.type === 'textarea' ? 'textarea' : (f.type || 'text'), options: f.options }));
+      // The therapist system looks up a patient's intervention-plan record by
+      // this exact title — using it here lets the imported answers land
+      // directly in that tab instead of as a generic orphaned questionnaire.
+      const title = q.q_type === 'tank' ? 'תוכנית התערבות (טנ"ק)' : (q.title || (typeof Q_LABELS !== 'undefined' ? Q_LABELS[q.q_type] : null) || 'שאלון');
       return {
-        id: q.id, patient_id: q.patient_id, title: q.title || (typeof Q_LABELS !== 'undefined' ? Q_LABELS[q.q_type] : null) || 'שאלון',
+        id: q.id, patient_id: q.patient_id, title,
         questions, answers: q.content || {}, status: 'completed'
       };
     }).filter(q => q.patient_id);
