@@ -7173,10 +7173,12 @@ async function exportAllDataOldSystem() {
       try { if (o.circumstance && o.circumstance.trim().startsWith('{')) parsed = JSON.parse(o.circumstance); } catch (e) {}
       let antecedent = null, behavior = null, consequence = null;
       if (parsed) {
-        const rows = parsed.rows || [];
-        antecedent = [parsed.teacher ? `מלמד: ${parsed.teacher}` : '', parsed.lesson ? `שיעור: ${parsed.lesson}` : '', ...rows.map(r => r.c)].filter(Boolean).join('\n') || null;
-        behavior = rows.map(r => r.b).filter(Boolean).join('\n') || null;
-        consequence = [...rows.map(r => r.o), parsed.summary].filter(Boolean).join('\n') || null;
+        const rows = (parsed.rows || []).filter(r => r.c || r.b || r.o || r.n);
+        const numbered = (get) => rows.map((r, i) => get(r) ? `${i + 1}. ${get(r)}` : null).filter(Boolean).join('\n') || null;
+        antecedent = [parsed.teacher ? `מלמד: ${parsed.teacher}` : '', parsed.lesson ? `שיעור: ${parsed.lesson}` : '', numbered(r => r.c)].filter(Boolean).join('\n') || null;
+        behavior = numbered(r => r.b);
+        const notesText = numbered(r => r.n);
+        consequence = [numbered(r => r.o), notesText ? `הערות:\n${notesText}` : '', parsed.summary ? `סיכום: ${parsed.summary}` : ''].filter(Boolean).join('\n\n') || null;
       }
       return {
         id: o.id, patient_id: o.patient_id, date: exportDateOnly(o.obs_date || o.created_at) || today,
@@ -7185,19 +7187,28 @@ async function exportAllDataOldSystem() {
       };
     }).filter(o => o.patient_id);
 
+    // The new system's goal is a single free-text field (no equivalent
+    // structured ABC-analysis form), so fold this system's richer goal-setting
+    // fields into one clearly-sectioned text block instead of losing them —
+    // the display now preserves line breaks (white-space:pre-wrap), so this
+    // reads as distinct headed sections rather than a run-on paragraph.
+    const GOAL_SECTIONS = [
+      ['description', '📌 תיאור'],
+      ['functional_analysis', '🔍 ניתוח פונקציונלי'],
+      ['hypothesis', '💡 השערה'],
+      ['target', '🎯 יעד'],
+      ['behavioral_goal', '📋 מטרה התנהגותית'],
+      ['path', '🛤️ דרך פעולה'],
+      ['short_reinforcement', '⏱️ חיזוק קצר טווח'],
+      ['long_reinforcement', '📅 חיזוק ארוך טווח'],
+      ['responses', '💬 תגובות'],
+    ];
     const goals = (goalRes.data || []).map(g => {
-      const parts = [];
-      if (g.description) parts.push(`תיאור: ${g.description}`);
-      if (g.functional_analysis) parts.push(`ניתוח פונקציונלי: ${g.functional_analysis}`);
-      if (g.hypothesis) parts.push(`השערה: ${g.hypothesis}`);
-      if (g.target) parts.push(`יעד: ${g.target}`);
-      if (g.behavioral_goal) parts.push(`מטרה התנהגותית: ${g.behavioral_goal}`);
-      if (g.path) parts.push(`דרך פעולה: ${g.path}`);
-      if (g.short_reinforcement) parts.push(`חיזוק קצר טווח: ${g.short_reinforcement}`);
-      if (g.long_reinforcement) parts.push(`חיזוק ארוך טווח: ${g.long_reinforcement}`);
-      if (g.responses) parts.push(`תגובות: ${g.responses}`);
+      const parts = GOAL_SECTIONS
+        .filter(([key]) => g[key])
+        .map(([key, label]) => `${label}\n${g[key]}`);
       return {
-        id: g.id, patient_id: g.patient_id, goal: parts.join('\n\n') || '(ללא תיאור)',
+        id: g.id, patient_id: g.patient_id, goal: parts.join('\n\n━━━━━━━━━━\n\n') || '(ללא תיאור)',
         target_date: null, status: 'active', progress: 0
       };
     }).filter(g => g.patient_id);
